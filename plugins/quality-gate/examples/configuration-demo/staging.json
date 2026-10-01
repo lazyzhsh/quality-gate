@@ -1,0 +1,1 @@
+{"endpoint": "https://staging.example.invalid", "database": {"host": "staging-db", "port": 5432}, "auth": {"token": "ref:staging/payment-token"}, "retry": 3, "features": {"canary": {"enabled": false}}}

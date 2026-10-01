@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "REPLAY-1",
+      "statement": "The checkout journey matches expected steps and replays the archived accepted baseline step by step"
+    }
+  ],
+  "gates": [
+    {
+      "id": "checkout-replay",
+      "kind": "journey",
+      "level": "L3",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "REPLAY-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "ignorePaths": [
+        "/requestId"
+      ],
+      "replayBaseline": {
+        "file": "baseline/journey-baseline.transcript.json",
+        "contentSha256": "6b2f14a16456650955a7aafb912aabcd86fd85990eab27598a6026f09ff9e417"
+      },
+      "scenarios": [
+        {
+          "id": "checkout",
+          "level": "e2e",
+          "expectedSteps": [
+            {
+              "id": "login",
+              "expected": { "status": 200, "state": "authenticated" }
+            },
+            {
+              "id": "place-order",
+              "expected": { "status": 201, "state": "created", "orderId": "ord-042" }
+            },
+            {
+              "id": "confirm",
+              "expected": { "status": 200, "state": "confirmed", "total": 1299 }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "REPLAY-R1",
+      "gateId": "checkout-replay",
+      "description": "Behavioural regression comparison against an archived observation record: not a performance or timing replay; a baseline made stale by requirement changes must be explicitly re-pinned (update contentSha256)"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

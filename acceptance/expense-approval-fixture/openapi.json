@@ -1,0 +1,1 @@
+{"openapi":"3.1.0","info":{"title":"Expense Approval Fixture","version":"0.1.0"},"paths":{"/claims":{"post":{"security":[{"authenticated":[]}]}},"/claims/{id}":{"get":{"security":[{"authenticated":[]}]}},"/claims/{id}/approve":{"post":{"security":[{"authenticated":[]}]}}}}

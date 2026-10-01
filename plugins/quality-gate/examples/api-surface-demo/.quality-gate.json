@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "GROUND-2",
+      "statement": "Endpoint and config-key references in the scanned sources resolve against the declared API surface registry (OpenAPI face and JSON Schema face)"
+    }
+  ],
+  "gates": [
+    {
+      "id": "ground-api",
+      "kind": "symbol-grounding",
+      "level": "L2",
+      "enabled": true,
+      "stages": ["close", "pr"],
+      "claimId": "GROUND-2",
+      "check": "all",
+      "include": ["src/**"],
+      "apiSurface": {"file": "api-surface.json"}
+    }
+  ],
+  "risks": [
+    {
+      "id": "GROUND-2-R1",
+      "gateId": "ground-api",
+      "description": "Existence proof only: endpoint matching is path-level with {param} segment wildcards (HTTP method not reconciled); full URLs are not extracted; schema keys enumerate properties recursively without patternProperties or conditional combinations"
+    }
+  ],
+  "exceptions": []
+}

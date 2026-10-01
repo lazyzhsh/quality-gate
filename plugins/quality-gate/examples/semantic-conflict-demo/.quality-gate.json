@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SC-1",
+      "statement": "Domain symbols map to their declared concepts without semantic conflicts"
+    }
+  ],
+  "gates": [
+    {
+      "id": "semantic-mapping",
+      "kind": "semantic-alignment",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SC-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "mappings": [
+        {
+          "symbol": "AgreementRecord",
+          "expectedIri": "urn:demo:Agreement"
+        },
+        {
+          "symbol": "CommitmentRecord",
+          "expectedIri": "urn:demo:Commitment"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SC-R1",
+      "gateId": "semantic-mapping",
+      "description": "Disjointness comes from the project catalog declaration, not OWL reasoning"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

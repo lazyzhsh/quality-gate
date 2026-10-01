@@ -1,0 +1,8 @@
+{
+ "id": "demo-api",
+ "version": "1",
+ "concepts": [
+  {"iri": "urn:demo:Agreement", "label": "agreement", "exposure": "public"},
+  {"iri": "urn:demo:SettlementPolicy", "label": "settlement policy", "exposure": "internal"}
+ ]
+}

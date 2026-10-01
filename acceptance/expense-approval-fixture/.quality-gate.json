@@ -1,0 +1,440 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C-REQ",
+      "statement": "All stated acceptance criteria link to source and same-run passing checks"
+    },
+    {
+      "id": "C-DESIGN",
+      "statement": "Architecture decisions are resolved with inspectable evidence"
+    },
+    {
+      "id": "C-CODE",
+      "statement": "The expense approval source parses, builds and passes eight project tests"
+    },
+    {
+      "id": "C-PROFILE",
+      "statement": "A reimbursed expense claim record satisfies the declared FIBO-linked profile"
+    },
+    {
+      "id": "C-LEDGER",
+      "statement": "A submitted, approved and reimbursed claim persists a balanced two-entry ledger"
+    },
+    {
+      "id": "C-BEHAVIOR",
+      "statement": "Approval follows the PRD normal, boundary and authorization cases"
+    },
+    {
+      "id": "C-METRICS",
+      "statement": "Configured local source rules and latency threshold hold"
+    },
+    {
+      "id": "C-AUTHZ",
+      "statement": "The declared API surface has explicit authorization on each operation"
+    },
+    {
+      "id": "C-BUDGET",
+      "statement": "Declared downstream timeout and retry budgets hold"
+    },
+    {
+      "id": "C-RERUN",
+      "statement": "Same-seed rerun evidence shows the golden reimbursement job is deterministic"
+    },
+    {
+      "id": "C-RELEASE",
+      "statement": "The isolated rollback drill succeeds"
+    },
+    {
+      "id": "C-DEBT",
+      "statement": "Known debt is owned, bounded and not overdue"
+    }
+  ],
+  "gates": [
+    {
+      "id": "rtm",
+      "kind": "traceability",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-REQ",
+      "file": ".quality-gate/registries/requirements.json",
+      "requirePrdRefs": true,
+      "level": "L0"
+    },
+    {
+      "id": "design-decisions",
+      "kind": "decisions",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-DESIGN",
+      "file": ".quality-gate/registries/decisions.json",
+      "level": "L0"
+    },
+    {
+      "id": "syntax",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-CODE",
+      "argv": [
+        "$NODE",
+        "--check",
+        "src/claims.mjs"
+      ],
+      "timeoutMs": 2000,
+      "level": "L1"
+    },
+    {
+      "id": "engineering",
+      "kind": "engineering",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-CODE",
+      "timeoutMs": 15000,
+      "requiredChecks": [
+        "static",
+        "build",
+        "unit"
+      ],
+      "checks": [
+        {
+          "id": "static",
+          "type": "exit",
+          "argv": [
+            "$NODE",
+            "--check",
+            "src/claims.mjs"
+          ],
+          "timeoutMs": 2000
+        },
+        {
+          "id": "build",
+          "type": "artifact",
+          "argv": [
+            "$NODE",
+            "scripts/engineering-runner.mjs",
+            "build"
+          ],
+          "timeoutMs": 3000
+        },
+        {
+          "id": "unit",
+          "type": "test",
+          "argv": [
+            "$NODE",
+            "scripts/engineering-runner.mjs",
+            "unit"
+          ],
+          "timeoutMs": 8000,
+          "blockOnSkipped": true,
+          "minTotal": 8
+        }
+      ],
+      "level": "L1"
+    },
+    {
+      "id": "profile",
+      "kind": "semantic-profile",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-PROFILE",
+      "file": ".quality-gate/registries/profile.json",
+      "dataFile": ".quality-gate/registries/records.json",
+      "level": "L2"
+    },
+    {
+      "id": "ledger-invariant",
+      "kind": "invariant",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-LEDGER",
+      "argv": [
+        "$NODE",
+        "scripts/invariant-runner.mjs"
+      ],
+      "timeoutMs": 3000,
+      "assertions": [
+        {
+          "id": "balanced",
+          "left": "debitSum",
+          "operator": "eq",
+          "right": "creditSum"
+        },
+        {
+          "id": "matches-claim",
+          "left": "debitSum",
+          "operator": "eq",
+          "right": "amountCents"
+        },
+        {
+          "id": "two-entries",
+          "left": "entryCount",
+          "operator": "eq",
+          "value": 2
+        },
+        {
+          "id": "reimbursed",
+          "left": "status",
+          "operator": "eq",
+          "value": "reimbursed"
+        }
+      ],
+      "level": "L2"
+    },
+    {
+      "id": "behavior",
+      "kind": "behavior",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-BEHAVIOR",
+      "argv": [
+        "$NODE",
+        "scripts/behavior-runner.mjs"
+      ],
+      "timeoutMs": 4000,
+      "cases": [
+        {
+          "id": "normal",
+          "input": {
+            "amountCents": 12000
+          },
+          "expected": {
+            "status": "approved"
+          }
+        },
+        {
+          "id": "limit",
+          "input": {
+            "amountCents": 100000
+          },
+          "expected": {
+            "status": "approved"
+          }
+        },
+        {
+          "id": "above-limit",
+          "input": {
+            "amountCents": 100001
+          },
+          "expected": {
+            "status": "rejected",
+            "reason": "above limit"
+          }
+        },
+        {
+          "id": "self-approval",
+          "input": {
+            "actorId": "alice"
+          },
+          "expected": {
+            "status": "rejected",
+            "reason": "self approval"
+          }
+        },
+        {
+          "id": "cross-tenant",
+          "input": {
+            "tenantId": "tenant-b"
+          },
+          "expected": {
+            "status": "rejected",
+            "reason": "forbidden"
+          }
+        },
+        {
+          "id": "invalid-amount",
+          "input": {
+            "amountCents": 0
+          },
+          "expected": {
+            "status": "rejected",
+            "reason": "invalid amount"
+          }
+        },
+        {
+          "id": "double-approval",
+          "input": {
+            "repeatApproval": true
+          },
+          "expected": {
+            "status": "rejected",
+            "reason": "invalid transition"
+          }
+        }
+      ],
+      "level": "L3"
+    },
+    {
+      "id": "metrics",
+      "kind": "metrics",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-METRICS",
+      "argv": [
+        "$NODE",
+        "scripts/metrics-runner.mjs"
+      ],
+      "timeoutMs": 4000,
+      "thresholds": {
+        "architectureViolations": {
+          "max": 0
+        },
+        "unsafeEvalOccurrences": {
+          "max": 0
+        },
+        "sampleLatencyMs": {
+          "max": 1000
+        }
+      },
+      "level": "L4"
+    },
+    {
+      "id": "api-authz",
+      "kind": "scan",
+      "category": "api-authz",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-AUTHZ",
+      "argv": [
+        "$NODE",
+        "scripts/authz-runner.mjs"
+      ],
+      "timeoutMs": 3000,
+      "blockAt": "high",
+      "level": "L4"
+    },
+    {
+      "id": "timeout-budget",
+      "kind": "budget",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-BUDGET",
+      "file": ".quality-gate/registries/budget.json",
+      "level": "L4"
+    },
+    {
+      "id": "rerun-evidence",
+      "kind": "rerun",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "C-RERUN",
+      "file": ".quality-gate/registries/rerun.json",
+      "level": "L4"
+    },
+    {
+      "id": "rollback-drill",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-RELEASE",
+      "argv": [
+        "$NODE",
+        "scripts/rollback-drill.mjs"
+      ],
+      "timeoutMs": 3000,
+      "level": "L5"
+    },
+    {
+      "id": "technical-debt",
+      "kind": "debt",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C-DEBT",
+      "file": ".quality-gate/registries/debt.json",
+      "level": "L5"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-PROFILE",
+      "gateId": "profile",
+      "description": "Profile fields are project-authored, not inferred from FIBO"
+    },
+    {
+      "id": "R-STORE",
+      "gateId": "ledger-invariant",
+      "description": "Local JSON snapshot readback is not a concurrent transactional database"
+    },
+    {
+      "id": "R-METRICS",
+      "gateId": "metrics",
+      "description": "Local timing loop is not production latency or load evidence"
+    },
+    {
+      "id": "R-SCAN",
+      "gateId": "api-authz",
+      "description": "Narrow OpenAPI declaration analyzer does not replace professional security scanning"
+    },
+    {
+      "id": "rerun-evidence-R1",
+      "gateId": "rerun-evidence",
+      "description": "Evidence file is project-authored; the kernel verifies structure and hash consistency only"
+    },
+    {
+      "id": "R-ROLLBACK",
+      "gateId": "rollback-drill",
+      "description": "Isolated configuration rollback does not prove production recovery"
+    }
+  ],
+  "exceptions": [],
+  "ontology": {
+    "type": "fibo-pinned",
+    "expectedCatalogSha256": "eb9795a238457b85161bbb22610a6a5507a613fb76d377b05daba625b3816c4e"
+  },
+  "requiredLevels": {
+    "close": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5"
+    ],
+    "release": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5"
+    ]
+  }
+}

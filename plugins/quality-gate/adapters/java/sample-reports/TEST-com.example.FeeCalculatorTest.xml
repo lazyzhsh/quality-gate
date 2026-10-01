@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 样例按 Maven surefire 报告 schema 手写（provenance：无 JDK 环境，未在真实构建链实测） -->
+<testsuite name="com.example.FeeCalculatorTest" time="0.031" tests="3" errors="0" skipped="0" failures="0">
+  <testcase name="testFeeStandard" classname="com.example.FeeCalculatorTest" time="0.004"/>
+  <testcase name="testFeeLarge" classname="com.example.FeeCalculatorTest" time="0.003"/>
+  <testcase name="testZeroIsInvalid" classname="com.example.FeeCalculatorTest" time="0.002"/>
+</testsuite>

@@ -1,0 +1,1 @@
+{"items":[{"id":"DEBT-01","description":"Replace JSON snapshot store before using this project as a production service","owner":"fixture-team","impact":"No concurrent transaction isolation","repayment":"Adopt transactional database and rerun persistence and resilience gates","severity":"low","status":"open","dueDate":"2099-12-31"}]}

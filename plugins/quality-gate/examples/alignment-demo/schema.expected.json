@@ -1,0 +1,1 @@
+{"kind":"schema","items":[{"table":"orders","columns":[{"name":"id","type":"TEXT","notNull":true,"primaryKey":true},{"name":"amount_minor","type":"INTEGER","notNull":true,"primaryKey":false},{"name":"currency","type":"TEXT","notNull":true,"primaryKey":false}]}]}

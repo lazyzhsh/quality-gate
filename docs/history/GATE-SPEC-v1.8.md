@@ -1,0 +1,59 @@
+# Gate Spec 1.8（配置 schemaVersion 0.1）
+
+本版为**功能裁剪版**：按用户决定移除 `migration`/`operational`/`readiness` 三个 kind、`scan` 的 dependency/secret/iac/dast 四类别、`metrics` 证据纪律（evidenceValidity/maxAgeDays/baselineViolations/provenance）与 release 阶段 `releasePackage`/顶层 `priorRuns`（均为破坏性配置变更，引用即校验失败）。其余判定规则延续 v1.7，引导初始化协议见文末。内核与 Agent 无关；ZCode Hook、Command、Skill 触发同一个 CLI。项目 `.quality-gate.json` 配置 `claims`、`gates`、`risks`、`exceptions`、可选 `requiredDomains` 和 `ontology`。报告按执行阶段写入 `.quality-gate/runs/<uuid>.json`。`PASS` 才可放行；`FAIL`、`ERROR`、`SKIP` 退出码分别为 1、2、2。最多 32 个 Gate，同阶段配置的超时总预算上限 40 秒。
+
+## 新增可执行 Gate
+
+| 域 | kind | 配置与执行 | 证据、失败对象 |
+|---|---|---|---|
+| L0 | `decisions` | 决策登记，L0 可显式允许 deferred；L5 必须关闭；`evidence` 支持 `{file}`/`{gateId}` 结构化引用并核验，可选 `affectsPaths`（存在性）与 `affectsGateIds`（登记性）影响链接；在关联门禁之后评估 | 决策 ID、owner、resolution、evidence 引用核验、影响检查、未关闭项 |
+| L0 | `change-scope` | Git 基线、允许/必需/敏感路径；每文件记录 A/M/D/R 变更类型；保护路径确认可绑定 `acknowledgedBase`（基线移动后失效需重新确认）；可选 `contentCheck` 运行器对变更内容做结构化 finding 检查，`acceptedFindings` 显式接受的才放行 | 实际变更与类型、超范围、缺失、未确认/过期敏感确认、未接受的内容 finding |
+| L1 | `engineering` | static/build/unit/mutation/structure/convention 六类子检查，项目提供工具 runner；unit 可选 `blockOnSkipped`、`minTotal`、`minCoverageRatio`（runner 回报 `coverage:{tool, ratio}`，阈值声明而证据缺失 ERROR、低于阈值 FAIL，带 total/covered 计数时内核交叉核验）与 `expected:{f2p,p2p}`（F2P=新行为：当前须过且**基线须败**，否则伪修复；P2P=防回归：双版本均须过；runner 须回报逐用例 `cases:[{name,status,baselineStatus}]`，skip 不计通过）；findings 可选 `maxBySeverity`；mutation 观察可选 `survivors` | 当次执行 ID、source、制品哈希、测试计数与 skipped、覆盖率与工具来源、逐用例双版本状态与六类违规（missingCase/skippedCase/f2pStillFailing/f2pPassedOnBaseline/p2pRegressed/p2pFailedOnBaseline）、变异分数及存活明细、违规位置、逐严重度计数 |
+| L2 | `alignment` | 实际 API/迁移后数据库结构观察与声明契约对比；可选 `ignorePaths`（JSON Pointer 模式，`*` 匹配一段）；`scope: contract-diff` 为契约兼容阻断：必填 `compatibilityLevel`（backward/forward/full），runner（oasdiff 类）回报 `breaking:[{path,rule}]`+`checked:true`，未执行即 ERROR、breaking 非空即 FAIL 指名 | JSON Pointer 路径、预期/实际、被忽略的差异；契约破坏性变更路径与规则 |
+| L2 | `consistency` | 支付数据正确性五类子检查（逐检查 argv）：zero-sum（整数最小货币单位逐账单借贷平；可选 `requirePreCommitCheck` 要求 runner 证实写前校验）、append-only（任何 UPDATE/DELETE 即 FAIL 指名）、reconciliation（`pairs` 逐对比对 `compared/matched/diffs`，差异按账龄分桶 p0/p1/p2，可选 `breakSlaHours`）、dlq（`dlqRetentionSec>=sourceRetentionSec` 否则静默丢数据；`maxReceiveCount` 上限；可选 `requireDrill` 毒消息演练三断言）、audit-chain（关键操作覆盖率；**hash 链 `sha256(prev:seq:actor:action)` 由内核重算验证**；可选 `minRetentionDays`） | 逐检查执行 ID、不平衡账单及差额、账本改写、对账差异与账龄桶、DLQ 违规、无审计事件操作、被篡改事件 seq、留存不足 |
+| L2/L3 | `invariant` | 对独立读取的值执行 eq/neq/le/lt/ge/gt 及条件规则；`when` 支持 `equals`/`notEquals`/`in`，数组为 AND 组合，条件不满足即 SKIP | 条件、操作数、实际值、失败规则 |
+| L3 | `journey` | smoke/integration/e2e 场景与逐步骤预期；可选 `ignorePaths` 豁免步骤易变字段（JSON Pointer 模式），失败步骤差异明细入证据；样例启动本地 HTTP | 旅程、步骤 ID、预期/实际、步骤差异/豁免 |
+| L3 | `visual` | 运行 renderer，默认与基线严格字节比较；可选 `maxDiffPixels`/`maxDiffRatio` 切换像素容差：runner 回报 `diff:{pixels,totalPixels}` 度量、内核按阈值判定（字节一致恒 PASS） | 路径、SHA256、diff 度量与阈值、比较模式 |
+| L3 | `property` | 固定 seed、多案例、金额断言（eq/neq/le/lt/ge/gt 与 `when` 条件，与 invariant 同一语义）及允许状态转换 | 案例数、seed、反例和失败转换 |
+| L3 | `semantic-alignment` | 当次读取代码符号的本体 IRI，与 FIBO/local provider 核对；符号允许多候选注解，候选与声明 IRI 互斥即 Semantic Conflict FAIL（互斥判定使用内建推理闭包：`disjointWith` 沿 `subClassOf` 传播给后代，如 A⊥B 且 D⊆B 则推断 A⊥D；目录声明与包含关系矛盾即 ERROR fail-closed）；可选 `matchMode: subsumed` 允许候选为声明概念经目录 `subClassOf` 传递闭包的子类（BFS 包含链入证据，RDFS 子集、非 OWL 推理）；可选 `acknowledgedOntology: {id, version, catalogSha256}` 指纹确认，目录升级后不符即 `staleOntologyAck` FAIL（升级评审可用 `plugins/quality-gate/scripts/ontology_diff.py` 分类加法/破坏性变更） | 符号、来源位置、候选 IRI、包含链、互斥对、本体确认状态、provider 版本 |
+| L3 | `terminology` | Terminology Ambiguity 最小版（原生，无 runner）：目录级 SKOS 完整性（prefLabel 跨概念唯一）与项目术语解析（label/altLabels 精确匹配，零命中/多命中即 FAIL）；同样支持 `acknowledgedOntology` 指纹确认 | 目录标签冲突、术语命中集合、本体确认状态、provider 版本 |
+| L3 | `semantic-relation` | Relation Alignment：项目声明概念间关系三元组，runner 从当次代码读取关系注解，内核核对代码/声明/目录三方一致（缺失、本体未认可、代码未声明关系、未知概念均 FAIL）；目录概念支持 `relations` 声明；支持 `acknowledgedOntology` | 期望/观察计数、逐三元组规则与位置、provider 版本 |
+| L3 | `semantic-constraint` | Constraint Alignment：目录概念声明的约束（`constraints`，与 invariant/property 同一断言语义）在 runner 观察的真实案例上执行；可选 `constraintIds` 子集、`minCases` 下限；未知概念/约束、概念无约束、缺失操作数均 ERROR | 约束数、案例数、反例（约束/案例/操作数）、provider 版本 |
+| L3 | `semantic-state` | State Alignment：目录概念声明的生命周期（`lifecycle` states/transitions）与 runner 观察到的真实实例转换对齐，未声明状态 `unknownState`、未声明转换 `illegalTransition` 均 FAIL；未知概念、概念无 lifecycle 均 ERROR | 状态数、声明转换数、案例数、逐案例规则、provider 版本 |
+| L3 | `semantic-instance` | Instance Alignment（原生，纯内建）：实例样本逐条类型解析与关键实体期望类型核对（允许等于或子类的特化 typing）；同一实体多类型按推理闭包判定——互斥 `disjointInstances`（含沿继承传播）或不可比较 `ambiguousInstanceType` 均 FAIL | 记录数、声明实体数、逐实体规则与类型集合、provider 版本 |
+| L3 | `semantic-exposure` | Semantic Exposure：目录概念用 `exposure: public\|internal` 声明暴露策略（无声明即 ERROR），runner 观察项目公共面，内部概念暴露 `internalConceptExposed`、未解析概念 `unknownExposedConcept` 均 FAIL；公共面定义是 runner 的观察依据（source 入证据） | 公共面观察计数、逐概念规则与位置、provider 版本 |
+| L3 | `semantic-consistency` | 目录一致性核验（互斥×包含矛盾、环、悬垂目标均构建时 ERROR）与声明/推断互斥对计数；可选 `reasoner: {argv, timeoutMs}` 外部增强——双实现一致性核对协议：内核经 stdin 交付完整目录事实，外部独立计算推断互斥对集合，不一致即 ERROR（不裁决对错，只阻断），一致记 AGREED；内核不采信外部单独声称的结论 | 概念/继承边/声明对/推断对计数、reasoner 状态与工具、provider 版本 |
+| L4 | `scan` | sast/api-authz/credential 三类别（1.8.0 裁剪 dependency/secret/iac/dast）、严重度阻断阈值；api-authz=逐 operation 显式鉴权声明（anonymous 须显式）、credential=凭据 issuedAt 轮换上限+vault 来源；可选 `acceptedFindings`（rule+location 精确豁免，`expiresAt` 过期自动恢复阻断） | 工具/版本、目标、结构化 finding（含未声明鉴权端点、过期/非 vault 凭据）、豁免与过期标注、阻断结果 |
+| L4 | `resilience` | 故障场景、最大恢复时间、最终状态、必需信号；可选 `requiredTransitions`（熔断全路径演练：runner 回报 `transitions` 序列须与期望一致且 `breakerEventsLogged:true`）与 `maxAgeDays`（演练观察须带 `observedAt`，过期即 FAIL） | 故障、恢复耗时、状态、log/metric/trace/alert、状态机序列与跳变日志、证据过期 |
+| L4 | `budget` | 文件式纯内核算术（无 runner）：`hops` 每跳 timeoutMs×(retries+1) 之和须 ≤ 调用方 `budgets` 预算（调用方未声明即违规）；`retryPolicies` 预算 ≤20%、jitterMode∈full/equal/decorrelated、backoff cap≥base | 逐跳尝试次数、需求合计 vs 预算、missingCallerBudget/budgetExceeded/retryBudgetExceeded 违规 |
+| L4 | `rerun` | 重跑确定性证据（R6，文件式纯内核校验，无 runner）：`jobs` 每任务 ≥2 次同 seed `runs`（sha256 输出哈希）+ `idempotencyKeyStrategy`；可选 `doubleEntry` 复式恒等式；runs<2、异 seed、算法未声明即 ERROR | 逐任务 runs 数/seed/确定性结论、outputDivergence（哈希不一致）、unbalancedDoubleEntry（借贷不等）违规 |
+| L5 | `configuration` | 多环境文件、允许差异路径（支持 `*` 段通配）、秘密引用 | 缺键、类型冲突、未声明差异、明文秘密（脱敏） |
+| L5 | `documentation` | 代码/API/用户/运维制品版本与主题；制品 path 由内核核验存在且非空 | 各制品缺失主题、版本偏差、制品文件缺失/为空 |
+| L5 | `debt` | 技术债登记，owner/影响/偿还/期限；resolved 项可选 evidence `{file}`/`{gateId}` 引用核验 | 高严重度和逾期未结项阻断、引用未通过 |
+
+`assumptions` 可要求来源/证据/影响/风险/处理；其 `source`/`evidence` 字段支持结构化引用：`{file}` 经存在性与防逃逸核验，`{gateId}` 须为同次 PASS 的门禁证据，未知门禁或畸形引用即 ERROR，纯文本保持登记不核验；该门禁在关联门禁之后评估。`traceability` 可要求 normal/boundary/negative/exception/state-transition AC 类型；其 `testGateIds` 可引用除 `traceability` 之外任意 kind 的门禁（元门禁在 RTM 之后评估，不能充当同次测试证据）；可选 `coverage: {argv, timeoutMs}` 运行器按 AC 核验链接代码文件是否被执行，未覆盖即 FAIL，runner 协议与其他门禁一致（同次 runId、结构化观察）；`persistence` 可要求 API 前后数据库快照并输出字段 delta；可选 `expectedRecordCount`（默认 1）：0 断言必须不落库（此时期望 HTTP 状态允许非 2xx），>1 为批量——runner 须回 `records` 数组且与 `requireSnapshots` 互斥，逐条按 expected 模板核对。已有 `command`、`ontology-map`、`semantic-profile`、`behavior`、`metrics` 保持兼容。`behavior` 同样支持 `expected:{f2p,p2p}`（值为用例 id，runner 回报 `baselineActual`，**基线通过与失败由内核按同一期望判定**，runner 无法自判）。`metrics` 为纯阈值判定（1..20 个 `{min?,max?}`，证据纪律已于 1.8.0 随 L4.2 裁剪）；灰度判定协议（R5）以拓扑声明 `canaryAnalysis` + runner 指标表达（inconclusive 不计 PASS、guardrail 矛盾、SRM 作废，模式见 CONFIG-GUIDE 架构适应度模式库）。全部示例在 `plugins/quality-gate/examples/`，逐任务状态及证明边界见 [RTM](../RTM.md)。
+
+所有 runner 由项目显式配置为参数数组 `argv`，通过 stdin 接收当次 `runId`，stdout 输出相同 `runId` 的 JSON 观察。缺失、过期、格式错误、超时或非零退出均不会 PASS。`$NODE` 使用插件当前 Node 可执行文件。`traceability` 的 coverage runner 与 `change-scope` 的 contentCheck runner 遵循同一协议；contentCheck 收到 baseRef/baseCommit 与逐文件变更类型，finding 是否接受由配置的 `acceptedFindings` 决定，runner 无权自判放行。change-scope 的重命名仅报告目标路径。runner 在项目根运行，拥有当前用户权限；正式项目应在隔离的测试环境配置其依赖与目标。示例安全扫描、SVG 对比、SQLite 结构观察与故障演练只证明该演示场景。
+
+报告含 configSha256 与逐门禁证据（`releasePackage`/`priorRuns` 跨运行哈希链已于 1.8.0 裁剪）。证据时效已由 `maxAgeDays`/`acknowledgedOntology` 按门禁覆盖（声明式豁免 `acceptedFindings.expiresAt` 同理过期自动恢复阻断）。提议的 Exception 登记即阻断；已审批（`status:"approved"` + `approvedBy`/`approvedAt`）且在 `expiresAt` 有效期内 → 报告呈现 **WAIVED**（单独列示、计入例外台账、不改变任何门禁判定——豁免从不把 FAIL 门禁变成 PASS）；过期或未生效自动回退阻断。审批为声明字段，无签名防伪造。FIBO 固定 Agreements/Contracts 两模块 52 个类（含 subClassOf/disjointWith 边，随包 vendored、逐源 SHA 核验、运行不联网，手动升级工作流见 docs/FIBO-PROVIDER.md），并可通过 local-catalog 替换；IRI 对齐、RDFS 子集闭包与有限 JSON profile 不等于完整 OWL/SHACL 推理。semantic-profile 规则与 SHACL Core 词汇对齐（逐条 violation 标注等价约束组件），但内核不是 SHACL 引擎。映射维护可采用提案-确认-pin 工作流：LLM/匹配工具提案写入 `ontology-proposals.json`（含 confidence），人工接受后 pin 进 mappings，`qgate.mjs proposals` 审计 accepted-not-pinned 漂移；门禁不读取提案文件，confidence 不构成证据。
+
+## 引导初始化（v1.7 新增；v1.7.1 扩展生命周期；v1.8 附加门禁目录随裁剪调整）
+
+项目缺 `.quality-gate.json` 时的配置创建走确定性协议（[ADR-0014](../adr/ADR-0014-guided-onboarding.md)）：档位化模版库（lite ⊂ pro ⊂ max，7 模版 + 6 附加门禁，`lib/templates.mjs` 静态数据）→ answers 契约（`templateId` + 可选 `addOns/disable/substitutions/requiredDomains`，未知字段或目标即拒绝）→ `qgate.mjs init` 装配（禁用级联清理 risks/exceptions/孤儿 claims → 合并附加 → 替换 → **占位符残留即拒绝并定位路径** → 内核 `validate()`）→ 写入。写入仅发生在 CLI 层且对已有配置需显式 `--force`；ZCode 会话内由 `/quality-gate-init` 引导对话问询（agent 不代写配置）。SessionStart 缺配置注入引导指向；内核缺配置报错为可行动文案。模版/附加清单与 answers 字段表见 [CONFIG-GUIDE 引导初始化与模版库](../CONFIG-GUIDE.md)。模版产出的配置仍受本规范全部判定规则约束：骨架协议在 runner 与登记文件补齐前按 fail-closed 报 FAIL/ERROR，不得以禁用门禁或创建例外换取放行。
+
+配置生命周期分权（v1.7.1，[ADR-0015](../adr/ADR-0015-config-lifecycle.md)）：**重初始化**＝`qgate.mjs leftovers` 确定性列出残留（根目录已知登记文件名 + 旧配置引用 + `.quality-gate/` 目录），经用户确认后 `init --fresh` 删除（不可恢复；装配失败不删）并全新引导；**升级/增量调整**＝`qgate.mjs inspect`（有效性/预算/溯源与模版漂移/可用附加/登记文件存在性）+ `qgate.mjs update`（changes 契约增量应用 + `migrateRegistries` 迁移），ZCode 会话内经 `/quality-gate-update` 引导。init 写入顶层溯源 `template:{id,generatedAt}`（内核校验形状；update 刷新 generatedAt）。登记文件默认集中 `.quality-gate/registries/`（可提交），运行数据仍在 `.quality-gate/runs/`（gitignore 仅忽略 runs/）。
+
+引导契约收口（v1.7.2，实机验收反馈）：answers/changes 新增 `ontology`（fibo-skeleton/local-catalog/fibo-pinned 严格键集；随包目录 sha256 由 `qgate.mjs templates` 的 `ontologyHint` 发布，six-domain 默认 skeleton 仅占位、L2 语义门禁运行 ERROR 属 fail-closed）与 metrics `thresholds` 替换（自有指标名 1..20 个、min/max 与 validateMetrics 同构）；init/update 写盘后做登记文件门禁引用预检（`testGateIds`/`affectsGateIds` 引用不存在门禁即 `preflightGateRefs` 警告，只读不阻断）——配置全程仍只由 init/update 写入，无 post-init 手改通道。
+
+## 摘要输出
+
+每次运行后，CLI 向 stderr 输出**分级**人读报告（v1.7.4 起；stdout 仍是完整 JSON 报告，供 CI 与打包脚本消费，判定语义不变）：
+
+- **PASS（整体通过）**：一行 brief——状态/阶段/通过计数/总耗时（报告级 startedAt→finishedAt）/run id、域覆盖行、证据路径与全表重渲染提示；不再附带全表，避免对话内刷屏。
+- **非 PASS**：全量 Markdown 表——总体状态、阶段、通过/跳过计数、耗时、域覆盖、未满足必需域、逐门禁的 `kind`/`domain`/状态、按 kind 提取的失败原因（超限截断并给出剩余数）与**建议列**（FAIL→按原因修复后重跑；ERROR→检查 runner/配置输入；SKIP→不在本阶段执行），末行给出证据路径与放行提示。Stop Hook 非 PASS 时的阻断 reason 使用同一全量摘要。
+
+`qgate.mjs report <project-root> [runId]`（缺省取 `.quality-gate/runs/` 最新一次；runId 接受**唯一前缀**，≥4 字符、歧义即 fail-closed 列出候选）不重跑门禁、直接重渲染归档运行的全量报告，并前置标注归档时间戳与「非当前状态」守卫行，供会话内引用历史证据。全表另含每门禁**耗时列**（evidence 的 startedAt→finishedAt）；展示路径与重跑/全表命令按当前工作目录相对化（仅显示层）。提示词层（SKILL/命令/SessionStart）要求 agent 把分级报告以 **Markdown 正文**贴进回复（不得包代码围栏，否则加粗与表格不渲染）、正文说明控制在一两句：PASS 贴 brief 行，非 PASS 贴全表并随修复循环更新。报告中每条 Gate Evidence 均含 `kind` 与 `domain` 字段。摘要是展示层，不改变任何判定语义。
+
+## 外部依赖提示
+
+内核仅依赖 Node 20+；`git` 为 change-scope 所需，`python`/`python3`/`py` 为登记的示例 runner 命令。运行前内核按登记表预检（仅 `--version`），报告含 `dependencies`（required/missing/hint/url）；SessionStart 在新项目注入缺失提示与安装链接，摘要输出"缺少外部依赖"行，注册表命令 ENOENT 时追加安装指引。项目自定义工具不做预检。

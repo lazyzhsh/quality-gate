@@ -1,0 +1,11 @@
+{
+  "name": "quality-gate",
+  "version": "1.24.0",
+  "description": "Configurable evidence-producing quality gates",
+  "commands": "commands",
+  "skills": "skills",
+  "description_i18n": {
+    "en": "Configurable evidence-producing quality gates",
+    "zh-CN": "可配置并生成证据的质量门禁"
+  }
+}

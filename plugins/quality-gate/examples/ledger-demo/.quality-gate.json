@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "PAY-1",
+      "statement": "Payment ledger invariants hold: zero-sum entries, append-only history, reconciled against the settlement file, bounded dead-lettering and a verifiable audit chain"
+    },
+    {
+      "id": "PAY-2",
+      "statement": "The transfer contract stays compatible with its declared compatibility level"
+    }
+  ],
+  "gates": [
+    {
+      "id": "ledger-consistency",
+      "kind": "consistency",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "PAY-1",
+      "timeoutMs": 10000,
+      "requiredChecks": [
+        "orders",
+        "mutations",
+        "reconciliation",
+        "dlq",
+        "audit"
+      ],
+      "checks": [
+        {
+          "id": "orders",
+          "type": "zero-sum",
+          "argv": [
+            "$NODE",
+            "check.mjs"
+          ],
+          "timeoutMs": 2000,
+          "requirePreCommitCheck": true
+        },
+        {
+          "id": "mutations",
+          "type": "append-only",
+          "argv": [
+            "$NODE",
+            "check.mjs"
+          ],
+          "timeoutMs": 2000
+        },
+        {
+          "id": "reconciliation",
+          "type": "reconciliation",
+          "argv": [
+            "$NODE",
+            "check.mjs"
+          ],
+          "timeoutMs": 2000,
+          "pairs": [
+            {
+              "id": "ledger-vs-bank"
+            }
+          ],
+          "breakSlaHours": 72
+        },
+        {
+          "id": "dlq",
+          "type": "dlq",
+          "argv": [
+            "$NODE",
+            "check.mjs"
+          ],
+          "timeoutMs": 2000,
+          "maxReceiveCount": 3,
+          "requireDrill": true
+        },
+        {
+          "id": "audit",
+          "type": "audit-chain",
+          "argv": [
+            "$NODE",
+            "check.mjs"
+          ],
+          "timeoutMs": 2000,
+          "stateChangingOperations": [
+            "appendMoneyOrder"
+          ],
+          "minRetentionDays": 365
+        }
+      ],
+      "level": "L2"
+    },
+    {
+      "id": "contract-compat",
+      "kind": "alignment",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "PAY-2",
+      "scope": "contract-diff",
+      "compatibilityLevel": "full",
+      "file": "contracts/current-api.json",
+      "argv": [
+        "$NODE",
+        "contract-diff.mjs"
+      ],
+      "timeoutMs": 3000,
+      "level": "L2"
+    }
+  ],
+  "risks": [
+    {
+      "id": "PAY-R1",
+      "gateId": "ledger-consistency",
+      "description": "In-memory demo ledger proves the check protocols and kernel-side audit-chain verification only, not production storage guarantees"
+    }
+  ],
+  "exceptions": []
+}

@@ -1,0 +1,154 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "ENG-1",
+      "statement": "The configured static, build, unit, mutation, structure and convention checks pass"
+    },
+    {
+      "id": "ENG-2",
+      "statement": "Every acceptance criterion type has same-run engineering evidence"
+    }
+  ],
+  "gates": [
+    {
+      "id": "requirements",
+      "kind": "traceability",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "ENG-2",
+      "file": "requirements.json",
+      "level": "L0"
+    },
+    {
+      "id": "engineering",
+      "kind": "engineering",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "ENG-1",
+      "timeoutMs": 30000,
+      "requiredChecks": [
+        "static",
+        "build",
+        "unit",
+        "mutation",
+        "structure",
+        "convention"
+      ],
+      "checks": [
+        {
+          "id": "static",
+          "type": "exit",
+          "argv": [
+            "$NODE",
+            "--check",
+            "calc.mjs"
+          ],
+          "timeoutMs": 2000
+        },
+        {
+          "id": "build",
+          "type": "artifact",
+          "argv": [
+            "$NODE",
+            "scripts/check.mjs",
+            "build"
+          ],
+          "timeoutMs": 3000
+        },
+        {
+          "id": "unit",
+          "type": "test",
+          "argv": [
+            "$NODE",
+            "scripts/check.mjs",
+            "unit"
+          ],
+          "timeoutMs": 8000,
+          "blockOnSkipped": true,
+          "minTotal": 4,
+          "minCoverageRatio": 1,
+          "expected": {
+            "f2p": [
+              "large amount discount rate"
+            ],
+            "p2p": [
+              "normal fee",
+              "zero is invalid",
+              "rounding boundary"
+            ]
+          }
+        },
+        {
+          "id": "mutation",
+          "type": "metric",
+          "argv": [
+            "$NODE",
+            "scripts/check.mjs",
+            "mutation"
+          ],
+          "timeoutMs": 10000,
+          "min": 1
+        },
+        {
+          "id": "structure",
+          "type": "findings",
+          "argv": [
+            "$NODE",
+            "scripts/check.mjs",
+            "structure"
+          ],
+          "timeoutMs": 3000,
+          "maxFindings": 0,
+          "maxBySeverity": {
+            "low": 0,
+            "medium": 0,
+            "high": 0
+          }
+        },
+        {
+          "id": "convention",
+          "type": "findings",
+          "argv": [
+            "$NODE",
+            "scripts/check.mjs",
+            "convention"
+          ],
+          "timeoutMs": 3000,
+          "maxFindings": 0,
+          "maxBySeverity": {
+            "low": 0,
+            "medium": 0,
+            "high": 0
+          }
+        }
+      ],
+      "requireRawOutput": true,
+      "level": "L1"
+    }
+  ],
+  "risks": [
+    {
+      "id": "ENG-R1",
+      "gateId": "engineering",
+      "description": "Checks cover this small Node sample and configured rules only"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L0",
+      "L1"
+    ],
+    "pr": [
+      "L0",
+      "L1"
+    ]
+  }
+}

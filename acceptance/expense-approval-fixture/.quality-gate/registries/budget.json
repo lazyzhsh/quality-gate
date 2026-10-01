@@ -1,0 +1,1 @@
+{"hops":[{"caller":"claim-api","callee":"store","timeoutMs":500,"retries":1},{"caller":"claim-api","callee":"policy","timeoutMs":300,"retries":1}],"budgets":{"claim-api":2500},"retryPolicies":[{"client":"claim-api","budgetPercent":15,"jitterMode":"full","backoffBaseMs":50,"backoffCapMs":500}]}

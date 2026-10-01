@@ -1,0 +1,6 @@
+{
+  "name": "api-surface-demo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Demo project for the symbol-grounding apiSurface branch: endpoint and config-key references reconcile against a declared OpenAPI face and JSON Schema face"
+}

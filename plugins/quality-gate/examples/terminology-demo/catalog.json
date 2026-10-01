@@ -1,0 +1,28 @@
+{
+  "id": "demo-agreements",
+  "version": "1",
+  "concepts": [
+    {
+      "iri": "urn:demo:Agreement",
+      "label": "agreement",
+      "altLabels": [
+        "mutual assent",
+        {
+          "value": "协议",
+          "lang": "zh"
+        }
+      ]
+    },
+    {
+      "iri": "urn:demo:Commitment",
+      "label": "commitment",
+      "altLabels": [
+        "obligation",
+        {
+          "value": "义务",
+          "lang": "zh"
+        }
+      ]
+    }
+  ]
+}

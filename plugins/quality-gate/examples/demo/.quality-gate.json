@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C1",
+      "statement": "Demo JavaScript has valid syntax"
+    },
+    {
+      "id": "C2",
+      "statement": "All declared demo assumptions are confirmed"
+    }
+  ],
+  "gates": [
+    {
+      "id": "syntax",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "edit",
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C1",
+      "argv": [
+        "$NODE",
+        "--check",
+        "app.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L1"
+    },
+    {
+      "id": "assumptions",
+      "kind": "assumptions",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C2",
+      "file": "assumptions.json",
+      "level": "L0"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "gateId": "syntax",
+      "description": "Syntax checking cannot prove business correctness"
+    },
+    {
+      "id": "R2",
+      "gateId": "assumptions",
+      "description": "Register may omit unstated assumptions"
+    }
+  ],
+  "exceptions": [],
+  "ontology": {
+    "type": "fibo-skeleton"
+  }
+}

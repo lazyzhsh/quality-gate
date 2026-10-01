@@ -1,0 +1,14 @@
+{
+  "records": [
+    {
+      "id": "contract-001",
+      "typeIri": "urn:demo:WrittenContract",
+      "properties": {
+        "partyIds": ["party-A", "party-B"],
+        "code": "AGR-042",
+        "amount": 500,
+        "note": [{"value": "signed", "lang": "en"}]
+      }
+    }
+  ]
+}

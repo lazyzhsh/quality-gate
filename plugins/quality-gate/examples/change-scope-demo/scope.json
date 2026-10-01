@@ -1,0 +1,16 @@
+{
+  "baseRef": "baseline",
+  "allowedPaths": ["src/**", ".quality-gate.json", "scope.json", "package.json"],
+  "requiredPaths": ["src/**"],
+  "protectedPaths": [
+    {
+      "id": "dependency-lock",
+      "patterns": ["package.json"],
+      "acknowledged": false
+    }
+  ],
+  "contentCheck": {
+    "argv": ["$NODE", "content-check.mjs"],
+    "timeoutMs": 5000
+  }
+}

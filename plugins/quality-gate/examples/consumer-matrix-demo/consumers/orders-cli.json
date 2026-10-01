@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "0.1",
+  "kind": "consumer-matrix",
+  "consumer": "orders-cli",
+  "items": [
+    {"path": "/payments", "method": "GET"}
+  ]
+}

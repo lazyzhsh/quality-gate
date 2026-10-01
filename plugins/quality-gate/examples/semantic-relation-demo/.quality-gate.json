@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SR-1",
+      "statement": "Concept relations observed in code match the ontology declaration"
+    }
+  ],
+  "gates": [
+    {
+      "id": "relation-check",
+      "kind": "semantic-relation",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SR-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "relations": [
+        {
+          "from": "urn:demo:Contract",
+          "predicate": "hasParty",
+          "to": "urn:demo:ContractParty"
+        },
+        {
+          "from": "urn:demo:Contract",
+          "predicate": "creates",
+          "to": "urn:demo:Obligation"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SR-R1",
+      "gateId": "relation-check",
+      "description": "Relation alignment checks declared triples only; it does not discover relations the project never annotated"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

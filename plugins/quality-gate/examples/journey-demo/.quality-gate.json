@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "J-1",
+      "statement": "Configured smoke, integration and API end-to-end journeys match expected steps"
+    }
+  ],
+  "gates": [
+    {
+      "id": "journeys",
+      "kind": "journey",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "J-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "ignorePaths": [
+        "/serverTime"
+      ],
+      "scenarios": [
+        {
+          "id": "smoke",
+          "level": "smoke",
+          "expectedSteps": [
+            {
+              "id": "health",
+              "expected": {
+                "status": 200,
+                "state": "ok"
+              }
+            }
+          ]
+        },
+        {
+          "id": "integration",
+          "level": "integration",
+          "expectedSteps": [
+            {
+              "id": "create",
+              "expected": {
+                "status": 201,
+                "state": "created"
+              }
+            },
+            {
+              "id": "read",
+              "expected": {
+                "status": 200,
+                "state": "created"
+              }
+            }
+          ]
+        },
+        {
+          "id": "e2e",
+          "level": "e2e",
+          "expectedSteps": [
+            {
+              "id": "create",
+              "expected": {
+                "status": 201,
+                "state": "created"
+              }
+            },
+            {
+              "id": "pay",
+              "expected": {
+                "status": 200,
+                "state": "paid"
+              }
+            },
+            {
+              "id": "read",
+              "expected": {
+                "status": 200,
+                "state": "paid"
+              }
+            }
+          ]
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "risks": [
+    {
+      "id": "J-R1",
+      "gateId": "journeys",
+      "description": "The demo covers a bounded API journey, not a browser user journey or all integration dependencies"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

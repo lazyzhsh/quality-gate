@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C-REGRESSION",
+      "statement": "当前工作树上插件内核的全量回归测试全部通过。"
+    },
+    {
+      "id": "C-CONVENTIONS",
+      "statement": "统一语言弃用词在活文档集零出现（约定对齐门禁，自举自 glossary 防回归测试 v1.19 迁移）。"
+    }
+  ],
+  "gates": [
+    {
+      "id": "G-TESTS",
+      "kind": "command",
+      "claimId": "C-REGRESSION",
+      "enabled": true,
+      "stages": [
+        "pr",
+        "release"
+      ],
+      "argv": [
+        "$NODE",
+        "devtools/run-suite.mjs",
+        "--test-reporter=dot",
+        "plugins/quality-gate/tests/*.test.mjs"
+      ],
+      "timeoutMs": 180000,
+      "level": "L1"
+    },
+    {
+      "id": "G-CONVENTIONS",
+      "kind": "convention-alignment",
+      "claimId": "C-CONVENTIONS",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "file": ".quality-gate/registries/conventions.json",
+      "level": "L0"
+    }
+  ],
+  "risks": [],
+  "exceptions": []
+}

@@ -1,0 +1,4 @@
+{"id":"demo-agreements","version":"1","concepts":[
+ {"iri":"urn:demo:Agreement","label":"Agreement","disjointWith":["urn:demo:Commitment"]},
+ {"iri":"urn:demo:Commitment","label":"Commitment","disjointWith":["urn:demo:Agreement"]}
+]}

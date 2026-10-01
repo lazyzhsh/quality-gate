@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "API-1",
+      "statement": "The live route matches the declared API contract"
+    },
+    {
+      "id": "DB-1",
+      "statement": "The migrated SQLite table matches the declared entity schema"
+    }
+  ],
+  "gates": [
+    {
+      "id": "api-contract",
+      "kind": "alignment",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "API-1",
+      "scope": "api",
+      "file": "api.expected.json",
+      "argv": [
+        "$NODE",
+        "api-observe.mjs"
+      ],
+      "timeoutMs": 5000,
+      "ignorePaths": [
+        "/items/*/serverTime"
+      ],
+      "level": "L2"
+    },
+    {
+      "id": "db-schema",
+      "kind": "alignment",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "DB-1",
+      "scope": "schema",
+      "file": "schema.expected.json",
+      "argv": [
+        "python",
+        "schema-observe.py"
+      ],
+      "timeoutMs": 5000,
+      "level": "L2"
+    }
+  ],
+  "risks": [
+    {
+      "id": "API-R1",
+      "gateId": "api-contract",
+      "description": "Only the observed sample route and response are checked"
+    },
+    {
+      "id": "DB-R1",
+      "gateId": "db-schema",
+      "description": "SQLite demo introspection does not cover every ORM or production database behavior"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L2"
+    ]
+  }
+}

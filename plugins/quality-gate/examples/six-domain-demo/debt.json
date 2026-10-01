@@ -1,0 +1,6 @@
+{
+  "items": [
+    {"id":"DEBT-1","description":"Demo fixture: legacy quote table replaced by rule engine in a later increment","owner":"platform","impact":"medium","repayment":"swap table lookup for policy engine","severity":"low","status":"open","dueDate":"2099-01-01"},
+    {"id":"DEBT-2","description":"Demo fixture: fee rounding documented","owner":"platform","impact":"low","repayment":"documented in README","severity":"low","status":"resolved","dueDate":"2026-01-01","evidence":"README of the demo"}
+  ]
+}

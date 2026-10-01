@@ -1,0 +1,10 @@
+{
+ "id": "demo-payments",
+ "version": "1",
+ "concepts": [
+  {"iri": "urn:demo:PaymentObligation", "label": "payment obligation", "constraints": [
+    {"id": "CAPTURE_LIMIT", "left": "capturedAmount", "operator": "le", "right": "authorizedAmount"},
+    {"id": "NON_NEGATIVE", "left": "capturedAmount", "operator": "ge", "value": 0}
+  ]}
+ ]
+}

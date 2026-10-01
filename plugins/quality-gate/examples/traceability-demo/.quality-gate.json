@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C-SYNTAX",
+      "statement": "Demo module parses"
+    },
+    {
+      "id": "C-RTM",
+      "statement": "Acceptance criteria link to code and passing checks"
+    }
+  ],
+  "gates": [
+    {
+      "id": "requirements",
+      "kind": "traceability",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "C-RTM",
+      "file": "requirements.json",
+      "coverage": {
+        "argv": [
+          "$NODE",
+          "scripts/coverage.mjs"
+        ],
+        "timeoutMs": 5000
+      },
+      "level": "L0"
+    },
+    {
+      "id": "syntax",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "C-SYNTAX",
+      "argv": [
+        "$NODE",
+        "--check",
+        "app.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L1"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-RTM",
+      "gateId": "requirements",
+      "description": "A linked passing test suite does not prove it exercises each acceptance criterion"
+    }
+  ],
+  "exceptions": []
+}

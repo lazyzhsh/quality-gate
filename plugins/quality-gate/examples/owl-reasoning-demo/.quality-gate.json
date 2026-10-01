@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "OWL-1",
+      "statement": "Declared relations and symbol bindings hold through equivalence, union, subproperty, inverse and transitivity inference"
+    }
+  ],
+  "gates": [
+    {
+      "id": "relation-reasoning",
+      "kind": "semantic-relation",
+      "level": "L3",
+      "enabled": true,
+      "stages": ["close"],
+      "claimId": "OWL-1",
+      "argv": ["$NODE", "runner.mjs"],
+      "timeoutMs": 5000,
+      "relations": [
+        {"from": "demo:Schedule", "predicate": "partOf", "to": "demo:Agreement"},
+        {"from": "demo:Schedule", "predicate": "hasComponent", "to": "demo:Clause"}
+      ]
+    },
+    {
+      "id": "binding-reasoning",
+      "kind": "semantic-alignment",
+      "level": "L3",
+      "enabled": true,
+      "stages": ["close"],
+      "claimId": "OWL-1",
+      "argv": ["$NODE", "runner.mjs", "mappings"],
+      "timeoutMs": 5000,
+      "matchMode": "subsumed",
+      "mappings": [
+        {"symbol": "AgreementRecord", "expectedIri": "demo:Signatory"},
+        {"symbol": "GuarantorRecord", "expectedIri": "demo:ContractParty"}
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "OWL-R1",
+      "gateId": "relation-reasoning",
+      "description": "Deterministic OWL subset only: equivalence/union/subproperty/inverse/transitivity per declared catalog facts; no open-world assumption, no contrapositive reasoning, no class expressions beyond unionOf"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {"close": ["L3"]},
+  "ontology": {"type": "local-catalog", "file": "catalog.json"}
+}

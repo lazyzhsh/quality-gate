@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SE-1",
+      "statement": "Internal concepts do not appear on the public API surface"
+    }
+  ],
+  "gates": [
+    {
+      "id": "exposure-check",
+      "kind": "semantic-exposure",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SE-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SE-R1",
+      "gateId": "exposure-check",
+      "description": "The public surface is defined by the project runner's observation basis; the kernel cannot detect surfaces the runner does not scan"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

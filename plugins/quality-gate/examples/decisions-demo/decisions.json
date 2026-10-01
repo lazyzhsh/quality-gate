@@ -1,0 +1,4 @@
+{"decisions":[
+ {"id":"D-1","question":"Which retry policy applies to outbound calls?","status":"resolved","owner":"platform-team","resolution":"Bounded retries with maximum 2 attempts","evidence":{"gateId":"syntax"},"affectsPaths":["app.mjs"],"affectsGateIds":["syntax"]},
+ {"id":"D-2","question":"Do we need a circuit breaker now?","status":"resolved","owner":"platform-team","resolution":"Deferred to the resilience domain gates; not part of this demo scope","evidence":"design review 2026-09-25"}
+]}

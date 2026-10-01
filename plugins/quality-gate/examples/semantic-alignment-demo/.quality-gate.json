@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "S-1",
+      "statement": "Agreement entity maps to the intended FIBO concept"
+    }
+  ],
+  "gates": [
+    {
+      "id": "semantic-mapping",
+      "kind": "semantic-alignment",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "S-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "mappings": [
+        {
+          "symbol": "AgreementRecord",
+          "expectedIri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "fibo-pinned",
+    "expectedCatalogSha256": "eb9795a238457b85161bbb22610a6a5507a613fb76d377b05daba625b3816c4e"
+  },
+  "risks": [
+    {
+      "id": "S-R1",
+      "gateId": "semantic-mapping",
+      "description": "Exact symbol-to-IRI mapping does not prove OWL entailment or full business semantics"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

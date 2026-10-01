@@ -1,0 +1,16 @@
+{
+ "requirements":[
+  {
+   "id":"REQ-001",
+   "statement":"Fee calculation behaves as specified across every acceptance criterion type",
+   "requiredTypes":["normal","boundary","negative","exception","state-transition"],
+   "acceptanceCriteria":[
+    {"id":"AC-001","type":"normal","statement":"A typical amount yields the fee: fee(100) === 2","codeFiles":["calc.mjs","calc.test.mjs"],"testGateIds":["engineering"]},
+    {"id":"AC-002","type":"boundary","statement":"Rounding boundary behaves as specified: fee(101) === 3","codeFiles":["calc.mjs","calc.test.mjs"],"testGateIds":["engineering"]},
+    {"id":"AC-003","type":"negative","statement":"Zero amount is rejected: fee(0) === null","codeFiles":["calc.mjs","calc.test.mjs"],"testGateIds":["engineering"]},
+    {"id":"AC-004","type":"exception","statement":"Invalid input returns null instead of throwing","codeFiles":["calc.mjs","calc.test.mjs"],"testGateIds":["engineering"]},
+    {"id":"AC-005","type":"state-transition","statement":"Re-importing the module (mutation harness reload) yields identical behavior for the same input","codeFiles":["calc.mjs","calc.test.mjs"],"testGateIds":["engineering"]}
+   ]
+  }
+ ]
+}

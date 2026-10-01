@@ -1,0 +1,4 @@
+{"paths":{
+ "/orders/{id}":{"get":{"security":[{"authenticated":[]}],"x-owner":"token user-{id}"},"delete":{"security":[{"service-role":[]}]}},
+ "/health":{"get":{"security":[{"anonymous":[]}]}}
+}}

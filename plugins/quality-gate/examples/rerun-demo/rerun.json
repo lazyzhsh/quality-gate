@@ -1,0 +1,14 @@
+{
+  "jobs": [
+    {
+      "id": "settlement-batch",
+      "hashAlgorithm": "sha256",
+      "idempotencyKeyStrategy": "settlementId+businessDate",
+      "runs": [
+        {"seed": "fixture-2026-09-25", "outputSha256": "9fecddbc6eb3b043fec8a8ab082267387b1912d15eff0b7b6b07dd52c5ff5e9a"},
+        {"seed": "fixture-2026-09-25", "outputSha256": "9fecddbc6eb3b043fec8a8ab082267387b1912d15eff0b7b6b07dd52c5ff5e9a"}
+      ],
+      "doubleEntry": {"debits": 2290548, "credits": 2290548}
+    }
+  ]
+}

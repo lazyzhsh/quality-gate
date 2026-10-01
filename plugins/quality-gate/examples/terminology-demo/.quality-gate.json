@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "T-1",
+      "statement": "Business terms resolve unambiguously in the project catalog"
+    }
+  ],
+  "gates": [
+    {
+      "id": "term-check",
+      "kind": "terminology",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "T-1",
+      "terms": [
+        {
+          "term": "agreement"
+        },
+        {
+          "term": "obligation"
+        },
+        {
+          "term": "commitment"
+        },
+        {
+          "term": "协议",
+          "lang": "zh"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "T-R1",
+      "gateId": "term-check",
+      "description": "Exact label matching cannot detect synonyms that are not declared as altLabels"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

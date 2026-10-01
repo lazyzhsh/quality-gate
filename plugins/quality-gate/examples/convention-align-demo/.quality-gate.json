@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {"id": "CONV-1", "statement": "Declared repo conventions hold in the scanned artifacts"}
+  ],
+  "gates": [
+    {"id": "conventions", "kind": "convention-alignment", "level": "L0", "enabled": true, "stages": ["close", "pr"], "claimId": "CONV-1", "file": "conventions.json"}
+  ],
+  "risks": [
+    {"id": "CONV-R1", "gateId": "conventions", "description": "Literal-word reconciliation only: conventions that cannot degrade to a deterministic rule stay in prompt-layer documents; exemptions are auditable hits in evidence"}
+  ],
+  "exceptions": [],
+  "requiredLevels": {"close": ["L0"]}
+}

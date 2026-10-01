@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "FIBO-1",
+      "statement": "Configured agreement terms are present in the pinned FIBO catalog"
+    }
+  ],
+  "gates": [
+    {
+      "id": "agreement-terms",
+      "kind": "ontology-map",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "FIBO-1",
+      "file": "mappings.json",
+      "level": "L2"
+    }
+  ],
+  "risks": [
+    {
+      "id": "FIBO-R1",
+      "gateId": "agreement-terms",
+      "description": "Exact term presence does not establish correct business mapping or OWL consistency"
+    }
+  ],
+  "exceptions": [],
+  "ontology": {
+    "type": "fibo-pinned",
+    "expectedCatalogSha256": "eb9795a238457b85161bbb22610a6a5507a613fb76d377b05daba625b3816c4e"
+  }
+}

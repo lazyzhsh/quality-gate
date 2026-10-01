@@ -1,0 +1,110 @@
+{
+  "rules": [
+    {
+      "id": "TERM-no-deprecated",
+      "type": "banned-words",
+      "words": [
+        "收口",
+        "对拍",
+        "超面",
+        "降权",
+        "双降权",
+        "残差",
+        "自指",
+        "空转",
+        "封堵",
+        "落点",
+        "末环",
+        "搭车",
+        "悬置",
+        "双跑",
+        "烟测",
+        "翻转",
+        "自证放行",
+        "附加库",
+        "附加项",
+        "模版",
+        "运行器",
+        "会话基线",
+        "诚实边界",
+        "合谋 runner",
+        "随版",
+        "历史基线",
+        "完成基线",
+        "客户端旅程",
+        "转录",
+        "锚点",
+        "锚定",
+        "验证锚",
+        "Git 基线",
+        "基线移动",
+        "首个为基线",
+        "快赢",
+        "内核重放",
+        "重放",
+        "形状协议"
+      ],
+      "scope": [
+        "docs/CONFIG-GUIDE.md",
+        "docs/RTM.md",
+        "docs/PLAN.md",
+        "docs/PRD.md",
+        "docs/README.md",
+        "docs/GATE-SPEC-*.md",
+        "docs/FIBO-PROVIDER.md",
+        "docs/PERSISTENCE-GATE.md",
+        "AGENTS.md",
+        "PROJECT-HANDOFF.md",
+        "README.md",
+        "plugins/quality-gate/README.md",
+        "plugins/quality-gate/README_CN.md",
+        "plugins/quality-gate/adapters/README.md",
+        "plugins/quality-gate/examples/README.md",
+        "plugins/quality-gate/skills/quality-gate/SKILL.md",
+        "plugins/quality-gate/commands/*.md",
+        "docs/OPEN-SOURCE-STATUS.md",
+        "docs/THIRD-PARTY-NOTICES.md",
+        ".github/*.md"
+      ],
+      "exemptions": [
+        {
+          "word": "重放",
+          "lineContains": "防重放"
+        },
+        {
+          "word": "重放",
+          "lineContains": "不可重放"
+        },
+        {
+          "word": "重放",
+          "lineContains": "baseline 内容内核重放"
+        },
+        {
+          "word": "重放",
+          "lineContains": "盘点"
+        },
+        {
+          "word": "模版",
+          "lineContains": "盘点"
+        },
+        {
+          "word": "内核重放",
+          "lineContains": "baseline 内容内核重放"
+        },
+        {
+          "word": "烟测",
+          "precededBy": "冒"
+        },
+        {
+          "word": "随版",
+          "followedBy": "发布"
+        }
+      ],
+      "severity": "fail",
+      "source": {
+        "file": "docs/GLOSSARY.md",
+        "section": "6. 弃用词清单"
+      }
+    }
+  ]
+}

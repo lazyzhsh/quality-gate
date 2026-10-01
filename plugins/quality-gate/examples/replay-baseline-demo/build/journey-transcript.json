@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "0.1",
+  "kind": "journey",
+  "runId": "75bf222f-21f1-40c0-90cd-abd29d151636",
+  "source": "deterministic-checkout-journey",
+  "scenarios": [
+    {
+      "id": "checkout",
+      "steps": [
+        {
+          "id": "login",
+          "actual": {
+            "status": 200,
+            "state": "authenticated",
+            "requestId": "req-mup87huo-vzltqb"
+          }
+        },
+        {
+          "id": "place-order",
+          "actual": {
+            "status": 201,
+            "state": "created",
+            "orderId": "ord-042",
+            "requestId": "req-mup87huo-vzltqb"
+          }
+        },
+        {
+          "id": "confirm",
+          "actual": {
+            "status": 200,
+            "state": "confirmed",
+            "total": 1299,
+            "requestId": "req-mup87huo-vzltqb"
+          }
+        }
+      ]
+    }
+  ]
+}

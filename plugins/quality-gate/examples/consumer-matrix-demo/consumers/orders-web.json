@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "0.1",
+  "kind": "consumer-matrix",
+  "consumer": "orders-web",
+  "items": [
+    {
+      "path": "/payments",
+      "method": "POST",
+      "fields": {
+        "amount": "integer",
+        "currency": "string",
+        "refundFirst": "boolean"
+      }
+    }
+  ]
+}

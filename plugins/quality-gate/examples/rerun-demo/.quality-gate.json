@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "RERUN-1",
+      "statement": "Batch reruns are deterministic: same-seed double runs produce identical output hashes and balanced double-entry totals"
+    }
+  ],
+  "gates": [
+    {
+      "id": "rerun-determinism",
+      "kind": "rerun",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "RERUN-1",
+      "file": "rerun.json",
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "RERUN-R1",
+      "gateId": "rerun-determinism",
+      "description": "Rerun evidence file is declared (runs/hashes produced by examples/rerun-demo/settlement.mjs double runs); the kernel checks structure and cross-run consistency, it does not re-execute the job"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

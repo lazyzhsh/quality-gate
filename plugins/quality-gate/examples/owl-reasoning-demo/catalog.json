@@ -1,0 +1,20 @@
+{
+  "id": "demo-owl-reasoning",
+  "version": "1",
+  "properties": [
+    {"predicate": "partOf", "transitive": true},
+    {"predicate": "hasComponent", "subPropertyOf": ["partOf"]},
+    {"predicate": "componentOf", "inverseOf": "hasComponent"}
+  ],
+  "concepts": [
+    {"iri": "demo:Party", "label": "party"},
+    {"iri": "demo:Signatory", "label": "signatory", "subClassOf": ["demo:Party"], "relations": [{"predicate": "partOf", "to": "demo:Agreement"}]},
+    {"iri": "demo:Counterparty", "label": "counterparty", "equivalentClass": ["demo:Signatory"]},
+    {"iri": "demo:Guarantor", "label": "guarantor", "subClassOf": ["demo:Party"]},
+    {"iri": "demo:ContractParty", "label": "contract party", "unionOf": ["demo:Signatory", "demo:Guarantor"]},
+    {"iri": "demo:Agreement", "label": "agreement"},
+    {"iri": "demo:MasterAgreement", "label": "master agreement"},
+    {"iri": "demo:Schedule", "label": "schedule", "relations": [{"predicate": "partOf", "to": "demo:Agreement"}, {"predicate": "hasComponent", "to": "demo:Clause"}]},
+    {"iri": "demo:Clause", "label": "clause"}
+  ]
+}

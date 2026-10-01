@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "CAP-1",
+      "statement": "Timeout budgets cover downstream attempts and the retry budget holds under a concurrent failure burst"
+    }
+  ],
+  "gates": [
+    {
+      "id": "timeout-budget",
+      "kind": "budget",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "CAP-1",
+      "file": "budget.json",
+      "level": "L4"
+    },
+    {
+      "id": "retry-drill",
+      "kind": "metrics",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "CAP-1",
+      "argv": [
+        "$NODE",
+        "drill.mjs"
+      ],
+      "timeoutMs": 3000,
+      "thresholds": {
+        "retryToTotalRatio": {
+          "max": 0.2
+        },
+        "maxSynchronizedRetries": {
+          "max": 5
+        }
+      },
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "CAP-R1",
+      "gateId": "retry-drill",
+      "description": "Deterministic simulation proves the drill protocol and budget arithmetic; production needs real concurrent load"
+    }
+  ],
+  "exceptions": []
+}

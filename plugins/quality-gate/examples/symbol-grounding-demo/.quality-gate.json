@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "GROUND-1",
+      "statement": "Every static import in the scanned sources resolves to a declared face: project module, dependency manifest or Node builtin"
+    }
+  ],
+  "gates": [
+    {
+      "id": "ground-imports",
+      "kind": "symbol-grounding",
+      "level": "L1",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "GROUND-1",
+      "check": "all",
+      "include": [
+        "src/**"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "GROUND-R1",
+      "gateId": "ground-imports",
+      "description": "Existence proof only: resolution checks that a reference is real, not that types or versions are correct; dynamic specifiers (template literals, variable require) are counted and reported as uncovered"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L1"
+    ]
+  }
+}

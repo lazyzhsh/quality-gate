@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "0.1",
+  "kind": "consumer-matrix",
+  "consumer": "settlement-batch",
+  "items": [
+    {"path": "/refunds", "method": "POST", "fields": {"amount": "integer", "reason": "string"}}
+  ]
+}

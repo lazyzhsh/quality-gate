@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "D-1",
+      "statement": "Code, API, user and operator documents describe the same release capabilities"
+    }
+  ],
+  "gates": [
+    {
+      "id": "documentation",
+      "kind": "documentation",
+      "enabled": true,
+      "stages": [
+        "release"
+      ],
+      "claimId": "D-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "version": "2.0.0",
+      "requiredTopics": [
+        "create-order",
+        "get-order"
+      ],
+      "level": "L5"
+    }
+  ],
+  "risks": [
+    {
+      "id": "D-R1",
+      "gateId": "documentation",
+      "description": "Topic markers are project-authored; this does not verify full prose accuracy"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "release": [
+      "L5"
+    ]
+  }
+}

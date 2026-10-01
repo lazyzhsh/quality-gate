@@ -1,0 +1,8 @@
+fixtures/raw provenance (generated 2026-09-27, real tool output)
+tap-node-flat.txt:    node --test --test-reporter=tap sample.test.mjs  (Node 24; 2 pass / 1 skip / 1 fail)
+tap-node-nested.txt:  node --test --test-reporter=tap nested.test.mjs (describe block: 2 inner leaves + 1 top-level, suite point)
+junit-pytest.xml:     python -m pytest --junitxml=junit.pytest.xml -q test_sample.py (pytest in a throwaway venv; 2 pass / 1 skip / 1 fail)
+
+sample.test.mjs:
+  test('fee tier standard'..), test('fee tier large amount'..), test('legacy rounding', t=>t.skip('legacy baseline only')), test('cap enforcement' fails: 3*3===10)
+test_sample.py mirrors the same four cases (pytest.mark.skip for legacy rounding, failing assert for cap enforcement).

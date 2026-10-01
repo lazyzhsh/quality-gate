@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "GROUND-3",
+      "statement": "Python and Java imports reconcile bidirectionally against reference adapter observations (coverage gaps and unresolved reports fail closed)"
+    }
+  ],
+  "gates": [
+    {
+      "id": "ground-imports",
+      "kind": "symbol-grounding",
+      "level": "L1",
+      "enabled": true,
+      "stages": ["close", "pr"],
+      "claimId": "GROUND-3",
+      "check": "all",
+      "include": ["pkg/**", "src/**"],
+      "importObservations": [{"language": "java", "file": ".quality-gate/observations/java.json"}]
+    }
+  ],
+  "risks": [
+    {
+      "id": "GROUND-3-R1",
+      "gateId": "ground-imports",
+      "description": "Adapter resolutions reflect the running interpreter environment (venv variance reported as-is); java reconciliation is lexical against dependency manifests and scanned sources, no compilation; observation files are produced by the adapters — closing without running them fails closed"
+    }
+  ],
+  "exceptions": []
+}

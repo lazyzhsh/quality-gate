@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "CFG-1",
+      "statement": "Release environment configuration has compatible keys and declared differences"
+    }
+  ],
+  "gates": [
+    {
+      "id": "config",
+      "kind": "configuration",
+      "enabled": true,
+      "stages": [
+        "release"
+      ],
+      "claimId": "CFG-1",
+      "files": {
+        "staging": "staging.json",
+        "production": "production.json"
+      },
+      "allowedDifferences": [
+        "endpoint",
+        "database.host",
+        "auth.token",
+        "features.*.enabled"
+      ],
+      "level": "L5"
+    }
+  ],
+  "risks": [
+    {
+      "id": "CFG-R1",
+      "gateId": "config",
+      "description": "File comparison does not prove live deployment values or secret store availability"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "release": [
+      "L5"
+    ]
+  }
+}

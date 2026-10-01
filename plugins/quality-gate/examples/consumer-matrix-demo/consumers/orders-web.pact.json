@@ -1,0 +1,44 @@
+{
+  "consumer": {
+    "name": "orders-web"
+  },
+  "provider": {
+    "name": "payment-api"
+  },
+  "interactions": [
+    {
+      "description": "creates a payment with amount and currency",
+      "request": {
+        "method": "POST",
+        "path": "/payments",
+        "body": {
+          "amount": 100,
+          "currency": "USD"
+        }
+      },
+      "response": {
+        "status": 201
+      }
+    },
+    {
+      "description": "creates a payment for a refund-first flow",
+      "request": {
+        "method": "POST",
+        "path": "/payments",
+        "body": {
+          "amount": 250,
+          "currency": "EUR",
+          "refundFirst": true
+        }
+      },
+      "response": {
+        "status": 201
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

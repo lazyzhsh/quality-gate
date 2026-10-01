@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C-VIS-1",
+      "statement": "The rendered page matches the pinned browser visual baseline"
+    }
+  ],
+  "gates": [
+    {
+      "id": "browser-visual",
+      "kind": "visual",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "C-VIS-1",
+      "argv": [
+        "$NODE",
+        "../../adapters/visual/screenshot.mjs"
+      ],
+      "timeoutMs": 30000,
+      "baselineFile": "baseline.png",
+      "level": "L3"
+    }
+  ],
+  "risks": [
+    {
+      "id": "C-VIS-R1",
+      "gateId": "browser-visual",
+      "description": "Headless CLI screenshots are byte-stable on one machine but font rendering and anti-aliasing differ across machines - re-pin the baseline (scripts/pin-baseline.mjs) when reproducing elsewhere"
+    }
+  ],
+  "exceptions": []
+}

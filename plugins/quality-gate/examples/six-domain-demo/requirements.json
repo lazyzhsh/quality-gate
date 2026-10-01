@@ -1,0 +1,6 @@
+{
+  "requirements": [{
+    "id":"REQ-001","statement":"The quote business module must parse",
+    "acceptanceCriteria":[{"id":"AC-001","statement":"Node syntax check passes for business.mjs","codeFiles":["business.mjs"],"testGateIds":["syntax"]}]
+  }]
+}

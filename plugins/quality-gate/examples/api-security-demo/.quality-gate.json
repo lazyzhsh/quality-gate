@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SEC-1",
+      "statement": "Every API operation declares explicit authorization, credentials stay short-lived and vault-sourced, and authorization fails secure under attack and dependency failure"
+    }
+  ],
+  "gates": [
+    {
+      "id": "api-authz",
+      "kind": "scan",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "SEC-1",
+      "category": "api-authz",
+      "blockAt": "high",
+      "argv": [
+        "$NODE",
+        "authz-analyzer.mjs"
+      ],
+      "timeoutMs": 3000,
+      "level": "L4"
+    },
+    {
+      "id": "credentials",
+      "kind": "scan",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "SEC-1",
+      "category": "credential",
+      "blockAt": "high",
+      "argv": [
+        "$NODE",
+        "credential-analyzer.mjs"
+      ],
+      "timeoutMs": 3000,
+      "level": "L4"
+    },
+    {
+      "id": "authz-behavior",
+      "kind": "behavior",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SEC-1",
+      "argv": [
+        "$NODE",
+        "behavior-runner.mjs"
+      ],
+      "timeoutMs": 3000,
+      "cases": [
+        {
+          "id": "bola-cross-tenant",
+          "input": {
+            "token": "user-A",
+            "path": "/orders/B"
+          },
+          "expected": {
+            "status": 403
+          }
+        },
+        {
+          "id": "owner-allowed",
+          "input": {
+            "token": "user-A",
+            "path": "/orders/A"
+          },
+          "expected": {
+            "status": 200
+          }
+        },
+        {
+          "id": "fail-secure-on-authz-down",
+          "input": {
+            "token": "user-A",
+            "path": "/orders/A",
+            "authzDown": true
+          },
+          "expected": {
+            "status": 403
+          }
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "risks": [
+    {
+      "id": "SEC-R1",
+      "gateId": "api-authz",
+      "description": "Demo analyzers prove the declaration and findings protocol on a minimal spec and registry; production needs a full OpenAPI analyzer and a real vault integration"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

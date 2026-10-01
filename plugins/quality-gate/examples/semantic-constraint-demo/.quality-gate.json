@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SC-1",
+      "statement": "Observed capture behaviour satisfies ontology-declared constraints"
+    }
+  ],
+  "gates": [
+    {
+      "id": "constraint-check",
+      "kind": "semantic-constraint",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SC-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "concept": "urn:demo:PaymentObligation",
+      "minCases": 5,
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SC-R1",
+      "gateId": "constraint-check",
+      "description": "Constraint execution covers the observed runner cases only; it is not exhaustive or model-checked proof"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "shapes": [
+    {
+      "id": "AgreementShape",
+      "targetClass": "urn:demo:Agreement",
+      "closed": true,
+      "properties": [
+        {
+          "path": "partyIds",
+          "minCount": 2,
+          "maxCount": 2,
+          "valueType": "string"
+        },
+        {
+          "path": "code",
+          "minCount": 1,
+          "maxCount": 1,
+          "valueType": "string",
+          "pattern": "AGR-\\d{3}",
+          "minLength": 4,
+          "maxLength": 12
+        },
+        {
+          "path": "amount",
+          "minCount": 1,
+          "maxCount": 1,
+          "valueType": "number",
+          "minInclusive": 0,
+          "maxInclusive": 1000
+        },
+        {
+          "path": "note",
+          "minCount": 0,
+          "maxCount": 3,
+          "valueType": "string",
+          "languageIn": [
+            "en",
+            "zh"
+          ]
+        }
+      ]
+    }
+  ]
+}

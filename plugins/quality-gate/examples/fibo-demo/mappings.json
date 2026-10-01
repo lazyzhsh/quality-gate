@@ -1,0 +1,6 @@
+{
+  "mappings": [
+    {"id": "contract", "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement"},
+    {"id": "bilateralContract", "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/BilateralAgreement"}
+  ]
+}

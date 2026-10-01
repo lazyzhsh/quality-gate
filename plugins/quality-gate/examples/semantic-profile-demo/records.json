@@ -1,0 +1,26 @@
+{
+  "records": [
+    {
+      "id": "agreement-001",
+      "typeIri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement",
+      "properties": {
+        "partyIds": [
+          "party-A",
+          "party-B"
+        ],
+        "active": true
+      }
+    },
+    {
+      "id": "agreement-002",
+      "typeIri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract",
+      "properties": {
+        "partyIds": [
+          "party-C",
+          "party-D"
+        ],
+        "active": false
+      }
+    }
+  ]
+}

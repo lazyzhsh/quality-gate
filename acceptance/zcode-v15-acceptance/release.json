@@ -1,0 +1,7 @@
+{
+  "artifacts": [
+    {"role": "runbook", "path": "RUNBOOK.md"},
+    {"role": "rollback", "path": "ROLLBACK.md"},
+    {"role": "config", "path": "config.example.json"}
+  ]
+}

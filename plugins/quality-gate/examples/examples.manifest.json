@@ -1,0 +1,540 @@
+{
+  "schemaVersion": "0.1",
+  "description": "示例清单:单一事实源。smokeStage=打包烟测执行阶段(null=不进烟测,但必须有测试锚);role: protocol|showcase|onboarding|doc;knownKindsWithoutExamples=尚无独立示例的 gate kind(夹具测试覆盖,示例待补)",
+  "entries": [
+    {
+      "id": "alignment-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "alignment"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "api-security-demo",
+      "role": "protocol",
+      "levels": [
+        "L3",
+        "L4"
+      ],
+      "kinds": [
+        "scan",
+        "behavior"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "architecture-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "metrics",
+        "topology"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "behavior-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "behavior"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "budget-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "budget",
+        "metrics"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "change-scope-demo",
+      "role": "protocol",
+      "levels": [
+        "L0"
+      ],
+      "kinds": [
+        "change-scope"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "configuration-demo",
+      "role": "protocol",
+      "levels": [
+        "L5"
+      ],
+      "kinds": [
+        "configuration"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "convention-align-demo",
+      "role": "protocol",
+      "levels": [
+        "L0"
+      ],
+      "kinds": [
+        "convention-alignment"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "consumer-matrix-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "consumer-matrix"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "debt-demo",
+      "role": "protocol",
+      "levels": [
+        "L5"
+      ],
+      "kinds": [
+        "debt"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "decisions-demo",
+      "role": "protocol",
+      "levels": [
+        "L0",
+        "L1"
+      ],
+      "kinds": [
+        "command",
+        "decisions"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "demo",
+      "role": "onboarding",
+      "levels": [
+        "L0",
+        "L1"
+      ],
+      "kinds": [
+        "command",
+        "assumptions"
+      ],
+      "smokeStage": "close",
+      "note": "README 入门最小样例(command+assumptions)"
+    },
+    {
+      "id": "documentation-demo",
+      "role": "protocol",
+      "levels": [
+        "L5"
+      ],
+      "kinds": [
+        "documentation"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "engineering-demo",
+      "role": "protocol",
+      "levels": [
+        "L0",
+        "L1"
+      ],
+      "kinds": [
+        "traceability",
+        "engineering"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "fibo-demo",
+      "role": "doc",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "ontology-map"
+      ],
+      "smokeStage": "close",
+      "note": "FIBO provider 用法(FIBO-PROVIDER.md)"
+    },
+    {
+      "id": "intent-drift-demo",
+      "role": "protocol",
+      "levels": [
+        "L0"
+      ],
+      "kinds": [
+        "change-scope"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "invariant-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "invariant"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "journey-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "journey"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "ledger-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "consistency",
+        "alignment"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "persistence-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "persistence"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "property-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "property"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "rerun-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "rerun"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "resilience-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "resilience"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "scan-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "scan"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "semantic-alignment-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-alignment"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "semantic-conflict-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-alignment"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-consistency-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-consistency"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-constraint-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-constraint"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-exposure-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-exposure"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-instance-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-instance"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-profile-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "semantic-profile"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-relation-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-relation"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-state-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-state"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "semantic-subsumption-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-alignment"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "six-domain-demo",
+      "role": "showcase",
+      "levels": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "kinds": [
+        "traceability",
+        "command",
+        "semantic-profile",
+        "behavior",
+        "metrics",
+        "debt"
+      ],
+      "smokeStage": "release",
+      "note": "六域组合展示"
+    },
+    {
+      "id": "symbol-grounding-demo",
+      "role": "protocol",
+      "levels": [
+        "L1"
+      ],
+      "kinds": [
+        "symbol-grounding"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "terminology-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "terminology"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "traceability-demo",
+      "role": "protocol",
+      "levels": [
+        "L0",
+        "L1"
+      ],
+      "kinds": [
+        "traceability",
+        "command"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "visual-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "visual"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "visual-browser-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "visual"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "api-surface-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "symbol-grounding"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "adapter-imports-demo",
+      "role": "protocol",
+      "levels": [
+        "L1"
+      ],
+      "kinds": [
+        "symbol-grounding"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "trace-continuity-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "trace-continuity"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "replay-baseline-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "journey"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "shacl-engine-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "semantic-profile"
+      ],
+      "smokeStage": null
+    },
+    {
+      "id": "owl-reasoning-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-relation",
+        "semantic-alignment"
+      ],
+      "smokeStage": null
+    }
+  ],
+  "knownKindsWithoutExamples": []
+}

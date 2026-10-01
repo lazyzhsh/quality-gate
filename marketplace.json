@@ -1,0 +1,24 @@
+{
+  "name": "quality-gate-local",
+  "plugins": [
+    {
+      "name": "quality-gate",
+      "source": "./plugins/quality-gate",
+      "version": "1.24.0",
+      "description": "Configurable evidence-producing quality gates",
+      "category": "developer-tools",
+      "description_i18n": {
+        "en": "Configurable evidence-producing quality gates",
+        "zh-CN": "可配置并生成证据的质量门禁"
+      }
+    }
+  ],
+  "owner": {
+    "name": "Quality Gate Maintainers"
+  },
+  "description": "Configurable evidence-producing quality gates",
+  "description_i18n": {
+    "en": "Configurable evidence-producing quality gates",
+    "zh-CN": "可配置并生成证据的质量门禁"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SI-1",
+      "statement": "Ledger instances are typed consistently with the ontology"
+    }
+  ],
+  "gates": [
+    {
+      "id": "instance-check",
+      "kind": "semantic-instance",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SI-1",
+      "dataFile": "records.json",
+      "entityTypes": [
+        {
+          "entityId": "contract-1",
+          "typeIri": "urn:demo:Contract"
+        },
+        {
+          "entityId": "sheet-1",
+          "typeIri": "urn:demo:TermSheet"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SI-R1",
+      "gateId": "instance-check",
+      "description": "Instance alignment checks declared entity typings and internal consistency of the observed sample; it cannot verify records that were never observed"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

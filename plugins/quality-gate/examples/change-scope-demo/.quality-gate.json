@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SCOPE-1",
+      "statement": "This increment changes exactly the agreed file scope"
+    }
+  ],
+  "gates": [
+    {
+      "id": "increment-scope",
+      "kind": "change-scope",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "SCOPE-1",
+      "file": "scope.json",
+      "level": "L0"
+    }
+  ],
+  "risks": [
+    {
+      "id": "SCOPE-R1",
+      "gateId": "increment-scope",
+      "description": "Scope evidence is the Git worktree diff against the tagged baseline; uncommitted local noise counts as change"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L0"
+    ]
+  }
+}

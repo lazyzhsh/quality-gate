@@ -1,0 +1,1 @@
+{"endpoint": "https://production.example.invalid", "database": {"host": "production-db", "port": 5432}, "auth": {"token": "ref:production/payment-token"}, "retry": 3, "features": {"canary": {"enabled": true}}}

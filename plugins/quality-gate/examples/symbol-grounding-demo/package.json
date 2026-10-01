@@ -1,0 +1,9 @@
+{
+  "name": "symbol-grounding-demo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Demo project for the symbol-grounding gate: leftpad is declared here (dependency manifest face) but intentionally not installed",
+  "dependencies": {
+    "leftpad": "^1.0.0"
+  }
+}

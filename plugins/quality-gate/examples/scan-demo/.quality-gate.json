@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SEC-1",
+      "statement": "Configured source security check contains no high findings"
+    }
+  ],
+  "gates": [
+    {
+      "id": "sast",
+      "kind": "scan",
+      "category": "sast",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SEC-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "blockAt": "high",
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "SEC-R1",
+      "gateId": "sast",
+      "description": "Example rules are narrow demonstrations; production projects must configure complete scanners"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

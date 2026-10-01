@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "ARC-1",
+      "statement": "Service topology satisfies the declared architecture fitness principles"
+    }
+  ],
+  "gates": [
+    {
+      "id": "architecture-fitness",
+      "kind": "metrics",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "ARC-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 3000,
+      "thresholds": {
+        "realtimeSinglePointDependencies": {
+          "max": 0
+        },
+        "backgroundNotActiveActive": {
+          "max": 0
+        },
+        "coreWithoutCanary": {
+          "max": 0
+        },
+        "batchNotRerunnable": {
+          "max": 0
+        },
+        "canaryNotPromoted": {
+          "max": 0
+        },
+        "canaryGuardrailContradiction": {
+          "max": 0
+        },
+        "canarySrmVoided": {
+          "max": 0
+        }
+      },
+      "level": "L4"
+    },
+    {
+      "id": "topology-semantics",
+      "kind": "topology",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "ARC-1",
+      "file": "topology.json",
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "ARC-R1",
+      "gateId": "architecture-fitness",
+      "description": "Fitness values come from the demo declared topology (provenance: declared); production should derive them from the real dependency graph or drilled evidence"
+    },
+    {
+      "id": "ARC-R2",
+      "gateId": "topology-semantics",
+      "description": "Topology semantics are verified against the declared file; production should derive the declaration from the real orchestration state"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

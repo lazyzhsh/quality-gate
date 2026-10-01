@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "P-1",
+      "statement": "Payment amounts and lifecycle transitions satisfy declared invariants"
+    }
+  ],
+  "gates": [
+    {
+      "id": "payment-properties",
+      "kind": "property",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "P-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "seed": 42,
+      "minCases": 100,
+      "assertions": [
+        {
+          "id": "capture-bound",
+          "left": "captured",
+          "operator": "le",
+          "right": "authorized"
+        },
+        {
+          "id": "refund-bound",
+          "left": "refunded",
+          "operator": "le",
+          "right": "captured"
+        }
+      ],
+      "allowedTransitions": [
+        {
+          "from": "CREATED",
+          "to": "AUTHORIZED"
+        },
+        {
+          "from": "AUTHORIZED",
+          "to": "CAPTURED"
+        },
+        {
+          "from": "CAPTURED",
+          "to": "SETTLED"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "risks": [
+    {
+      "id": "P-R1",
+      "gateId": "payment-properties",
+      "description": "The bounded deterministic cases do not prove all production payment behavior"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {run,exitCode} from '../lib/kernel.mjs';
+import {fixture} from './fixture.mjs';
+test('P1 pass with persisted evidence and config hash',t=>{const {root}=fixture(t);const r=run(root);assert.equal(exitCode(r),0);assert.equal(JSON.parse(fs.readFileSync(r.reportPath)).status,'PASS');assert.equal(r.configSha256.length,64);});
+test('P1 command failure is not a pass',t=>{const f=fixture(t);f.c.gates[0].argv[2]='process.exit(7)';f.save();assert.equal(run(f.root).status,'FAIL');});
+test('P1 timeout is an error',t=>{const f=fixture(t);f.c.gates[0].argv[2]='setTimeout(()=>{},10000)';f.c.gates[0].timeoutMs=30;f.save();assert.equal(run(f.root).status,'ERROR');});
+test('P1 malformed and unsupported configuration fails closed',t=>{const f=fixture(t);f.c.gates[0].kind='unknown';f.save();assert.equal(run(f.root).status,'ERROR');});
+test('P1 no selected gates is not pass',t=>{const f=fixture(t);assert.equal(exitCode(run(f.root,'release')),2);});
+test('P1 evidence write failure is error',t=>{const f=fixture(t);assert.equal(run(f.root,'close',path.join(f.root,'.quality-gate.json','runs')).status,'ERROR');});

@@ -1,0 +1,9 @@
+{
+ "id": "demo-contracts",
+ "version": "1",
+ "concepts": [
+  {"iri": "urn:demo:Contract", "label": "contract", "relations": [{"predicate": "hasParty", "to": "urn:demo:ContractParty"}, {"predicate": "creates", "to": "urn:demo:Obligation"}]},
+  {"iri": "urn:demo:ContractParty", "label": "contract party"},
+  {"iri": "urn:demo:Obligation", "label": "obligation"}
+ ]
+}

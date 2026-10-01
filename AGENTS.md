@@ -1,0 +1,9 @@
+# 面向后续 Coding Agent 的项目约定
+
+先读 `PROJECT-HANDOFF.md`，再按任务读 `docs/PRD.md`（产品需求与路线）、`docs/RTM.md`（需求跟踪矩阵，实现状态单一索引）、`docs/adr/`（架构决策），规范层 `docs/GATE-SPEC-v1.23.md`、`docs/CONFIG-GUIDE.md`、`docs/GLOSSARY.md`（统一语言术语表）与上下文层 `docs/context/original-design-v0.1.md`（设计基线和探索资料，不代表所有功能已实现）。docs 分层组织见 `docs/README.md`。新概念先入 `docs/GLOSSARY.md` 登记再进文档与代码；弃用词清单在活文档零出现（根门禁 G-CONVENTIONS 约定对齐强制，v1.19 起自 glossary 防回归测试自举迁移；新增弃用词须同步 `.quality-gate/registries/conventions.json`）。
+
+继续保持内核与 ZCode adapter 分离。每个新 Gate 至少提供可运行正例、故意失败反例及明确的失败证据；修改后运行全量回归 `node devtools/run-suite.mjs plugins/quality-gate/tests/*.test.mjs`（并发钳制持续 CPU ≤75%，2026-09-30 起）和受影响 demo。若变更打包/安装结构，运行 `python devtools/build_delivery.py` 并验证解包结果。不要把 SKIP、ERROR、缺证据或例外提案当作 PASS。
+
+新增或调整任何可配置项（门禁选项、登记文件字段、runner 协议入参）时，必须同步 `docs/CONFIG-GUIDE.md` 的选项表与 `jsonc` 样例；`tests/config-guide.test.mjs` 会校验样例仍可通过 validate、kind 全覆盖且选项有文档，摘要层的提取器覆盖由 `tests/summary.test.mjs` 强制。版本文档归档：发行说明 `RELEASE-*` 放 `docs/release/`（按版本递增，便于追溯发行历史），实机验收 `LIVE-ACCEPTANCE-*`、`VALIDATION.md`、历史 ITERATION 与旧版 SPEC 放 `docs/history/`（两者均只增不改）；`docs/` 根部只放活文档（PRD/RTM/adr/现行 SPEC/CONFIG-GUIDE/PLAN/协议文档），`docs/context/` 放原始设计与调研输入；根目录入口文档保留 AGENTS.md、PROJECT-HANDOFF.md、README.md；另保留开源许可证 LICENSE，社区文件放 .github/。移动文档后修复全仓库相对链接。
+
+更新实现时同步维护 RTM 对应行、Gate Spec、发布说明及验证证据。报告须说明工具来源、输入范围和证明边界；不要把演示用扫描器、FIBO 目录查询或本地故障演练表述为生产认证。ZCode 实机验收与 CLI/模拟测试分别记录。不要直接编辑 ZCode 安装缓存；在项目源码中开发、打包，再经本地 marketplace 安装测试。客户端升级走固定流程（2026-09-27 起，[LIVE-ACCEPTANCE-1.12](docs/history/LIVE-ACCEPTANCE-1.12.md)：directory 型本地市场已支持直接更新，取代旧"卸载→安装"流程）：先 `python devtools/sync_client_marketplace.py` 同步 marketplace 快照并校验（"更新"按钮读快照不读源仓库——快照停更则版本停更），再在客户端插件市场对 Quality Gate 行执行"更新"（仅有的必要 UI 动作）；验证一律走文件系统（缓存版本目录、SHA 全等、Stop 报告按 mtime 轮询），不用截图探索。

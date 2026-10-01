@@ -1,0 +1,525 @@
+{
+  "id": "fibo-fnd-agreements",
+  "version": "master_2026Q1",
+  "revision": "574a83150a34d7188384c2ecbe124843761931d6",
+  "sources": [
+    {
+      "file": "Agreements.rdf",
+      "sha256": "b3303766dbf6ee8ca58fbc4c6a4d970d534d1856730963815feb0674127a03f4",
+      "path": "FND/Agreements/Agreements.rdf"
+    },
+    {
+      "file": "Contracts.rdf",
+      "sha256": "653d3ca4f5df6a9732b133f29f276240b9f40e542edeee0fc98f98e778e59c15",
+      "path": "FND/Agreements/Contracts.rdf"
+    }
+  ],
+  "conceptCount": 52,
+  "droppedSubclassEdges": [
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/Situation"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Beneficiary",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/PartyRole"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Commitment",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/Situation"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Obligee",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/PartyRole"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Obligor",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/PartyRole"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BreachOfContract",
+      "to": "https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/OccurrenceKind"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BreachOfCovenant",
+      "to": "https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/OccurrenceKind"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractDocument",
+      "to": "https://www.omg.org/spec/Commons/Documents/LegalDocument"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractMilestone",
+      "to": "https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/OccurrenceKind"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractParty",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/PartyRole"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractThirdParty",
+      "to": "https://www.omg.org/spec/Commons/PartiesAndSituations/PartyRole"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualElement",
+      "to": "https://www.omg.org/spec/Commons/Collections/Constituent"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MilestoneEvent",
+      "to": "https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/Occurrences/Occurrence"
+    },
+    {
+      "from": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MilestoneSchedule",
+      "to": "https://spec.edmcouncil.org/fibo/ontology/FND/DatesAndTimes/FinancialDates/Schedule"
+    }
+  ],
+  "droppedDisjointEdges": [],
+  "concepts": [
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement",
+      "label": "agreement",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Beneficiary",
+      "label": "beneficiary",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/BilateralAgreement",
+      "label": "bilateral agreement",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Commitment",
+      "label": "commitment",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/CommitmentAtLarge",
+      "label": "commitment at large",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/UnilateralCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/MultilateralAgreement",
+      "label": "multilateral agreement",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement"
+      ],
+      "disjointWith": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/BilateralAgreement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Obligee",
+      "label": "obligee",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Obligor",
+      "label": "obligor",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/UnilateralCommitment",
+      "label": "unilateral commitment",
+      "kind": "Class",
+      "source": "FND/Agreements/Agreements.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Commitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/AssignableContract",
+      "label": "assignable contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TransferableContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BilateralContract",
+      "label": "bilateral contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/BilateralAgreement",
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BilateralNettingProvision",
+      "label": "bilateral netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BreachOfContract",
+      "label": "breach of contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BreachOfCovenant",
+      "label": "breach of covenant",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/CloseOutNettingProvision",
+      "label": "close-out netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision"
+      ],
+      "disjointWith": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/SettlementNettingProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/CollateralAgreement",
+      "label": "collateral agreement",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ConditionPrecedent",
+      "label": "condition precedent",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualElement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/Contract",
+      "label": "contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractDocument",
+      "label": "contract document",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractMilestone",
+      "label": "contract milestone",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ConditionPrecedent"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractParty",
+      "label": "contract party",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractPrincipal",
+      "label": "contract principal",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractParty"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractThirdParty",
+      "label": "contract third party",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment",
+      "label": "contractual commitment",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualElement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualDefinition",
+      "label": "contractual definition",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualElement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualElement",
+      "label": "contractual element",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/Counterparty",
+      "label": "counterparty",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractParty"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/DisclosureProvision",
+      "label": "disclosure provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/EarlyTerminationProvision",
+      "label": "early termination provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TerminationProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ExtensionProvision",
+      "label": "extension provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MasterAgreement",
+      "label": "master agreement",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MilestoneEvent",
+      "label": "milestone event",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MilestoneSchedule",
+      "label": "milestone schedule",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf"
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MultilateralContract",
+      "label": "multilateral contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/MultilateralAgreement",
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/MultilateralNettingProvision",
+      "label": "multilateral netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision"
+      ],
+      "disjointWith": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/BilateralNettingProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision",
+      "label": "netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NonBindingTerm",
+      "label": "non-binding term",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualElement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NonTransferableContract",
+      "label": "non-transferable contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ],
+      "disjointWith": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TransferableContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NotificationProvision",
+      "label": "notification provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NovateableContract",
+      "label": "novateable contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TransferableContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NovationNettingProvision",
+      "label": "novation netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/PaymentNettingProvision",
+      "label": "payment netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/Representation",
+      "label": "representation",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/SettlementNettingProvision",
+      "label": "settlement netting provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TermSheet",
+      "label": "term sheet",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TerminationProvision",
+      "label": "termination provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TransferableContract",
+      "label": "transferable contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/UnilateralContract",
+      "label": "unilateral contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/UseOfProceedsProvision",
+      "label": "use of proceeds provision",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/VerbalContract",
+      "label": "verbal contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/Contract"
+      ],
+      "disjointWith": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/Warranty",
+      "label": "warranty",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ContractualCommitment"
+      ]
+    },
+    {
+      "iri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/WrittenContract",
+      "label": "written contract",
+      "kind": "Class",
+      "source": "FND/Agreements/Contracts.rdf",
+      "subClassOf": [
+        "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/Contract"
+      ]
+    }
+  ]
+}

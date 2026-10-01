@@ -1,0 +1,1 @@
+{"assumptions":[{"id":"A1","statement":"This fixture only demonstrates syntax and register checks","status":"confirmed","source":{"file":"adr-1.md"},"evidence":{"gateId":"syntax"}},{"id":"A2","statement":"Plain-text provenance remains accepted without verification","status":"confirmed","source":"team review 2026-09","evidence":"manual checklist"}]}

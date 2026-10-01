@@ -1,0 +1,1 @@
+{"kind":"api","items":[{"method":"POST","path":"/quote","requestFields":["amount","currency"],"responseStatus":200,"responseFields":["decision","fee"]}]}

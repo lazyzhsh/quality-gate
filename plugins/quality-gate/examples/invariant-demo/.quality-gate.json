@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "INV-1",
+      "statement": "Committed payment and ledger records satisfy declared financial invariants"
+    }
+  ],
+  "gates": [
+    {
+      "id": "financial-invariants",
+      "kind": "invariant",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "INV-1",
+      "argv": [
+        "python",
+        "runner.py"
+      ],
+      "timeoutMs": 5000,
+      "assertions": [
+        {
+          "id": "balanced-ledger",
+          "left": "debitSum",
+          "operator": "eq",
+          "right": "creditSum"
+        },
+        {
+          "id": "refund-cap",
+          "left": "refundAmount",
+          "operator": "le",
+          "right": "capturedAmount"
+        },
+        {
+          "id": "posted-on-success",
+          "when": {
+            "field": "paymentStatus",
+            "equals": "SUCCESS"
+          },
+          "left": "ledgerStatus",
+          "operator": "eq",
+          "value": "POSTED"
+        },
+        {
+          "id": "refund-strictly-below",
+          "left": "refundAmount",
+          "operator": "lt",
+          "right": "capturedAmount"
+        },
+        {
+          "id": "status-not-failed",
+          "left": "paymentStatus",
+          "operator": "neq",
+          "value": "FAILED"
+        },
+        {
+          "id": "credit-positive",
+          "when": {
+            "field": "ledgerStatus",
+            "in": [
+              "POSTED",
+              "PENDING"
+            ]
+          },
+          "left": "creditSum",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "id": "active-implies-balanced",
+          "when": [
+            {
+              "field": "paymentStatus",
+              "notEquals": "FAILED"
+            },
+            {
+              "field": "ledgerStatus",
+              "in": [
+                "POSTED",
+                "PENDING"
+              ]
+            }
+          ],
+          "left": "debitSum",
+          "operator": "ge",
+          "right": "creditSum"
+        }
+      ],
+      "level": "L2"
+    }
+  ],
+  "risks": [
+    {
+      "id": "INV-R1",
+      "gateId": "financial-invariants",
+      "description": "Only configured queries and assertions are checked; runner integrity is trusted"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L2"
+    ]
+  }
+}

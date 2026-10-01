@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C-PERSIST-1",
+      "statement": "Creating an order persists every configured field exactly once"
+    },
+    {
+      "id": "C-PERSIST-2",
+      "statement": "Duplicate submission of the same order id still persists exactly one record"
+    },
+    {
+      "id": "C-PERSIST-3",
+      "statement": "A rejected order request persists nothing"
+    }
+  ],
+  "gates": [
+    {
+      "id": "order-persistence",
+      "kind": "persistence",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C-PERSIST-1",
+      "argv": [
+        "python",
+        "runner.py"
+      ],
+      "timeoutMs": 10000,
+      "expectedHttpStatus": 201,
+      "correlationField": "id",
+      "requireSnapshots": true,
+      "expected": {
+        "id": "$RUN_ID",
+        "amount_minor": 1250,
+        "currency": "CNY",
+        "note": null
+      },
+      "level": "L2"
+    },
+    {
+      "id": "order-idempotency",
+      "kind": "persistence",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C-PERSIST-2",
+      "argv": [
+        "python",
+        "runner.py",
+        "duplicate"
+      ],
+      "timeoutMs": 10000,
+      "expectedHttpStatus": 201,
+      "correlationField": "id",
+      "expected": {
+        "id": "$RUN_ID",
+        "amount_minor": 1250,
+        "currency": "CNY",
+        "note": null
+      },
+      "level": "L2"
+    },
+    {
+      "id": "order-rejection",
+      "kind": "persistence",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C-PERSIST-3",
+      "argv": [
+        "python",
+        "runner.py",
+        "rejected"
+      ],
+      "timeoutMs": 10000,
+      "expectedHttpStatus": 422,
+      "correlationField": "id",
+      "expectedRecordCount": 0,
+      "expected": {
+        "id": "$RUN_ID"
+      },
+      "level": "L2"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-PERSIST-1",
+      "gateId": "order-persistence",
+      "description": "Runner must faithfully execute the API and independently query the intended database; only configured fields and this case are covered"
+    },
+    {
+      "id": "R-PERSIST-2",
+      "gateId": "order-idempotency",
+      "description": "Idempotency is demonstrated by the demo INSERT OR IGNORE writer; production keys and retries differ"
+    },
+    {
+      "id": "R-PERSIST-3",
+      "gateId": "order-rejection",
+      "description": "Only the negative-amount rejection path is demonstrated"
+    }
+  ],
+  "exceptions": [],
+  "ontology": {
+    "type": "fibo-skeleton"
+  }
+}

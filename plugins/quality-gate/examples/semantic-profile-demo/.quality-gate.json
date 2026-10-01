@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SEM-1",
+      "statement": "Sample agreement conforms to the declared profile"
+    }
+  ],
+  "gates": [
+    {
+      "id": "agreement-profile",
+      "kind": "semantic-profile",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "SEM-1",
+      "file": "profile.json",
+      "dataFile": "records.json",
+      "level": "L2"
+    }
+  ],
+  "risks": [
+    {
+      "id": "SEM-R1",
+      "gateId": "agreement-profile",
+      "description": "Profile constraints are authored by the project and are not inferred from FIBO or SHACL"
+    }
+  ],
+  "exceptions": [],
+  "ontology": {
+    "type": "fibo-pinned",
+    "expectedCatalogSha256": "eb9795a238457b85161bbb22610a6a5507a613fb76d377b05daba625b3816c4e"
+  }
+}

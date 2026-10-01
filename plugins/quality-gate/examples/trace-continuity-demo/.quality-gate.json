@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "TRACE-1",
+      "statement": "The order pipeline drill propagates one trace context across gateway, orders and payments without discontinuity"
+    }
+  ],
+  "gates": [
+    {
+      "id": "trace-links",
+      "kind": "trace-continuity",
+      "level": "L4",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "TRACE-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "links": [
+        "gateway->orders",
+        "orders->payments"
+      ],
+      "requireTraceparent": true
+    }
+  ],
+  "risks": [
+    {
+      "id": "TRACE-R1",
+      "gateId": "trace-links",
+      "description": "Declarative reconciliation of runner-reported propagation pairs only: no traffic capture, no APM; production OpenTelemetry instrumentation is project engineering outside this gate"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

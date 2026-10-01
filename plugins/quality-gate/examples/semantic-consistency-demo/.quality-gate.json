@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SCO-1",
+      "statement": "The catalog is consistent and both reasoners agree on inferred disjointness"
+    }
+  ],
+  "gates": [
+    {
+      "id": "consistency-check",
+      "kind": "semantic-consistency",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SCO-1",
+      "reasoner": {
+        "argv": [
+          "$NODE",
+          "reasoner.mjs"
+        ],
+        "timeoutMs": 3000
+      },
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SCO-R1",
+      "gateId": "consistency-check",
+      "description": "Agreement protocol cross-checks two implementations of the same OWL-subset rules; it does not add OWL reasoning power beyond those rules"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+ "id": "demo-agreements",
+ "version": "1",
+ "concepts": [
+  {"iri": "urn:demo:Agreement", "label": "agreement"},
+  {"iri": "urn:demo:BilateralAgreement", "label": "bilateral agreement", "subClassOf": ["urn:demo:Agreement"]},
+  {"iri": "urn:demo:Commitment", "label": "commitment", "disjointWith": ["urn:demo:Agreement"]}
+ ]
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SHACL-1",
+      "statement": "Sample records conform to the declared profile under the external SHACL engine (deep matching included)"
+    }
+  ],
+  "gates": [
+    {
+      "id": "engine-profile",
+      "kind": "semantic-profile",
+      "level": "L2",
+      "enabled": true,
+      "stages": ["close"],
+      "claimId": "SHACL-1",
+      "file": "profile.json",
+      "dataFile": "records.json",
+      "shacl": {
+        "argv": ["python", "../../adapters/shacl/pyshacl_runner.py"],
+        "timeoutMs": 30000
+      }
+    }
+  ],
+  "risks": [
+    {
+      "id": "SHACL-R1",
+      "gateId": "engine-profile",
+      "description": "The SHACL engine is external (pyshacl via the reference adapter): the kernel translates declarations, deep-matches targets and verifies the observation; full SHACL semantics belong to pyshacl (pip install pyshacl)"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {"close": ["L2"]},
+  "ontology": {"type": "local-catalog", "file": "catalog.json"}
+}

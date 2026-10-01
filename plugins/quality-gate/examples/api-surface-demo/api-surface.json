@@ -1,0 +1,16 @@
+{
+  "surfaces": [
+    {
+      "id": "api-main",
+      "type": "openapi",
+      "file": "openapi.json",
+      "source": {"file": "package.json", "section": "description"}
+    },
+    {
+      "id": "config-app",
+      "type": "json-schema",
+      "file": "config.schema.json",
+      "source": {"file": "package.json", "section": "description"}
+    }
+  ]
+}

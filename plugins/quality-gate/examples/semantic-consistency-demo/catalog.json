@@ -1,0 +1,10 @@
+{
+ "id": "demo-agreements",
+ "version": "1",
+ "concepts": [
+  {"iri": "urn:demo:Agreement", "label": "agreement", "disjointWith": ["urn:demo:TermSheet"]},
+  {"iri": "urn:demo:WrittenContract", "label": "written contract", "subClassOf": ["urn:demo:Agreement"]},
+  {"iri": "urn:demo:TermSheet", "label": "term sheet", "disjointWith": ["urn:demo:Agreement"]},
+  {"iri": "urn:demo:IndicativeTermSheet", "label": "indicative term sheet", "subClassOf": ["urn:demo:TermSheet"]}
+ ]
+}

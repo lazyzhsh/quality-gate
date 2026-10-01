@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "INTENT-1",
+      "statement": "This task's changes stay inside the registered task intent and the intent baseline is intact"
+    }
+  ],
+  "gates": [
+    {
+      "id": "drift-check",
+      "kind": "change-scope",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "INTENT-1",
+      "file": "scope.json",
+      "level": "L0"
+    }
+  ],
+  "risks": [
+    {
+      "id": "INTENT-R1",
+      "gateId": "drift-check",
+      "description": "Path-level reconciliation only: files inside scope but wrong in content are guarded by other gates (F2P/P2P, behavior); intent-to-real-intent consistency is backed by the confirmation trail, not judged"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L0"
+    ]
+  }
+}

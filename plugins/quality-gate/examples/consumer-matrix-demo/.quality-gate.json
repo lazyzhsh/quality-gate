@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "API-1",
+      "statement": "provider 当前契约满足全部声明消费者的兼容期望"
+    }
+  ],
+  "gates": [
+    {
+      "id": "api-matrix",
+      "kind": "consumer-matrix",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "API-1",
+      "timeoutMs": 8000,
+      "argv": [
+        "$NODE",
+        "scripts/observe.mjs"
+      ],
+      "consumers": [
+        {
+          "id": "orders-web",
+          "expectedFile": "consumers/orders-web.json",
+          "compatibilityLevel": "backward"
+        },
+        {
+          "id": "settlement-batch",
+          "expectedFile": "consumers/settlement-batch.json"
+        },
+        {
+          "id": "orders-cli",
+          "expectedFile": "consumers/orders-cli.json"
+        }
+      ],
+      "level": "L2"
+    }
+  ],
+  "risks": [],
+  "exceptions": []
+}

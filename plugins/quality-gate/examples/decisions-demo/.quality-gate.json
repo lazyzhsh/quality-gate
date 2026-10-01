@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C1",
+      "statement": "Demo module parses"
+    },
+    {
+      "id": "C2",
+      "statement": "Every design decision is closed with verifiable evidence"
+    }
+  ],
+  "gates": [
+    {
+      "id": "syntax",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C1",
+      "argv": [
+        "$NODE",
+        "--check",
+        "app.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L1"
+    },
+    {
+      "id": "decisions",
+      "kind": "decisions",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "claimId": "C2",
+      "file": "decisions.json",
+      "level": "L0"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "gateId": "decisions",
+      "description": "A decision may be marked resolved without real evidence"
+    }
+  ],
+  "exceptions": []
+}

@@ -1,0 +1,9 @@
+{
+  "id": "demo-shacl",
+  "version": "1",
+  "concepts": [
+    {"iri": "urn:demo:Agreement", "label": "agreement"},
+    {"iri": "urn:demo:Contract", "label": "contract", "subClassOf": ["urn:demo:Agreement"]},
+    {"iri": "urn:demo:WrittenContract", "label": "written contract", "subClassOf": ["urn:demo:Contract"]}
+  ]
+}

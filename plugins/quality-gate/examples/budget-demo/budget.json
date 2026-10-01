@@ -1,0 +1,12 @@
+{
+ "hops":[
+  {"caller":"order-api","callee":"payment-db","timeoutMs":800,"retries":2},
+  {"caller":"order-api","callee":"fraud-check","timeoutMs":300,"retries":1},
+  {"caller":"settlement-batch","callee":"payment-db","timeoutMs":2000}
+ ],
+ "budgets":{"order-api":5000,"settlement-batch":3000},
+ "retryPolicies":[
+  {"client":"order-api","budgetPercent":15,"jitterMode":"full","backoffBaseMs":100,"backoffCapMs":5000},
+  {"client":"settlement-batch","budgetPercent":10,"jitterMode":"decorrelated","backoffBaseMs":500,"backoffCapMs":30000}
+ ]
+}

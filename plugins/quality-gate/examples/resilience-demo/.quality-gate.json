@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "R-1",
+      "statement": "A dependency outage and duplicate request preserve state and emit diagnostic signals"
+    }
+  ],
+  "gates": [
+    {
+      "id": "resilience",
+      "kind": "resilience",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "R-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "scenarios": [
+        {
+          "id": "db-outage",
+          "maxRecoveryMs": 1000,
+          "expectedFinalState": "ready",
+          "requiredSignals": [
+            "log",
+            "metric",
+            "trace",
+            "alert"
+          ]
+        },
+        {
+          "id": "duplicate-message",
+          "maxRecoveryMs": 1000,
+          "expectedFinalState": "single-payment",
+          "requiredSignals": [
+            "log",
+            "metric",
+            "trace"
+          ]
+        },
+        {
+          "id": "external-timeout",
+          "maxRecoveryMs": 1000,
+          "expectedFinalState": "ready",
+          "requiredSignals": [
+            "log",
+            "metric",
+            "trace"
+          ]
+        },
+        {
+          "id": "breaker",
+          "maxRecoveryMs": 1000,
+          "expectedFinalState": "restored-closed",
+          "requiredSignals": [
+            "log",
+            "metric",
+            "trace"
+          ],
+          "requiredTransitions": [
+            "closed",
+            "open",
+            "half-open",
+            "closed"
+          ]
+        }
+      ],
+      "maxAgeDays": 1,
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-R1",
+      "gateId": "resilience",
+      "description": "Local dependency simulation does not cover real DB, Redis, network partition or production alert delivery"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

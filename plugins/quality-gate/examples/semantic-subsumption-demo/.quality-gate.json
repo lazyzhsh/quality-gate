@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SS-1",
+      "statement": "Contract symbols may be any declared subclass of Agreement"
+    }
+  ],
+  "gates": [
+    {
+      "id": "semantic-subsumption",
+      "kind": "semantic-alignment",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SS-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "matchMode": "subsumed",
+      "mappings": [
+        {
+          "symbol": "ContractRecord",
+          "expectedIri": "urn:demo:Agreement"
+        }
+      ],
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SS-R1",
+      "gateId": "semantic-subsumption",
+      "description": "RDFS subclass closure over a project catalog is not OWL reasoning and does not prove instance-level semantics"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

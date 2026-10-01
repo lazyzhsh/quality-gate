@@ -1,0 +1,10 @@
+{
+  "shapes": [{
+    "id": "AgreementDemoShape",
+    "targetClass": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement",
+    "properties": [
+      {"path": "partyIds", "minCount": 2, "maxCount": 2, "valueType": "string"},
+      {"path": "active", "minCount": 1, "maxCount": 1, "valueType": "boolean"}
+    ]
+  }]
+}

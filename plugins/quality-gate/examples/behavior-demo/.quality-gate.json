@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "BUS-1",
+      "statement": "The quote policy handles configured normal and boundary cases"
+    }
+  ],
+  "gates": [
+    {
+      "id": "quote-cases",
+      "kind": "behavior",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr"
+      ],
+      "claimId": "BUS-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "ignorePaths": [
+        "/evaluatedAt"
+      ],
+      "cases": [
+        {
+          "id": "normal",
+          "input": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "expected": {
+            "decision": "accept",
+            "fee": 2
+          }
+        },
+        {
+          "id": "zero",
+          "input": {
+            "amount": 0,
+            "currency": "USD"
+          },
+          "expected": {
+            "decision": "reject",
+            "reason": "amount"
+          }
+        },
+        {
+          "id": "unsupported",
+          "input": {
+            "amount": 100,
+            "currency": "XYZ"
+          },
+          "expected": {
+            "decision": "reject",
+            "reason": "currency"
+          }
+        },
+        {
+          "id": "eur",
+          "input": {
+            "amount": 100,
+            "currency": "EUR"
+          },
+          "expected": {
+            "decision": "accept",
+            "fee": 2
+          }
+        }
+      ],
+      "expected": {
+        "f2p": [
+          "eur"
+        ],
+        "p2p": [
+          "normal",
+          "zero",
+          "unsupported"
+        ]
+      },
+      "level": "L3"
+    }
+  ],
+  "risks": [
+    {
+      "id": "BUS-R1",
+      "gateId": "quote-cases",
+      "description": "Configured cases do not cover all possible inputs or external side effects"
+    }
+  ],
+  "exceptions": []
+}

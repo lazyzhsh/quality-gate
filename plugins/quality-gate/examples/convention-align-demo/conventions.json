@@ -1,0 +1,23 @@
+{
+  "rules": [
+    {
+      "id": "TERM-legacy-words",
+      "type": "banned-words",
+      "words": ["legacy-claim", "旧称谓Z"],
+      "scope": ["docs/**", "src/**"],
+      "exemptions": [
+        {"word": "legacy-claim", "lineContains": "迁移说明"}
+      ],
+      "severity": "fail",
+      "source": {"file": "AGENTS.md", "section": "术语约定"}
+    },
+    {
+      "id": "CONV-no-todo",
+      "type": "argv",
+      "argv": ["$NODE", "check-todo.mjs"],
+      "timeoutMs": 5000,
+      "severity": "fail",
+      "source": {"file": "CONVENTIONS.md", "section": "提交纪律"}
+    }
+  ]
+}

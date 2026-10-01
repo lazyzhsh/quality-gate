@@ -1,0 +1,8 @@
+{
+ "records": [
+  {"id": "r-1", "entityId": "contract-1", "typeIri": "urn:demo:WrittenContract"},
+  {"id": "r-2", "entityId": "contract-1", "typeIri": "urn:demo:Contract"},
+  {"id": "r-3", "entityId": "contract-2", "typeIri": "urn:demo:Contract"},
+  {"id": "r-4", "entityId": "sheet-1", "typeIri": "urn:demo:TermSheet"}
+ ]
+}

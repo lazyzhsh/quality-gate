@@ -1,0 +1,26 @@
+.zcode/
+.quality-gate/
+**/.quality-gate/
+__pycache__/
+*.pyc
+node_modules/
+graphify-out/
+evidence/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+
+# One-off local migration scripts; not maintained public tools.
+devtools/glossary_edit_5.py
+devtools/rollback_counts.py
+devtools/rollback_terms_5.py
+devtools/sweep_keys_t5.py
+devtools/sweep_terms_t3.py
+devtools/sweep_terms_t3_fix.py
+devtools/sweep_terms_t4.py

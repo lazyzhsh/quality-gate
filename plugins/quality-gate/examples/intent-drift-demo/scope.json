@@ -1,0 +1,13 @@
+{
+  "baseRef": "baseline",
+  "allowedPaths": [
+    "src/**",
+    ".quality-gate.json",
+    "scope.json",
+    "README.md"
+  ],
+  "taskIntent": {
+    "file": ".quality-gate/registries/task-intent.json"
+  },
+  "requireTaskIntent": true
+}

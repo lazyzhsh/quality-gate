@@ -1,0 +1,15 @@
+{
+ "id": "demo-contracts",
+ "version": "1",
+ "concepts": [
+  {"iri": "urn:demo:Contract", "label": "contract", "lifecycle": {
+    "states": ["draft", "active", "suspended", "terminated"],
+    "transitions": [
+      {"from": "draft", "to": "active"},
+      {"from": "active", "to": "suspended"},
+      {"from": "suspended", "to": "active"},
+      {"from": "active", "to": "terminated"}
+    ]
+  }}
+ ]
+}

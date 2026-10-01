@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "T-1",
+      "statement": "Release technical debt is assigned, bounded and not overdue"
+    }
+  ],
+  "gates": [
+    {
+      "id": "technical-debt",
+      "kind": "debt",
+      "enabled": true,
+      "stages": [
+        "release"
+      ],
+      "claimId": "T-1",
+      "file": "debt.json",
+      "level": "L5"
+    }
+  ],
+  "risks": [
+    {
+      "id": "T-R1",
+      "gateId": "technical-debt",
+      "description": "The register depends on honest entry of known debt and does not discover undisclosed debt"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "release": [
+      "L5"
+    ]
+  }
+}

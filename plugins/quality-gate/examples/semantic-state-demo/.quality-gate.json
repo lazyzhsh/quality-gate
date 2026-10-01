@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "SS-1",
+      "statement": "Observed contract state transitions conform to the ontology lifecycle"
+    }
+  ],
+  "gates": [
+    {
+      "id": "state-check",
+      "kind": "semantic-state",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "SS-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "concept": "urn:demo:Contract",
+      "minCases": 3,
+      "level": "L3"
+    }
+  ],
+  "ontology": {
+    "type": "local-catalog",
+    "file": "catalog.json"
+  },
+  "risks": [
+    {
+      "id": "SS-R1",
+      "gateId": "state-check",
+      "description": "Lifecycle alignment covers observed transitions only; it does not prove state-machine completeness or absence of unobserved paths"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L3"
+    ]
+  }
+}

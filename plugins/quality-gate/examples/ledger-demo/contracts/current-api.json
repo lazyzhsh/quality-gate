@@ -1,0 +1,1 @@
+{"fields":{"transfer.amount":{"type":"integer"},"transfer.currency":{"type":"string"},"transfer.reference":{"type":"string"},"transfer.memo":{"type":"string","optional":true}}}

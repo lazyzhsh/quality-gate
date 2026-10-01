@@ -1,0 +1,17 @@
+name: 改进建议
+description: 从需求效果提出范围明确的改进
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+      description: 当前能力的具体缺口、使用场景和 RTM 对应项。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 建议与验收条件
+      description: 可验证的预期效果、正例、反例与证明边界。
+    validations:
+      required: true

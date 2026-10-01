@@ -1,0 +1,24 @@
+name: 缺陷报告
+description: 提交可复现的错误放行、错误阻断或执行问题
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: 版本与环境
+      description: Quality Gate、Node、系统版本；CLI 或宿主 adapter；可选工具版本。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现
+      description: 配置、输入、运行命令及可公开的失败证据。请删除凭据与私人数据。
+    validations:
+      required: true
+  - type: textarea
+    id: expectation
+    attributes:
+      label: 预期与实际结果
+      description: 指明适用的需求或判定规则，以及预期 PASS / FAIL / ERROR。
+    validations:
+      required: true

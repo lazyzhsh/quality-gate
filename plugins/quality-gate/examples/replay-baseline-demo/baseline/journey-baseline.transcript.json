@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "0.1",
+  "kind": "journey",
+  "runId": "9c1f2ab6-53d4-47e8-b0a1-6f2d8e4c7a90",
+  "source": "deterministic-checkout-journey",
+  "scenarios": [
+    {
+      "id": "checkout",
+      "steps": [
+        {
+          "id": "login",
+          "actual": { "status": 200, "state": "authenticated", "requestId": "archived" }
+        },
+        {
+          "id": "place-order",
+          "actual": { "status": 201, "state": "created", "orderId": "ord-042", "requestId": "archived" }
+        },
+        {
+          "id": "confirm",
+          "actual": { "status": 200, "state": "confirmed", "total": 1299, "requestId": "archived" }
+        }
+      ]
+    }
+  ]
+}

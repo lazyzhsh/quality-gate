@@ -1,0 +1,16 @@
+{
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "statement": "The demo module must be syntactically valid",
+      "acceptanceCriteria": [
+        {
+          "id": "AC-001",
+          "statement": "Node can parse app.mjs",
+          "codeFiles": ["app.mjs"],
+          "testGateIds": ["syntax"]
+        }
+      ]
+    }
+  ]
+}

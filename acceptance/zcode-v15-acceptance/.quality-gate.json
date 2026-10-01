@@ -1,0 +1,285 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "C0",
+      "statement": "The stated acceptance criterion links to implementation and a passing check"
+    },
+    {
+      "id": "C1",
+      "statement": "The business module parses"
+    },
+    {
+      "id": "C2",
+      "statement": "Agreement sample satisfies the declared FIBO-linked profile"
+    },
+    {
+      "id": "C3",
+      "statement": "The quote policy handles configured normal and boundary cases"
+    },
+    {
+      "id": "C4",
+      "statement": "Configured architecture, example security and sample latency metrics meet thresholds"
+    },
+    {
+      "id": "C5",
+      "statement": "Required release artifacts and rollback drill evidence are present"
+    },
+    {
+      "id": "C5D",
+      "statement": "The isolated rollback drill succeeds"
+    },
+    {
+      "id": "C6",
+      "statement": "Timeout budgets cover downstream attempts and retry budgets hold (v1.5.0 budget gate)"
+    },
+    {
+      "id": "C7",
+      "statement": "Declared external runner tooling is available on this machine"
+    }
+  ],
+  "gates": [
+    {
+      "id": "rtm",
+      "kind": "traceability",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C0",
+      "file": "requirements.json",
+      "level": "L0"
+    },
+    {
+      "id": "syntax",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C1",
+      "argv": [
+        "$NODE",
+        "--check",
+        "business.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L1"
+    },
+    {
+      "id": "external-tool",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "C7",
+      "argv": [
+        "python3",
+        "-c",
+        "print('python3 available')"
+      ],
+      "timeoutMs": 5000,
+      "level": "L1"
+    },
+    {
+      "id": "profile",
+      "kind": "semantic-profile",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C2",
+      "file": "profile.json",
+      "dataFile": "records.json",
+      "level": "L2"
+    },
+    {
+      "id": "behavior",
+      "kind": "behavior",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C3",
+      "argv": [
+        "$NODE",
+        "behavior-runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "cases": [
+        {
+          "id": "normal",
+          "input": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "expected": {
+            "decision": "accept",
+            "fee": 2
+          }
+        },
+        {
+          "id": "zero",
+          "input": {
+            "amount": 0,
+            "currency": "USD"
+          },
+          "expected": {
+            "decision": "reject",
+            "reason": "amount"
+          }
+        }
+      ],
+      "level": "L3"
+    },
+    {
+      "id": "metrics",
+      "kind": "metrics",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C4",
+      "argv": [
+        "$NODE",
+        "metrics-runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "thresholds": {
+        "architectureViolations": {
+          "max": 0
+        },
+        "unsafeEvalOccurrences": {
+          "max": 0
+        },
+        "sampleLatencyMs": {
+          "max": 1000
+        }
+      },
+      "level": "L4"
+    },
+    {
+      "id": "timeout-budget",
+      "kind": "budget",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "C6",
+      "file": "budget.json",
+      "level": "L4"
+    },
+    {
+      "id": "readiness",
+      "kind": "readiness",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C5",
+      "file": "release.json",
+      "requiredRoles": [
+        "runbook",
+        "rollback",
+        "config"
+      ],
+      "verificationGateIds": [
+        "rollback-drill"
+      ],
+      "level": "L5"
+    },
+    {
+      "id": "rollback-drill",
+      "kind": "command",
+      "enabled": true,
+      "stages": [
+        "close",
+        "release"
+      ],
+      "claimId": "C5D",
+      "argv": [
+        "$NODE",
+        "drill.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L5"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R0",
+      "gateId": "rtm",
+      "description": "Linked passing test does not prove all acceptance semantics"
+    },
+    {
+      "id": "R1",
+      "gateId": "syntax",
+      "description": "Syntax does not prove functional correctness"
+    },
+    {
+      "id": "R7",
+      "gateId": "external-tool",
+      "description": "WindowsApps python3 store stub is a deliberately missing dependency for install-guidance live evidence"
+    },
+    {
+      "id": "R2",
+      "gateId": "profile",
+      "description": "Profile fields are project-authored, not inferred from FIBO"
+    },
+    {
+      "id": "R3",
+      "gateId": "behavior",
+      "description": "Only listed business cases execute"
+    },
+    {
+      "id": "R4",
+      "gateId": "metrics",
+      "description": "Demo scanner and timing sample are not production assurance"
+    },
+    {
+      "id": "R6",
+      "gateId": "timeout-budget",
+      "description": "Kernel arithmetic on a declared file, not a production timeout inventory"
+    },
+    {
+      "id": "R5",
+      "gateId": "readiness",
+      "description": "Artifacts and isolated drill do not prove production readiness"
+    },
+    {
+      "id": "R5D",
+      "gateId": "rollback-drill",
+      "description": "Drill does not exercise a production migration"
+    }
+  ],
+  "exceptions": [],
+  "ontology": {
+    "type": "fibo-pinned",
+    "expectedCatalogSha256": "eb9795a238457b85161bbb22610a6a5507a613fb76d377b05daba625b3816c4e"
+  },
+  "requiredLevels": {
+    "close": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5"
+    ],
+    "release": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5"
+    ]
+  }
+}

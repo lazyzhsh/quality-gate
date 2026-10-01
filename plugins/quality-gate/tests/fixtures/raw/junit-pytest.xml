@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="1" tests="4" time="0.030" timestamp="2026-09-27T20:57:33.143051+08:00" hostname="example-host"><testcase classname="test_sample" name="test_fee_standard" time="0.000" /><testcase classname="test_sample" name="test_fee_large" time="0.000" /><testcase classname="test_sample" name="test_legacy_rounding" time="0.000"><skipped type="pytest.skip" message="legacy baseline only">C:\Users\example\AppData\Local\Temp\qg-raw\test_sample.py:9: legacy baseline only</skipped></testcase><testcase classname="test_sample" name="test_cap_enforcement" time="0.000"><failure message="assert (3 * 3) == 10">def test_cap_enforcement():
+&gt;       assert 3 * 3 == 10
+E       assert (3 * 3) == 10
+
+test_sample.py:14: AssertionError</failure></testcase></testsuite></testsuites>
