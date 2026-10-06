@@ -1,6 +1,6 @@
 # 面向后续 Coding Agent 的项目约定
 
-先读 `PROJECT-HANDOFF.md`，再按任务读 `docs/PRD.md`（产品需求与路线）、`docs/RTM.md`（需求跟踪矩阵，实现状态单一索引）、`docs/adr/`（架构决策），规范层 `docs/GATE-SPEC-v1.23.md`、`docs/CONFIG-GUIDE.md`、`docs/GLOSSARY.md`（统一语言术语表）与上下文层 `docs/context/original-design-v0.1.md`（设计基线和探索资料，不代表所有功能已实现）。docs 分层组织见 `docs/README.md`。新概念先入 `docs/GLOSSARY.md` 登记再进文档与代码；弃用词清单在活文档零出现（根门禁 G-CONVENTIONS 约定对齐强制，v1.19 起自 glossary 防回归测试自举迁移；新增弃用词须同步 `.quality-gate/registries/conventions.json`）。
+先读 `PROJECT-HANDOFF.md`，再按任务读 `docs/PRD.md`（产品需求与路线）、`docs/RTM.md`（需求跟踪矩阵，实现状态单一索引）、`docs/adr/`（架构决策），规范层 `docs/GATE-SPEC-v1.23.md`、`docs/CONFIG-GUIDE.md`、`docs/GLOSSARY.md`（统一语言术语表）与上下文层 `docs/context/original-design-v0.1.md`（设计基线和探索资料，不代表所有功能已实现）。docs 分层组织见 `docs/README.md`。新概念先入 `docs/GLOSSARY.md` 登记再进文档与代码；弃用词清单在活文档零出现（根门禁 G-CONVENTIONS 约定对齐强制，v1.19 起自 glossary 防回归测试自举迁移；新增弃用词须同步 `.quality-gate/registries/conventions.json`）。写作遵循受控表达核心规则（细则见 `docs/WRITING-GUIDE.md`，RTM X12）：指令与报告区分主体、条件、动作与证据；失败建议先指向具体对象与复验动作，调整阈值/豁免/AC 属验收要求变更，不作为默认修复；状态词 PASS/FAIL/ERROR/SKIP/WAIVED 保留协议原义，无证据写"未验证"。
 
 继续保持内核与 ZCode adapter 分离。每个新 Gate 至少提供可运行正例、故意失败反例及明确的失败证据；修改后运行全量回归 `node devtools/run-suite.mjs plugins/quality-gate/tests/*.test.mjs`（并发钳制持续 CPU ≤75%，2026-09-30 起）和受影响 demo。若变更打包/安装结构，运行 `python devtools/build_delivery.py` 并验证解包结果。不要把 SKIP、ERROR、缺证据或例外提案当作 PASS。
 

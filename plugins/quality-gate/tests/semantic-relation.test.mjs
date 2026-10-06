@@ -32,6 +32,34 @@ test('relation absent from the catalog is unsanctioned',t=>{
  assert.ok(evidence(r).details.findings.some(f=>f.rule==='unsanctionedRelation'&&f.predicate==='assigns'));
 });
 
+test('same-predicate reverse catalog edge does not sanction the forward expectation (F03)',t=>{
+ const root=project(t),c=config(root),catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json'),'utf8'));
+ // 目录只在 to 概念上声明同谓词反向边（B—assigns→A），无 inverseOf：期望 A—assigns→B 不被认可。
+ // 观察侧补注解使满足判定通过——隔离认可面，唯一 finding 须是 unsanctionedRelation。
+ c.gates[0].relations.push({from:'urn:demo:Contract',predicate:'assigns',to:'urn:demo:ContractParty'});
+ save(root,c);
+ catalog.concepts.find(x=>x.iri==='urn:demo:ContractParty').relations=[{predicate:'assigns',to:'urn:demo:Contract'}];
+ fs.writeFileSync(path.join(root,'catalog.json'),JSON.stringify(catalog));
+ fs.appendFileSync(path.join(root,'domain.mjs'),'\n// @ontology-relation urn:demo:Contract assigns urn:demo:ContractParty\n');
+ const r=run(root);
+ assert.equal(r.status,'FAIL');
+ assert.deepEqual(evidence(r).details.findings.map(f=>f.rule),['unsanctionedRelation']);
+ assert.equal(evidence(r).details.findings[0].predicate,'assigns');
+});
+
+test('reverse sanction holds only with a declared inverse predicate (F03)',t=>{
+ const root=project(t),c=config(root),catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json'),'utf8'));
+ // 显式互逆：assigns inverseOf assignedBy，目录在 to 概念上以 assignedBy 声明反向关系——认可成立
+ c.gates[0].relations.push({from:'urn:demo:Contract',predicate:'assigns',to:'urn:demo:ContractParty'});
+ save(root,c);
+ catalog.properties=[{predicate:'assigns',inverseOf:'assignedBy'}];
+ catalog.concepts.find(x=>x.iri==='urn:demo:ContractParty').relations=[{predicate:'assignedBy',to:'urn:demo:Contract'}];
+ fs.writeFileSync(path.join(root,'catalog.json'),JSON.stringify(catalog));
+ fs.appendFileSync(path.join(root,'domain.mjs'),'\n// @ontology-relation urn:demo:Contract assigns urn:demo:ContractParty\n');
+ const r=run(root);
+ assert.equal(r.status,'PASS',JSON.stringify(evidence(r).details.findings));
+});
+
 test('relation annotated in code but not declared fails as undeclared',t=>{
  const root=project(t);
  fs.appendFileSync(path.join(root,'domain.mjs'),'\n// @ontology-relation urn:demo:Obligation settles urn:demo:ContractParty\n');

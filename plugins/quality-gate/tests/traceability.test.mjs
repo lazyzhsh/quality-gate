@@ -180,3 +180,112 @@ test('defaultRequiredTypes applies to requirements without their own set',t=>{
  f.c.gates.find(g=>g.id==='rtm').defaultRequiredTypes=['normal','weird'];f.save();
  assert.equal(run(f.root).status,'ERROR');
 });
+
+// ---- 证明链补齐（v1.31，二轮评审 AC-UNBOUND）：AC→真实用例身份与当轮结果绑定 ----
+// 用例绑定 runner：behavior 观察回显输入（期望=输入 → 用例全过）；unit 检查回报逐用例
+// 状态（expected 声明后逐用例身份入证据）
+function caseSetup(t){
+ const f=setup(t);
+ fs.writeFileSync(path.join(f.root,'behavior-runner.mjs'),"let raw='';for await(const c of process.stdin)raw+=c;const q=JSON.parse(raw);console.log(JSON.stringify({schemaVersion:'0.1',runId:q.runId,source:'case fixture',cases:q.cases.map(c=>({id:c.id,actual:c.input}))}));");
+ fs.writeFileSync(path.join(f.root,'unit-runner.mjs'),"let raw='';for await(const c of process.stdin)raw+=c;const q=JSON.parse(raw);const cases=[{name:'transfer-once',status:'pass',baselineStatus:'pass'}];console.log(JSON.stringify({schemaVersion:'0.1',runId:q.runId,source:'unit fixture',total:cases.length,passed:cases.length,failed:0,skipped:0,cases}));");
+ f.c.gates.push(
+  {id:'behavior',kind:'behavior',level:'L3',enabled:true,stages:['close'],claimId:'C2',argv:['$NODE','behavior-runner.mjs'],timeoutMs:2000,cases:[{id:'transfer-once',input:{settled:1},expected:{settled:1}}]},
+  {id:'unit',kind:'engineering',level:'L1',enabled:true,stages:['close'],claimId:'C1',timeoutMs:5000,requiredChecks:['unit'],checks:[{id:'unit',type:'test',argv:['$NODE','unit-runner.mjs'],timeoutMs:2000,expected:{p2p:['transfer-once']}}]},
+ );
+ f.save();
+ f.requirements[0].acceptanceCriteria[0].testGateIds=['build','behavior','unit'];
+ f.saveRequirements();
+ return f;
+}
+const rtmOf=result=>result.evidence.find(e=>e.gateId==='rtm');
+const acOf=(result,id='AC-1')=>rtmOf(result).details.requirements[0].acceptanceCriteria.find(a=>a.id===id);
+
+test('AC case bindings verify per-case identity in the same run (positive)',t=>{
+ const f=caseSetup(t);
+ f.requirements[0].acceptanceCriteria[0].cases=[{gateId:'behavior',caseIds:['transfer-once']},{gateId:'unit',caseIds:['transfer-once']}];
+ f.saveRequirements();
+ const result=run(f.root);
+ assert.equal(result.status,'PASS',JSON.stringify(rtmOf(result).details.requirements));
+ const ac=acOf(result);
+ assert.deepEqual(ac.caseBindings,[{gateId:'behavior',cases:[{id:'transfer-once',status:'pass'}]},{gateId:'unit',cases:[{id:'transfer-once',status:'pass'}]}]);
+ assert.equal(ac.caseFindings,undefined);
+});
+
+test('AC bound to an unrelated passing gate cannot pass: case identity missing (review probe AC-UNBOUND)',t=>{
+ const f=caseSetup(t);
+ // 评审反例形态：AC 声称"转账恰好一次"，所连门禁是只退出 0 的 command——门禁 PASS 但
+ // 无逐用例身份，绑定用例缺失即 FAIL，AC 不得凭无关成功门禁放行
+ f.c.gates.push({id:'noop',kind:'command',level:'L1',enabled:true,stages:['close'],claimId:'C1',argv:['$NODE','-e','process.exit(0)'],timeoutMs:1000});
+ f.save();
+ f.requirements[0].acceptanceCriteria[0].testGateIds=['noop'];
+ f.requirements[0].acceptanceCriteria[0].cases=[{gateId:'noop',caseIds:['transfer-once']}];
+ f.saveRequirements();
+ const result=run(f.root);
+ assert.equal(result.status,'FAIL');
+ const ac=acOf(result);
+ assert.equal(ac.testGates[0].status,'PASS');
+ assert.deepEqual(ac.caseFindings,[{gateId:'noop',caseId:'transfer-once',rule:'acCaseMissing'}]);
+ assert.ok(failureReasons(rtmOf(result)).some(reason=>reason.includes('AC-1 绑定用例 transfer-once（noop）不在当轮证据中')));
+});
+
+test('skipped and failed bound cases cannot satisfy the AC',t=>{
+ const f=caseSetup(t);
+ // unit runner 回报 skip：expected 绑定下 check 本身 FAIL（skippedCase）——AC 侧同时得到
+ // acCaseSkipped finding（被跳过不是通过）
+ fs.writeFileSync(path.join(f.root,'unit-runner.mjs'),"let raw='';for await(const c of process.stdin)raw+=c;const q=JSON.parse(raw);const cases=[{name:'transfer-once',status:'skip',baselineStatus:'pass'}];console.log(JSON.stringify({schemaVersion:'0.1',runId:q.runId,source:'unit fixture',total:1,passed:0,failed:0,skipped:1,cases}));");
+ f.requirements[0].acceptanceCriteria[0].cases=[{gateId:'unit',caseIds:['transfer-once']}];
+ f.saveRequirements();
+ let result=run(f.root);
+ assert.equal(result.status,'FAIL');
+ assert.ok(acOf(result).caseFindings.some(finding=>finding.rule==='acCaseSkipped'&&finding.caseId==='transfer-once'));
+ assert.ok(failureReasons(rtmOf(result)).some(reason=>reason.includes('被跳过——跳过不是通过')));
+ // 行为用例未通过：期望改值 → behavior 门禁 FAIL，AC 侧 acCaseFailed finding 并存
+ fs.writeFileSync(path.join(f.root,'unit-runner.mjs'),"let raw='';for await(const c of process.stdin)raw+=c;const q=JSON.parse(raw);const cases=[{name:'transfer-once',status:'pass',baselineStatus:'pass'}];console.log(JSON.stringify({schemaVersion:'0.1',runId:q.runId,source:'unit fixture',total:1,passed:1,failed:0,skipped:0,cases}));");
+ f.c.gates.find(g=>g.id==='behavior').cases[0].expected={settled:2};
+ f.save();
+ f.requirements[0].acceptanceCriteria[0].cases=[{gateId:'behavior',caseIds:['transfer-once']}];
+ f.saveRequirements();
+ result=run(f.root);
+ assert.equal(result.status,'FAIL');
+ assert.ok(acOf(result).caseFindings.some(finding=>finding.rule==='acCaseFailed'&&finding.gateId==='behavior'));
+});
+
+test('requireCaseBinding demands a binding on every AC; default keeps legacy semantics',t=>{
+ const f=caseSetup(t);
+ // 未开启：AC 无 cases 仍按既有门禁关联语义 PASS
+ let result=run(f.root);
+ assert.equal(result.status,'PASS');
+ // 开启：同一登记 FAIL 指名未绑定
+ f.c.gates.find(g=>g.id==='rtm').requireCaseBinding=true;f.save();
+ result=run(f.root);
+ assert.equal(result.status,'FAIL');
+ assert.equal(acOf(result).caseUnbound,true);
+ assert.ok(failureReasons(rtmOf(result)).some(reason=>reason.includes('AC-1 未声明用例绑定')));
+ // 补上绑定即恢复 PASS
+ f.requirements[0].acceptanceCriteria[0].cases=[{gateId:'behavior',caseIds:['transfer-once']}];
+ f.saveRequirements();
+ assert.equal(run(f.root).status,'PASS');
+});
+
+test('case binding shapes fail closed at registry validation',t=>{
+ const f=caseSetup(t);
+ const ac=f.requirements[0].acceptanceCriteria[0];
+ const shapes=[
+  {gateId:'ghost',caseIds:['transfer-once']},          // gateId 不在该 AC 的 testGateIds 内
+  {gateId:'behavior',caseIds:[]},                      // 空用例表
+  {gateId:'behavior',caseIds:['a','a']},               // 用例重复
+ ];
+ for(const [index,cases] of shapes.entries()){
+  ac.cases=[cases];
+  f.saveRequirements();
+  assert.equal(run(f.root).status,'ERROR',`shape ${index} must fail validation`);
+ }
+ // 同一 gateId 重复绑定也拒绝
+ ac.cases=[{gateId:'behavior',caseIds:['transfer-once']},{gateId:'behavior',caseIds:['reject-dup']}];
+ f.saveRequirements();
+ assert.equal(run(f.root).status,'ERROR');
+ // requireCaseBinding 非布尔 → 配置 ERROR
+ ac.cases=undefined;f.saveRequirements();
+ f.c.gates.find(g=>g.id==='rtm').requireCaseBinding='yes';f.save();
+ assert.equal(run(f.root).status,'ERROR');
+});

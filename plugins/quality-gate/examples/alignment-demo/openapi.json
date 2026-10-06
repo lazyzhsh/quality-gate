@@ -1,0 +1,43 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "quote-api", "version": "1.0.0"},
+  "paths": {
+    "/quote": {
+      "post": {
+        "summary": "create a quote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {"type": "number"},
+                  "currency": {"type": "string"}
+                },
+                "required": ["amount", "currency"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "quote created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {"type": "string"},
+                    "fee": {"type": "number"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "bad request"}
+        }
+      }
+    }
+  }
+}

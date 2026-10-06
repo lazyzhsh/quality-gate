@@ -7,6 +7,7 @@
 | alignment-demo | 协议演示 | L2 | alignment | — | alignment |
 | api-security-demo | 协议演示 | L3/L4 | scan, behavior | close | api-security |
 | architecture-demo | 协议演示 | L4 | metrics | close | metrics |
+| architecture-dependency-demo | 协议演示 | L4 | metrics | close | metrics |
 | behavior-demo | 协议演示 | L3 | behavior | close | — |
 | budget-demo | 协议演示 | L4 | budget, metrics | close | budget |
 | change-scope-demo | 协议演示 | L0 | change-scope | — | change-scope-demo |
@@ -31,6 +32,7 @@
 | replay-baseline-demo | 协议演示 | L3 | journey | — | replay-baseline |
 | rerun-demo | 协议演示 | L4 | rerun | close | rerun |
 | resilience-demo | 协议演示 | L4 | resilience | — | resilience |
+| resilience-process-demo | 协议演示 | L4 | resilience | close | resilience |
 | scan-demo | 协议演示 | L4 | scan | — | scan |
 | semantic-alignment-demo | 协议演示 | L3 | semantic-alignment | — | semantic-alignment |
 | semantic-conflict-demo | 协议演示 | L3 | semantic-alignment | close | proposals, semantic-alignment |

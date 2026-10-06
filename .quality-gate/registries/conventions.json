@@ -105,6 +105,24 @@
         "file": "docs/GLOSSARY.md",
         "section": "6. 弃用词清单"
       }
+    },
+    {
+      "id": "STYLE-writing",
+      "type": "argv",
+      "severity": "advisory",
+      "source": {
+        "file": "docs/WRITING-GUIDE.md",
+        "section": "与自动检查的关系"
+      },
+      "argv": [
+        "$NODE",
+        "plugins/quality-gate/scripts/writing-style-check.mjs",
+        "--scope",
+        "docs/*.md",
+        "--scope",
+        "*.md"
+      ],
+      "timeoutMs": 10000
     }
   ]
 }

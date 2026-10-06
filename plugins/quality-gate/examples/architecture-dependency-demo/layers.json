@@ -1,0 +1,15 @@
+{
+  "layers": {
+    "cli": "src/cli",
+    "ui": "src/ui",
+    "core": "src/core",
+    "shared": "src/shared"
+  },
+  "forbidden": [
+    {"from": "core", "to": "ui"},
+    {"from": "core", "to": "cli"},
+    {"from": "shared", "to": "ui"},
+    {"from": "shared", "to": "core"},
+    {"from": "shared", "to": "cli"}
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "R-1",
+      "statement": "The payment service recovers from a real process kill within the declared budget"
+    }
+  ],
+  "gates": [
+    {
+      "id": "resilience-process",
+      "kind": "resilience",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "R-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 30000,
+      "scenarios": [
+        {
+          "id": "process-kill",
+          "maxRecoveryMs": 15000,
+          "expectedFinalState": "ready",
+          "requiredSignals": [
+            "log"
+          ]
+        }
+      ],
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-R1",
+      "gateId": "resilience-process",
+      "description": "Real process kill covers one fault class (unplanned termination with supervised restart); other fault types (network partition, disk failure) remain declared boundaries"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

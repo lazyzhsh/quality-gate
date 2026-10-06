@@ -11,3 +11,10 @@ test('P1 timeout is an error',t=>{const f=fixture(t);f.c.gates[0].argv[2]='setTi
 test('P1 malformed and unsupported configuration fails closed',t=>{const f=fixture(t);f.c.gates[0].kind='unknown';f.save();assert.equal(run(f.root).status,'ERROR');});
 test('P1 no selected gates is not pass',t=>{const f=fixture(t);assert.equal(exitCode(run(f.root,'release')),2);});
 test('P1 evidence write failure is error',t=>{const f=fixture(t);assert.equal(run(f.root,'close',path.join(f.root,'.quality-gate.json','runs')).status,'ERROR');});
+test('skip reasons distinguish disabled from stage-not-selected (v1.28)',t=>{const f=fixture(t);
+ f.c.gates.push({id:'off',kind:'command',level:'L1',enabled:false,stages:['close'],claimId:'C1',argv:['$NODE','-e','0'],timeoutMs:1000},{id:'later',kind:'command',level:'L1',enabled:true,stages:['release'],claimId:'C1',argv:['$NODE','-e','0'],timeoutMs:1000});
+ f.save();const r=run(f.root);
+ const off=r.evidence.find(e=>e.gateId==='off'),later=r.evidence.find(e=>e.gateId==='later');
+ assert.deepEqual(off.details,{reason:'disabled'});
+ assert.deepEqual(later.details,{reason:'stage-not-selected',stages:['release']});
+});

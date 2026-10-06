@@ -6,7 +6,7 @@
 
 1. **一概念一名**：每个概念在每个限界上下文（§2）内只有一个规范名；跨上下文同名必须同义，否则加限定词拆义。
 2. **双轨映射制**：中文文档用规范中文，代码与协议保持英文命名，本表持双向映射；中文文档内嵌英文仅限代码字面量（字段/枚举/文件名/命令）与 §9 借词清单。
-3. **弃用词零出现**：§6 弃用词不得出现在活文档（docs 根活文档、AGENTS/PROJECT-HANDOFF/README、插件双语 README、SKILL/commands、adapters/examples README）与代码人读文案；docs/history、docs/release、evidence/ 与 ADR-0001–0015 正文为历史档案，旧词按"历史称谓"理解（§10），不回写。活文档中的**历史性小节**（RTM §1–§10 增补行、PLAN 历史版本记录、PRD §7 已达成段、HANDOFF 前一版本与实机证据行）：其中的**版本主题名按专名保留**（如 v1.15 主线"baseline 内容内核重放"），其余 generic 术语用法在 T3 做词级替换（不改事实内容）。
+3. **弃用词零出现**：§6 弃用词不得出现在活文档（docs 根活文档、AGENTS/PROJECT-HANDOFF/README、插件双语 README、SKILL/commands、adapters/examples README）与代码人读文案；docs/history、docs/release、evidence/ 与 ADR-0001–0015 正文为历史档案，旧词按"历史称谓"理解（§10），不回写。活文档中的**历史性小节**（RTM 各版本增补节行、PLAN 历史版本记录、PRD §7 已达成段、HANDOFF 前一版本与实机证据行）：其中的**版本主题名按专名保留**（如 v1.15 主线"baseline 内容内核重放"），其余 generic 术语用法在 T3 做词级替换（不改事实内容）。
 4. **替换判定三问**（新词入表前合规检查）：① 软件/项目管理惯用词→可用；② 描述性复合词（字面即义，如"声明即核验"）→可用；③ 比喻/类比/跨领域借词→改用惯用语。
 5. 盘点计数（§10）是 2026-09-30 快照，仅作清扫规模参考；文档中一切计数以当期实测为准。
 6. **提案概念例外**：上下文层设计基线文档（docs/context/original-design-v*.md）中的新概念可以**提案态**行文（文档头部须声明提案概念清单，正文标注提案），正式登记发生在对应能力立项实施时；提案概念在实施定稿前不进入活文档与代码命名。2026-09-30 随演进基线 v0.9 增补。
@@ -18,7 +18,7 @@
 | 内核产品域 | `plugins/quality-gate/lib`（配置 schema、判定、run 报告、观察协议、摘要） | §3 概念总表；协议键名以表中代码名为准 |
 | 宿主适配上下文 | `hooks/`、`commands/`、`skills/`（ZCode 插件层） | 复用内核语言；宿主专有概念（Hook/Command/Skill、市场快照）在 §3 单列 |
 | 参考工具适配器 | `adapters/`（visual/consumer-usage/python/java 参考实现） | 复用内核观察协议语言；"参考非认证"边界固定 |
-| 演示上下文 | `examples/`（46 个 demo） | 复用内核语言；demo 场景词汇不入本表 |
+| 演示上下文 | `examples/`（48 个 demo） | 复用内核语言；demo 场景词汇不入本表 |
 | 过程管理域 | PLAN/RTM/PRD/HANDOFF 的迭代管理词汇 | §3 标"过程"；不与产品域词汇互借 |
 | 历史档案 | docs/history、docs/release、evidence/、ADR-0001–0015 正文 | 只读；旧词=历史称谓（§10） |
 
@@ -26,6 +26,7 @@
 
 | 概念 | 规范中文 | 代码名 | 定义 | 弃用别名 |
 |---|---|---|---|---|
+| controlled expression | 受控表达 | —（表达细则见 WRITING-GUIDE；自动检查经约定登记 argv 规则 STYLE-writing 接入，无新协议键） | 使用固定术语、明确条件与主体、可追溯证据和限定结论范围的表达规则；适用于项目规范、智能体指令和报告。借鉴 ASD-STE100 原则，不表示通过该标准合规检查，也不证明智能体行为正确 | — |
 | input snapshot | 输入内容快照 | `inputSnapshot` | 运行前文件路径与内容摘要清单；用于检测新增/删除/重命名/内容变更，不证明外部状态 | — |
 | input stability | 输入稳定性 | `inputsStable` | 运行前后内容快照完整且一致；复用的必要条件，非业务判定 | — |
 | gate | 门禁 | `gates[]`、`GATE_KINDS` | 单个可执行质量检查单元，按 kind 分型、属一个层级、可按 stage 裁剪 | — |
@@ -39,7 +40,12 @@
 | evidence | 证据 | `evidence[]` | run 报告内逐门禁结构化执行记录 | — |
 | run report | 运行报告 | `.quality-gate/runs/<uuid>.json`、`schemaVersion`（0.1→0.2 于 v1.16） | 单次运行全部判定与证据的归档 | — |
 | summary | 摘要 | `renderSummary`/`renderBrief` | stderr 分级人读报告（PASS 一行 brief，非 PASS 全表） | — |
+| content check | 内容级核验 | documentation 门禁 `requireContentCheck`/`requiredContent`（v1.29 定稿） | 内核实读文档制品内容验证主题、版本串与关键字段出现——自报 topics/version 不再是唯一依据（声明即核验模式在文档域的落地） | — |
+| not-applicable skip | 不适用跳过 | SKIP details `reason:'Condition not met'`（逐断言）、摘要行 `不适用跳过`（v1.28 定稿） | 门禁已执行、断言 `when` 条件全部未命中的 SKIP——与未启用、阶段未选中区分呈现；合法不适用与必要证据缺失由读者结合声明关联判断 | — |
 | evidence strength | 证据力 | `evidenceStrength` | 只读聚合 PASS 门禁的信号与定量证据得出的强度行（无信号不显示） | — |
+| execution budget | 统一执行预算 | `execution-budget.mjs`、报告 `executionBudget`（v1.31.0 F01 定稿） | 阶段执行预算＝门禁顶层声明（timeoutMs/coverage/reasoner/shacl）＋登记文件内嵌 runner（conventions argv 规则、scope.json contentCheck）之和；run 与 inspect 同源核验，登记不可读即 fail-closed；宿主预算同时是执行期限——剩余期限不足以启动新任务时停止启动并记 ERROR `budget-exhausted`（不放行为 SKIP） | — |
+| case binding | 用例绑定 | requirements.json 逐 AC `cases:[{gateId,caseIds}]`、门禁选项 `requireCaseBinding`（v1.31.0 证明链补齐定稿） | AC 声明的用例须在被绑定门禁的当轮证据中逐一存在且通过——缺失（acCaseMissing，无关成功门禁不能充当 AC 证据）/被跳过（acCaseSkipped）/未通过（acCaseFailed）均 FAIL 指名；用例身份取自 behavior cases 与 engineering unit/test checks[].cases；证明边界＝用例当轮真实执行且通过，AC 写作与用例设计仍人工负责 | — |
+| no signal | 无信号 | 来源列显示文案、`sourceDistribution.none`（v1.31.0 定稿） | PASS 而无任何来源信号的门禁分类——与非 PASS 的"—"语义分离；有量无锚=声明、有内核核验信号=核验、有降级声明=降级 | — |
 | strength tier | 强度等级 | 显示文案：核验级＞声明级＞降级（原"锚定"，T4 随批改文案与测试针） | 证据力等级的实测推导 | 锚定（等级义） |
 | signal | 证据信号 | 内部键 `anchors`→`signals`（T4 随批） | 内核可独立核验的证据标记，六个：git 基线核验/来源指纹/双次运行一致/持久化快照/原始输出解析/基线内容核验 | 锚点（该义） |
 | runner | runner | 观察协议的对端命令 | 项目经 argv 配置的真实工具执行者，按协议回报观察（§9 借词） | 运行器 |
@@ -66,20 +72,20 @@
 | task intent register | 任务意图登记 | `task-intent.json`（v1.17 定稿；CLI `qgate intent`） | 任务开始时结构化落盘的任务范围/验收条件/约束声明；问询不代写、修订显式留痕、内容哈希可守护（v0.9 §41 提案，v1.17 落地） | — |
 | drift check | 漂移对账 | change-scope `taskIntent` 绑定（v1.17 定稿；失败原因 `outside-task-scope`/`intent-file-modified`/`no-task-intent`） | 变更集相对任务意图基准的对账判定——越界变更与意图文件静默变更均 FAIL 指名（v0.9 §41.4 提案，v1.17 落地） | — |
 | symbol grounding | 符号存在性对账 | kind `symbol-grounding`（v1.17 定稿；失败原因 `unresolved-import`/`unresolved-member`） | 受检文件静态 import 说明符与声明面（项目内模块/依赖清单/内置模块）的确定性对账（v0.9 §43 提案，v1.17 落地 JS/TS 首版）；v1.20 扩展命名成员/端点/配置键三面+观察输入口（轨道 C 收官） | — |
-| | api existence protocol | API 存在性协议 | `apiSurface:{file}`+`registries/api-surface.json`（v1.20 定稿；失败原因 `unresolved-reference`） | 超出 import 粒度的引用（端点/配置键）对声明面登记的确定性对账——调用位引用×OpenAPI paths 面（{param} 段通配）、process.env×schema 键面（v0.9 §43.3 提案，v1.20 落地；OD-109=B 登记文件） | — |
+| api existence protocol | API 存在性协议 | `apiSurface:{file}`+`registries/api-surface.json`（v1.20 定稿；失败原因 `unresolved-reference`） | 超出 import 粒度的引用（端点/配置键）对声明面登记的确定性对账——调用位引用×OpenAPI paths 面（{param} 段通配）、process.env×schema 键面（v0.9 §43.3 提案，v1.20 落地；OD-109=B 登记文件） | — |
 | declaration face | 声明面 | 声明即核验输入（v1.20 定稿） | 存在性对账所对账的项目声明依据——OpenAPI 端点面/JSON Schema 键面/目标模块导出面/依赖清单/内置模块；声明即核验=runner 无权自判存在 | — |
 | observation input port | 观察输入口 | `importObservations[{language,file}]`（v1.20 定稿；失败原因 `observation-coverage-gap`） | 适配器产出的解析观察文件进入内核对账的声明通道——Python/Java import 由参考适配器以真实工具链探测后回报，内核核验形状与覆盖（OD-108=C 协议部分） | — |
 | bidirectional reconciliation | 双向对账 | OD-111=A（v1.20 定稿） | 内核词法提取集×适配器回报集的恰好覆盖对账——提取无回报=瞒报 FAIL、回报 unresolved 汇入失败面、多出回报进审计面；runner 无权决定引用集 | — |
-AC structure protocol | AC 结构化协议 | `acceptance[].format`（'gherkin'|'ears'）+失败原因 `ac-structure-invalid`/`ac-type-conflict`+`lib/ac-structure.mjs`（v1.18.0 定稿） | 验收条件声明结构化格式（Gherkin+EARS 双支持[2026-10-01 用户裁决双支持]），内核做结构校验（骨架齐备性：Gherkin 场景/步骤关键字/@类型标签、EARS 五模板中英词表）并派生 AC 类型（Gherkin=场景标签并集[映射机制 2026-10-01 裁决=标签权威]、EARS=模板映射集）；只校验结构不判语义，与真实意图的一致性靠确认留痕（v0.9 §41；v1.18.0 落地） | 形状协议（旧称） |
+| AC structure protocol | AC 结构化协议 | `acceptance[].format`（'gherkin'\|'ears'）+失败原因 `ac-structure-invalid`/`ac-type-conflict`+`lib/ac-structure.mjs`（v1.18.0 定稿） | 验收条件声明结构化格式（Gherkin+EARS 双支持[2026-10-01 用户裁决双支持]），内核做结构校验（骨架齐备性：Gherkin 场景/步骤关键字/@类型标签、EARS 五模板中英词表）并派生 AC 类型（Gherkin=场景标签并集[映射机制 2026-10-01 裁决=标签权威]、EARS=模板映射集）；只校验结构不判语义，与真实意图的一致性靠确认留痕（v0.9 §41；v1.18.0 落地） | 形状协议（旧称） |
 | convention register | 约定登记 | `.quality-gate/registries/conventions.json`（v1.19 定稿） | 仓库自声明约定条目的登记文件：banned-words 规则（字面词+扫描面+豁免机制）与 argv 规则（项目自配 runner 统一观察协议）；每条带 source 溯源绑定来源约定文件（文档形态与可执行形态双向可追）。本仓库自举承载 GLOSSARY §6 弃用词扫描（v1.19 起） | — |
 | convention alignment | 约定对齐 | kind `convention-alignment`（第 36 个，L0，v1.19 定稿） | 约定登记条目 ↔ 制品的对账判定：只写 markdown 靠自觉遵守的约定在内核判定下持续生效（OD-103 裁决=独立 kind——与 engineering convention 子检查判定语义不同，并存不冲突） | — |
 | ADR binding | ADR 绑定 | decisions `adrRef:{file}`＋`requireAdrRefs`（v1.19 定稿） | 决策登记与 ADR 文档的双向绑定：frontmatter 平面 YAML 子集（status/date/deciders/supersedes/superseded-by）声明即核验＋状态映射对账＋取代链互指核验——决策史一处事实一处索引 | — |
 | trace continuity verification | trace 贯通核验 | kind `trace-continuity`（第 37 个，L4，v1.21 定稿；失败原因 `trace-discontinuity`） | 演练 runner 回报跨服务调用传播对（调用对＋两端 trace/span id＋可选 traceparent），内核对每个声明调用对核验同 traceId、child.parentSpanId 与 parent.spanId 衔接、traceparent W3C 传播格式与一致性——核验贯通性而非信号存在性；声明式对账，不做 APM/流量采集（v0.9 §44.1 提案，v1.21 落地；OD-106=B 独立 kind，用户覆盖倾向案——可单独挂 close） | — |
 | replay asset | 回放资产 | `replayBaseline:{file,contentSha256}`（v1.21 定稿；失败原因 `replay-drift`/`replay-baseline-modified`） | journey/behavior 以归档观察记录为期望基线的逐步骤/逐用例对照（步骤序＋关键字段，易变字段走 ignorePaths），差异即行为漂移；contentSha256 内容绑定＝换基线须显式重 pin；当次无观察记录时容忍自报对照（弱一档如实呈现）；行为回归对照，非性能/时序回放（v0.9 §44.2 提案，v1.21 落地） | — |
-| SHACL engine protocol | SHACL 引擎协议 | semantic-profile `shacl:{argv,timeoutMs}`＋`adapters/shacl/pyshacl_runner.py`（v1.22 定稿；OD-114=B runner 协议外接，用户覆盖内核自研案） | 外接 SHACL 真引擎的统一观察协议——内核经 stdin 交付形状/记录/子类边，引擎回报 findings＋conformance，内核核验观察形状并判定（未知记录/未知组件/自报矛盾均 fail-closed，不采信自报放行）；组件全集内核原生判定（v1.22.1 起 OD-116=默认零外部依赖——插件默认不依赖外部环境工具安装）；pyshacl 为环境就绪时的可选第二实现（并集判定），完整 SHACL 语义属其承载 |
-| deep matching | 深度匹配 | sh:targetClass 语义（v1.22 起 semantic-profile 内核承载） | 记录类型是 shape 目标类或其后代（subClassOf 链）即套用该 shape——真 SHACL 的 rdfs:subClassOf* 目标语义；真子类套用入 deepMatches 证据（旧精确匹配为缺陷面） |
-| multilingual terminology | 多语言术语 | 目录 altLabels `{value,lang}` 条目＋terms 可选 `lang`（v1.22 定稿；OD-115=A SKOS 语言标签） | SKOS 语言标签制——纯字符串条目＝语言未定（旧目录零改动兼容），S14 唯一性按 (语言, 值) 分域（跨语言同形词合法）；术语带 lang 严格同语言匹配，不带 lang 跨语言匹配重名即歧义如实暴露 |
-| deterministic OWL subset | 确定性 OWL 子集（推理深化） | 目录 `equivalentClass`/`unionOf`/`properties[{subPropertyOf,inverseOf,transitive}]`＋semantic-relation 推理满足判定（v1.23 定稿；Q1=C 用户裁决） | 闭世界声明推理四件套——等价类（单边即对称，物化进扩展包含图：互达/互斥传播/建时矛盾 fail-closed）、并类（操作数⊑并类）、子属性层级（Q⊑*P 蕴含，须 DAG）、逆属性（单边声明即双向）与传递链（观察链前向可达）；无开世界假设/反例推理/unionOf 外类表达式——与"完整 OWL reasoner"的边界如实 |
+| SHACL engine protocol | SHACL 引擎协议 | semantic-profile `shacl:{argv,timeoutMs}`＋`adapters/shacl/pyshacl_runner.py`（v1.22 定稿；OD-114=B runner 协议外接，用户覆盖内核自研案） | 外接 SHACL 真引擎的统一观察协议——内核经 stdin 交付形状/记录/子类边，引擎回报 findings＋conformance，内核核验观察形状并判定（未知记录/未知组件/自报矛盾均 fail-closed，不采信自报放行）；组件全集内核原生判定（v1.22.1 起 OD-116=默认零外部依赖——插件默认不依赖外部环境工具安装）；pyshacl 为环境就绪时的可选第二实现（并集判定），完整 SHACL 语义属其承载 | — |
+| deep matching | 深度匹配 | sh:targetClass 语义（v1.22 起 semantic-profile 内核承载） | 记录类型是 shape 目标类或其后代（subClassOf 链）即套用该 shape——真 SHACL 的 rdfs:subClassOf* 目标语义；真子类套用入 deepMatches 证据（旧精确匹配为缺陷面） | — |
+| multilingual terminology | 多语言术语 | 目录 altLabels `{value,lang}` 条目＋terms 可选 `lang`（v1.22 定稿；OD-115=A SKOS 语言标签） | SKOS 语言标签制——纯字符串条目＝语言未定（旧目录零改动兼容），S14 唯一性按 (语言, 值) 分域（跨语言同形词合法）；术语带 lang 严格同语言匹配，不带 lang 跨语言匹配重名即歧义如实暴露 | — |
+| deterministic OWL subset | 确定性 OWL 子集（推理深化） | 目录 `equivalentClass`/`unionOf`/`properties[{subPropertyOf,inverseOf,transitive}]`＋semantic-relation 推理满足判定（v1.23 定稿；Q1=C 用户裁决） | 闭世界声明推理四件套——等价类（单边即对称，物化进扩展包含图：互达/互斥传播/建时矛盾 fail-closed）、并类（操作数⊑并类）、子属性层级（Q⊑*P 蕴含，须 DAG）、逆属性（单边声明即双向）与传递链（观察链前向可达）；无开世界假设/反例推理/unionOf 外类表达式——与"完整 OWL reasoner"的边界如实 | — |
 | onboarding | 引导初始化 | `templates`/`init` 命令、`/quality-gate-init` | 档位→模板→附加门禁→替换的确定性装配流程 | — |
 | preflight | 预检 | `preflightRefs` | init/update 写盘后的登记引用只读检查（不阻断） | — |
 | allowlist | 白名单 | `acceptedFindings`/`allowedTransitions`/文档顶层键白名单等 | 显式允许集合 | 允许清单（该义；2026-09-30 用户裁决保留白名单） |
@@ -142,7 +148,7 @@ AC structure protocol | AC 结构化协议 | `acceptance[].format`（'gherkin'|'
 | 层次 | 目标 | 前缀/形状 | 登记位置 | 备注 |
 |---|---|---|---|---|
 | 需求跟踪层（RTM） | 原始设计任务行 | `L<0-5>.<n>`（L0.1–L5.7） | RTM §1 | 与层级 L0–L5 以小数点区分 |
-| 需求跟踪层（RTM） | 横切需求行 | `X<n>`（X1–X11） | RTM §2 | — |
+| 需求跟踪层（RTM） | 横切需求行 | `X<n>`（X1–X15；X12–X15 为受控表达需求） | RTM §2 与"受控表达需求"节 | — |
 | 需求跟踪层（RTM） | 版本增补行 | 主题双字母+`n`：P/V/O/C/E/H/T/BR/TS/CD/UL… | RTM §3–§11 各版增补节 | 字母随该版主题选定，随行登记；同字母异版按节区分 |
 | 需求跟踪层（RTM） | 溯源编号（机制评审敞口） | `W<n>`（W1–W5） | RTM §6 溯源列 | 与工作包 T 编号区分 |
 | 需求跟踪层（RTM） | 四原则研究项 | `R<n>`（R1–R13；R13 已出范围） | RTM §7；研究输入 docs/context | R1–R4 兼作 topology 门禁规则名（同源同义） |

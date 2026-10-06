@@ -41,6 +41,19 @@ test('contract-diff without a performed check fails closed',t=>{
  assert.equal(run(root).status,'ERROR');
 });
 
+test('contract-diff requireLive demands an explicit live mode (F02)',t=>{
+ // 演示 runner 不回报 mode：requireLive 开启下缺失＝缺证据 FAIL 指名（第三条消费路径）
+ const root=project(t,'healthy',{consistency:false});
+ const configPath=path.join(root,'.quality-gate.json');
+ const config=JSON.parse(fs.readFileSync(configPath,'utf8'));
+ config.gates.find(g=>g.id==='contract-compat').requireLive=true;
+ fs.writeFileSync(configPath,JSON.stringify(config));
+ const contractGate=run(root).evidence.find(e=>e.gateId==='contract-compat');
+ assert.equal(contractGate.status,'FAIL');
+ assert.equal(contractGate.details.missingObservationMode,true);
+ assert.ok(failureReasons(contractGate).includes('观察缺少模式声明：requireLive 要求显式 live（缺证据）'));
+});
+
 test('every consistency check must be required or explicitly excluded with a reason',t=>{
  const root=project(t);
  focusConsistency(root,null,{contract:false});

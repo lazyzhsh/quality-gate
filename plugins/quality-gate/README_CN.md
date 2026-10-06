@@ -14,8 +14,8 @@ L2 persistence 门禁：见 examples/persistence-demo（Python 3.10+ 标准库�
 
 L2 ontology-map 门禁：见 examples/fibo-demo。核对配置的 IRI 存在于随包、SHA256 校验的 FIBO `master_2026Q1` Agreements/Contracts 子集（52 个含 subClassOf/disjointWith 边的类）或配置的 local catalog。只证明术语存在性；不验证业务映射、不做 OWL 推理。上游归属详见 marketplace 根 `docs/FIBO-PROVIDER.md`。
 
-examples/six-domain-demo 六域示例在 close/release 要求 L0–L5 每域都有 PASS 证据。examples/examples.manifest.json 是全部 46 个示例的单一事实源（含冒烟测试阶段；交付构建按清单执行）。完整协议与边界见 marketplace 根 `docs/GATE-SPEC-v1.23.md`。例外提案登记即阻断；已审批者在窗口内呈现 WAIVED，从不豁免任何 FAIL 门禁。
+examples/six-domain-demo 六域示例在 close/release 要求 L0–L5 每域都有 PASS 证据。examples/examples.manifest.json 是全部 48 个示例的单一事实源（含冒烟测试阶段；交付构建按清单执行）。完整协议与边界见 marketplace 根 `docs/GATE-SPEC-v1.23.md`。例外提案登记即阻断；已审批者在窗口内呈现 WAIVED，从不豁免任何 FAIL 门禁。
 
-MIT: see LICENSE in this plugin directory. Stop accepts at most 50000ms declared execution budget within the 55000ms host deadline; long command checks can use CLI pr/release (up to 300000ms). Current release: 1.24.0.
+MIT: see LICENSE in this plugin directory. Stop accepts at most 50000ms total execution budget (gate declarations plus registry-embedded convention/contentCheck runners) within the 55000ms host deadline and stops starting tasks that no longer fit the remaining deadline (ERROR budget-exhausted); long command checks can use CLI pr/release (up to 300000ms). Current release: 1.31.1.
 
-1.24.0 复用仅适用于确定性文件式检查且运行前后/当前内容快照一致；外部命令和时间政策重新执行。长回归使用 CLI pr/release，Stop 超预算时 ERROR 并阻断。
+归档复用仅适用于确定性文件式检查且运行前后/当前内容快照一致；外部命令和时间政策重新执行。长回归使用 CLI pr/release，Stop 超预算时 ERROR 并阻断。

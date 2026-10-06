@@ -2,7 +2,7 @@
 
 这是一个可运行的报销申请审批小项目，不是只返回预制 PASS 的 runner。业务代码把申请和账本写入临时 JSON 存储；门禁分别读取需求追踪、源码测试、落盘状态、业务行为、度量/扫描/预算/重跑与发布材料。
 
-**基线定位（2026-09-26 固化）**：本夹具是 quality-gate 插件实机验收的可复用基线快照——每次客户端升级（marketplace 安装新版本、新开会话）后按本 README「验收步骤」执行即可，不需要临时编制项目。基线 = 13 个门禁（12 种 gate kind）× L0–L5 全六域 + 全套登记文件 + 负例矩阵 + 生命周期检查脚本。1.9.0 起 rtm 门禁启用 `requirePrdRefs`，REQ-01 绑定 `prdRef:{file:"docs/PRD.md"}`（随版固化登记完备性声明）。
+**基线定位（2026-09-26 固化）**：本夹具是 quality-gate 插件实机验收的可复用基线快照——每次客户端升级（marketplace 安装新版本、新开会话）后按本 README「验收步骤」执行即可，不需要临时编制项目。基线 = 13 个门禁（12 种 gate kind）× L0–L5 全六域 + 全套登记文件 + 负例矩阵 + 生命周期检查脚本。1.9.0 起 rtm 门禁启用 `requirePrdRefs`，REQ-01 绑定 `prdRef:{file:"docs/PRD.md"}`（登记完备性声明随该版固化）。
 
 ## 门禁矩阵（13 门禁 / 12 kind / 六域）
 
@@ -15,20 +15,20 @@
 | L4 | metrics（3 阈值）、api-authz（scan）、timeout-budget（budget）、rerun-evidence（rerun） | scripts/metrics-runner.mjs、openapi.json、registries/budget.json、registries/rerun.json |
 | L5 | rollback-drill（command）、technical-debt（debt） | scripts/rollback-drill.mjs、registries/debt.json |
 
-其余 20 种 gate kind 的覆盖在插件侧：`examples/examples.manifest.json`（35 示例）与打包烟测（`python devtools/build_delivery.py`）+ 插件回归测试，与本夹具互补。
+其余 25 种 gate kind 的覆盖在插件侧：`examples/examples.manifest.json`（48 示例）与打包冒烟测试（`python devtools/build_delivery.py`）+ 插件回归测试，与本夹具互补。
 
 登记文件集中在 `.quality-gate/registries/`（随库提交）；`.quality-gate/runs/` 为运行数据（已 gitignore）。`openapi.json` 留在根目录（authz runner 直接读取）。
 
 ## 验收步骤（每次实机验收复用）
 
-**前提（客户端升级，2026-09-28 更新）**：客户端插件缓存停在旧版时先升级——`python devtools/sync_client_marketplace.py` 同步 marketplace 快照并校验（"更新"按钮读快照不读源仓库），再在客户端插件市场对 Quality Gate 行执行"更新"（2026-09-27 起支持，取代旧卸载→安装流程），重跑同一脚本确认 SHA 全等。四步可经 `QGATE_CLI=<缓存>/bin/qgate.mjs` 显式跑在缓存内核下（脚本已支持，负例矩阵版本自识别读缓存 plugin.json）。验收验证一律走文件系统（缓存版本、SHA、Stop 报告按 mtime 轮询），不用截图探索；客户端旅程（Stop 阻断→修复→放行）在 out-of-repo 夹具副本上做，见 docs/history/LIVE-ACCEPTANCE-1.13.md。
+**前提（客户端升级，2026-09-28 更新）**：客户端插件缓存停在旧版时先升级——`python devtools/sync_client_marketplace.py` 同步 marketplace 快照并校验（"更新"按钮读快照不读源仓库），再在客户端插件市场对 Quality Gate 行执行"更新"（2026-09-27 起支持，取代旧卸载→安装流程），重跑同一脚本确认 SHA 全等。四步可经 `QGATE_CLI=<缓存>/bin/qgate.mjs` 显式跑在缓存内核下（脚本已支持，负例矩阵版本自识别读缓存 plugin.json）。验收验证一律走文件系统（缓存版本、SHA、Stop 报告按 mtime 轮询），不用截图探索；客户端走查（Stop 阻断→修复→放行）在 out-of-repo 夹具副本上做，见 [docs/history/LIVE-ACCEPTANCE-1.13.md](../../docs/history/LIVE-ACCEPTANCE-1.13.md)。
 
 在**仓库根**执行（也可在 ZCode 会话内经 `/quality-gate`、`/quality-gate-init`、`/quality-gate-update` 驱动同一 CLI）：
 
 ```powershell
 node --test acceptance/expense-approval-fixture/tests/*.test.mjs        # 1. 业务单测 8/8
 node plugins/quality-gate/bin/qgate.mjs acceptance/expense-approval-fixture close      # 2. 基线正例：13/13 PASS 六域覆盖
-node acceptance/expense-approval-fixture/scripts/negative-matrix.mjs   # 3. 逐门禁负例：13 个注入各自 FAIL
+node acceptance/expense-approval-fixture/scripts/negative-matrix.mjs   # 3. 逐门禁/逐机制负例：14 个注入各自 FAIL（rtm 两例：代码链接缺失与用例绑定缺失）
 node acceptance/expense-approval-fixture/scripts/lifecycle-check.mjs   # 4. 生命周期：inspect/update/预检/迁移/重初始化旅程
 ```
 
@@ -36,17 +36,17 @@ node acceptance/expense-approval-fixture/scripts/lifecycle-check.mjs   # 4. 生�
 
 ## 脚本说明
 
-- `scripts/negative-matrix.mjs`：复制项目到临时目录，**逐门禁**注入一个真实缺陷并断言该门禁 FAIL、整体退出码 1；不改基线文件。注入清单见脚本内 `mutations`（含各 kind 的失败机理注释）。
+- `scripts/negative-matrix.mjs`：复制项目到临时目录，**逐门禁/逐机制**注入一个真实缺陷并断言该门禁 FAIL、整体退出码 1；不改基线文件。注入清单见脚本内 `mutations`（含各 kind 的失败机理注释）。
 - `scripts/lifecycle-check.mjs`：复制项目到临时目录验证配置生命周期——inspect 现状、update 增量（阈值替换/预检警告）、migrateRegistries 迁移、删除配置后的重初始化旅程（leftovers 清单 → `init --fresh`（含 ontology 钉扎与自有阈值 answers）→ 登记重建 → 预检修复 → close 六域 PASS）。
 
 ## 制品索引
 
-- `docs/PRD.md`：需求、验收标准和范围；`registries/requirements.json`：可执行追踪矩阵。
+- `docs/PRD.md`：需求、验收标准和范围；`registries/requirements.json`：可执行追踪矩阵（v1.31 起逐 AC 绑定 behavior 用例 `cases:[{gateId,caseIds}]` 且 rtm 门禁开启 `requireCaseBinding`——AC 须有当轮真实执行且通过的用例，缺失/被跳过/未通过均 FAIL 指名）。
 - `docs/PLAN.md` 与 `docs/PROGRESS.md`：研发工作包、状态和证据。
 - `docs/ARCHITECTURE.md`、`registries/decisions.json`：设计与已关闭决策。
 - `src/` 与 `tests/`：业务实现和测试；`scripts/`：项目工具适配、负例矩阵与生命周期检查。
 - `docs/RUNBOOK.md`、`docs/ROLLBACK.md`、`config.example.json`：交付材料。
-- `.quality-gate.json`：基线配置（13 门禁，close/release 阶段，requiredDomains 六域全要求；rerun-evidence 仅 close）。
+- `.quality-gate.json`：基线配置（13 门禁，close/release 阶段，requiredLevels 六域全要求；rerun-evidence 仅 close）。
 
 ## 证明边界
 

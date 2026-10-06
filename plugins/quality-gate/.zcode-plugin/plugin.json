@@ -1,6 +1,6 @@
 {
   "name": "quality-gate",
-  "version": "1.24.0",
+  "version": "1.31.1",
   "description": "Configurable evidence-producing quality gates",
   "commands": "commands",
   "skills": "skills",

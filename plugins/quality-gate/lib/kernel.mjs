@@ -40,6 +40,7 @@ import {runConventionAlignment} from './convention-alignment.mjs';
 import {validateTraceContinuity,runTraceContinuity} from './trace-continuity.mjs';
 import {dependencyReport} from './dependencies.mjs';
 import {inputSnapshot,changedInputs} from './freshness.mjs';
+import {executionBudget,exceedsDeadline} from './execution-budget.mjs';
 
 export const STAGE_BUDGET_MS={edit:60000,close:60000,pr:300000,release:300000};
 export const stageBudget=(c,stage)=>c.gates.filter(g=>g.enabled&&Array.isArray(g.stages)&&g.stages.includes(stage)).reduce((sum,g)=>sum+(g.timeoutMs??0)+(g.coverage?.timeoutMs??0)+(g.reasoner?.timeoutMs??0)+(g.shacl?.timeoutMs??0),0);
@@ -152,7 +153,7 @@ export function validate(c) {
     } else {
       assert(text(g.file), 'Gate input file required');
       if(g.kind==='ontology-map')assert(g.level==='L2'&&c.ontology&&typeof c.ontology.type==='string','L2 ontology-map requires ontology provider');
-      if(g.kind==='traceability')assert(g.level==='L0'&&(!('requirePrdRefs'in g)||typeof g.requirePrdRefs==='boolean')&&(g.defaultRequiredTypes===undefined||Array.isArray(g.defaultRequiredTypes)&&g.defaultRequiredTypes.length>0&&g.defaultRequiredTypes.length<=5&&g.defaultRequiredTypes.every(type=>['normal','boundary','negative','exception','state-transition'].includes(type))&&new Set(g.defaultRequiredTypes).size===g.defaultRequiredTypes.length),'traceability requires L0, boolean requirePrdRefs and valid unique defaultRequiredTypes');
+      if(g.kind==='traceability')assert(g.level==='L0'&&(!('requirePrdRefs'in g)||typeof g.requirePrdRefs==='boolean')&&(!('requireCaseBinding'in g)||typeof g.requireCaseBinding==='boolean')&&(g.defaultRequiredTypes===undefined||Array.isArray(g.defaultRequiredTypes)&&g.defaultRequiredTypes.length>0&&g.defaultRequiredTypes.length<=5&&g.defaultRequiredTypes.every(type=>['normal','boundary','negative','exception','state-transition'].includes(type))&&new Set(g.defaultRequiredTypes).size===g.defaultRequiredTypes.length),'traceability requires L0, boolean requirePrdRefs/requireCaseBinding and valid unique defaultRequiredTypes');
       if(g.kind==='semantic-profile')assert(g.level==='L2'&&text(g.dataFile)&&c.ontology&&typeof c.ontology.type==='string'&&(g.shacl===undefined||(g.shacl!==null&&typeof g.shacl==='object'&&!Array.isArray(g.shacl)&&Object.keys(g.shacl).length===2&&Array.isArray(g.shacl.argv)&&g.shacl.argv.length>0&&g.shacl.argv.every(text)&&Number.isInteger(g.shacl.timeoutMs)&&g.shacl.timeoutMs>0&&g.shacl.timeoutMs<=60000)),'L2 semantic-profile requires dataFile and ontology; shacl (optional) is exactly {argv, timeoutMs 1..60000}');
       if(g.kind==='debt')assert(g.level==='L5','debt requires L5');
       if(g.kind==='decisions')assert(['L0','L5'].includes(g.level)&&(!('allowDeferred'in g)||typeof g.allowDeferred==='boolean')&&(!('requireProvenance'in g)||typeof g.requireProvenance==='boolean')&&(!('requireAdrRefs'in g)||typeof g.requireAdrRefs==='boolean'),'decisions requires L0/L5 and boolean allowDeferred/requireProvenance/requireAdrRefs');
@@ -176,7 +177,16 @@ export function run(root, stage='close', reportDir=path.join(root,'.quality-gate
     catch(err){if(err.code==='ENOENT')throw new Error('missing .quality-gate.json: run onboarding first (qgate.mjs templates lists presets; qgate.mjs init <project-root> <answers.json> writes the config)');throw err;}
     report.configSha256=createHash('sha256').update(raw).digest('hex');
     const c=validate(JSON.parse(raw.replace(/^\uFEFF/,'')));
-    if(budgetMs!==undefined)assert(stageBudget(c,stage)<=budgetMs,`Host execution budget exceeds ${budgetMs}ms; run long checks with CLI pr/release`);
+    // 统一执行预算（F01，2026-10-06 二轮评审）：登记内嵌 runner（convention argv 规则、
+    // change-scope contentCheck）与顶层声明一并计入——超出阶段上限或宿主预算即整体 ERROR
+    // fail-closed，不执行任何门禁。宿主给出 budgetMs 时同时作为执行期限：剩余期限不足以
+    // 启动新任务时停止启动，该门禁记 ERROR budget-exhausted（不作为 SKIP 放行）。
+    const budget=executionBudget(root,c,stage);
+    if(budget.nested.length||budgetMs!==undefined)report.executionBudget={declaredMs:budget.declaredMs,nestedMs:budget.nestedMs,totalMs:budget.totalMs,...(budgetMs!==undefined?{hostBudgetMs:budgetMs}:{}),...(budget.nested.length?{nested:budget.nested}:{})};
+    if(budget.totalMs>STAGE_BUDGET_MS[stage])throw new Error(`Stage execution budget exceeds ${STAGE_BUDGET_MS[stage]}ms including registry runners (declared ${budget.declaredMs}ms + nested ${budget.nestedMs}ms${budget.nested.length?`: ${budget.nested.map(entry=>`${entry.gateId}=${entry.nestedMs}ms`).join(', ')}`:''}); reduce registry runner timeoutMs or move long checks to CLI pr/release`);
+    if(budgetMs!==undefined)assert(budget.totalMs<=budgetMs,`Host execution budget exceeds ${budgetMs}ms including registry runners (declared ${budget.declaredMs}ms + nested ${budget.nestedMs}ms); run long checks with CLI pr/release`);
+    const deadline=budgetMs!==undefined?Date.now()+budgetMs:undefined;
+    const nestedByGate=new Map(budget.nested.map(entry=>[entry.gateId,entry.nestedMs]));
     const dependencies=dependencyReport(c);
     if(dependencies.required.length)report.dependencies=dependencies;
     // 审批/到期豁免评估（D2）：已审批且在有效期内 → WAIVED 呈现（不改变任何门禁判定）；
@@ -189,9 +199,17 @@ export function run(root, stage='close', reportDir=path.join(root,'.quality-gate
     });
     Object.assign(report,{claims:c.claims,risks:c.risks,exceptions});
     for(const g of c.gates) {
-      const e={id:randomUUID(),gateId:g.id,claimId:g.claimId,kind:g.kind,level:g.level,startedAt:new Date().toISOString(),status:'SKIP',details:'Disabled or stage not selected'};
+      // SKIP 原因显式化（v1.28）：未启用与阶段未选中是两种不同的不执行形态，报告须可区分——
+      // 旧归档的合并字符串由摘要层按泛化文案呈现（见 summary.mjs skipCause）
+      const e={id:randomUUID(),gateId:g.id,claimId:g.claimId,kind:g.kind,level:g.level,startedAt:new Date().toISOString(),status:'SKIP',details:g.enabled?{reason:'stage-not-selected',stages:g.stages}:{reason:'disabled'}};
       if(g.enabled && g.stages.includes(stage)) {
-        try {
+        const taskMs=(g.timeoutMs??0)+(g.coverage?.timeoutMs??0)+(g.reasoner?.timeoutMs??0)+(g.shacl?.timeoutMs??0)+(nestedByGate.get(g.id)??0);
+        if(exceedsDeadline(deadline,taskMs)){
+          // F01：声明预算超出宿主剩余期限的任务不再启动——记 ERROR（fail-closed，不放行为 SKIP）
+          e.status='ERROR';
+          e.details={reason:'budget-exhausted',declaredMs:taskMs,remainingMs:Math.max(0,deadline-Date.now()),hostBudgetMs:budgetMs};
+        }
+        else try {
           if(g.kind==='command') {
             const argv=g.argv.map(a=>a==='$NODE'?process.execPath:a);
             const r=spawnSync(argv[0],argv.slice(1),{cwd:root,shell:false,encoding:'utf8',timeout:g.timeoutMs,maxBuffer:65536,windowsHide:true});
@@ -211,7 +229,7 @@ export function run(root, stage='close', reportDir=path.join(root,'.quality-gate
             e.status='PENDING';
             e.details='Evaluating after linked gates';
           } else if(g.kind==='change-scope') {
-            Object.assign(e,runChangeScope(g,root));
+            Object.assign(e,runChangeScope(g,root,{deadline}));
           } else if(g.kind==='engineering') {
             Object.assign(e,runEngineering(g,root));
           } else if(g.kind==='alignment') {
@@ -264,7 +282,7 @@ export function run(root, stage='close', reportDir=path.join(root,'.quality-gate
           } else if(g.kind==='symbol-grounding') {
             Object.assign(e,runSymbolGrounding(g,root));
           } else if(g.kind==='convention-alignment') {
-            Object.assign(e,runConventionAlignment(g,root));
+            Object.assign(e,runConventionAlignment(g,root,{deadline}));
           } else if(g.kind==='trace-continuity') {
             Object.assign(e,runTraceContinuity(g,root));
           } else if(g.kind==='traceability') {

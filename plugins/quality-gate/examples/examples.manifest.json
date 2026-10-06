@@ -3,6 +3,17 @@
   "description": "示例清单:单一事实源。smokeStage=打包烟测执行阶段(null=不进烟测,但必须有测试锚);role: protocol|showcase|onboarding|doc;knownKindsWithoutExamples=尚无独立示例的 gate kind(夹具测试覆盖,示例待补)",
   "entries": [
     {
+      "id": "adapter-imports-demo",
+      "role": "protocol",
+      "levels": [
+        "L1"
+      ],
+      "kinds": [
+        "symbol-grounding"
+      ],
+      "smokeStage": null
+    },
+    {
       "id": "alignment-demo",
       "role": "protocol",
       "levels": [
@@ -27,6 +38,17 @@
       "smokeStage": "close"
     },
     {
+      "id": "api-surface-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "symbol-grounding"
+      ],
+      "smokeStage": null
+    },
+    {
       "id": "architecture-demo",
       "role": "protocol",
       "levels": [
@@ -35,6 +57,17 @@
       "kinds": [
         "metrics",
         "topology"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "architecture-dependency-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "metrics"
       ],
       "smokeStage": "close"
     },
@@ -84,17 +117,6 @@
       "smokeStage": null
     },
     {
-      "id": "convention-align-demo",
-      "role": "protocol",
-      "levels": [
-        "L0"
-      ],
-      "kinds": [
-        "convention-alignment"
-      ],
-      "smokeStage": "close"
-    },
-    {
       "id": "consumer-matrix-demo",
       "role": "protocol",
       "levels": [
@@ -102,6 +124,17 @@
       ],
       "kinds": [
         "consumer-matrix"
+      ],
+      "smokeStage": "close"
+    },
+    {
+      "id": "convention-align-demo",
+      "role": "protocol",
+      "levels": [
+        "L0"
+      ],
+      "kinds": [
+        "convention-alignment"
       ],
       "smokeStage": "close"
     },
@@ -225,6 +258,18 @@
       "smokeStage": "close"
     },
     {
+      "id": "owl-reasoning-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "semantic-relation",
+        "semantic-alignment"
+      ],
+      "smokeStage": null
+    },
+    {
       "id": "persistence-demo",
       "role": "protocol",
       "levels": [
@@ -247,6 +292,17 @@
       "smokeStage": "close"
     },
     {
+      "id": "replay-baseline-demo",
+      "role": "protocol",
+      "levels": [
+        "L3"
+      ],
+      "kinds": [
+        "journey"
+      ],
+      "smokeStage": null
+    },
+    {
       "id": "rerun-demo",
       "role": "protocol",
       "levels": [
@@ -267,6 +323,17 @@
         "resilience"
       ],
       "smokeStage": null
+    },
+    {
+      "id": "resilience-process-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "resilience"
+      ],
+      "smokeStage": "close"
     },
     {
       "id": "scan-demo",
@@ -390,6 +457,17 @@
       "smokeStage": "close"
     },
     {
+      "id": "shacl-engine-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "semantic-profile"
+      ],
+      "smokeStage": null
+    },
+    {
       "id": "six-domain-demo",
       "role": "showcase",
       "levels": [
@@ -434,6 +512,17 @@
       "smokeStage": "close"
     },
     {
+      "id": "trace-continuity-demo",
+      "role": "protocol",
+      "levels": [
+        "L4"
+      ],
+      "kinds": [
+        "trace-continuity"
+      ],
+      "smokeStage": null
+    },
+    {
       "id": "traceability-demo",
       "role": "protocol",
       "levels": [
@@ -447,17 +536,6 @@
       "smokeStage": "close"
     },
     {
-      "id": "visual-demo",
-      "role": "protocol",
-      "levels": [
-        "L3"
-      ],
-      "kinds": [
-        "visual"
-      ],
-      "smokeStage": null
-    },
-    {
       "id": "visual-browser-demo",
       "role": "protocol",
       "levels": [
@@ -469,69 +547,13 @@
       "smokeStage": null
     },
     {
-      "id": "api-surface-demo",
-      "role": "protocol",
-      "levels": [
-        "L2"
-      ],
-      "kinds": [
-        "symbol-grounding"
-      ],
-      "smokeStage": null
-    },
-    {
-      "id": "adapter-imports-demo",
-      "role": "protocol",
-      "levels": [
-        "L1"
-      ],
-      "kinds": [
-        "symbol-grounding"
-      ],
-      "smokeStage": null
-    },
-    {
-      "id": "trace-continuity-demo",
-      "role": "protocol",
-      "levels": [
-        "L4"
-      ],
-      "kinds": [
-        "trace-continuity"
-      ],
-      "smokeStage": null
-    },
-    {
-      "id": "replay-baseline-demo",
+      "id": "visual-demo",
       "role": "protocol",
       "levels": [
         "L3"
       ],
       "kinds": [
-        "journey"
-      ],
-      "smokeStage": null
-    },
-    {
-      "id": "shacl-engine-demo",
-      "role": "protocol",
-      "levels": [
-        "L2"
-      ],
-      "kinds": [
-        "semantic-profile"
-      ],
-      "smokeStage": null
-    },
-    {
-      "id": "owl-reasoning-demo",
-      "role": "protocol",
-      "levels": [
-        "L3"
-      ],
-      "kinds": [
-        "semantic-relation",
-        "semantic-alignment"
+        "visual"
       ],
       "smokeStage": null
     }

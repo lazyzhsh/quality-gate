@@ -1,6 +1,6 @@
 # PRD：Quality Gate 产品需求文档
 
-版本基线：v1.24.0（2026-10-01）。本文档把[原始需求](context/original-design-v0.1.md)、当前实现与[后续规划](PLAN.md)整合为产品视角的唯一入口；需求→实现的逐项映射见 [RTM.md](RTM.md)，架构决策见 [adr/](adr/)，字段级规范见 [GATE-SPEC-v1.23.md](GATE-SPEC-v1.23.md) 与 [CONFIG-GUIDE.md](CONFIG-GUIDE.md)。
+版本基线：v1.31.1（2026-10-06）。本文档把[原始需求](context/original-design-v0.1.md)、当前实现与[后续规划](PLAN.md)整合为产品视角的唯一入口；需求→实现的逐项映射见 [RTM.md](RTM.md)，架构决策见 [adr/](adr/)，字段级规范见 [GATE-SPEC-v1.23.md](GATE-SPEC-v1.23.md) 与 [CONFIG-GUIDE.md](CONFIG-GUIDE.md)，表达规则见 [WRITING-GUIDE.md](WRITING-GUIDE.md)。
 
 ## 1. 问题与产品定位
 
@@ -59,7 +59,7 @@
 | 时效 | CLI edit/close 总预算 ≤60s，pr/release ≤300s；仅 pr/release 的 command 可到 300s，Stop 配置执行预算 ≤50s（宿主 55s） |
 | 平台 | Windows/macOS/Linux；内核不依赖宿主事件格式（ZCode adapter 隔离） |
 | 安全 | argv 以当前用户执行（按构建脚本同等审查）；秘密脱敏失败；报告只落本地不外传 |
-| 可维护 | 回归计数见最新发布验证；46 示例（25 冒烟测试）；新增可配置项必须同步 CONFIG-GUIDE 并由测试强制；新概念先入 GLOSSARY（弃用词由根 G-CONVENTIONS 强制） |
+| 可维护 | 回归计数见最新发布验证；48 示例（27 冒烟测试）；新增可配置项必须同步 CONFIG-GUIDE 并由测试强制；新概念先入 GLOSSARY（弃用词由根 G-CONVENTIONS 强制） |
 
 ## 6. 交付形态与验收纪律
 
@@ -69,21 +69,11 @@
 
 ## 7. 路线图
 
-**已达成**（详证据见 history/ 各发布与验收文档）：v1.5.0 = 34 kinds、304 测试、38 示例、ZCode 客户端实机验收完成（SessionStart/Skill/Stop 阻断与放行/依赖提示/插件页 1.5.0，双驱动栈交叉复验）。**v1.6.0**（2026-09-25，主线"R 系与治理混编"经用户选定）= 35 kinds、330 测试、40 示例（28 冒烟测试）：v1.5.1 补丁先行（config-guide 安装布局修复随包送达）；R5 灰度判定协议（canaryAnalysis，inconclusive 不计 PASS、SRM 作废）、R6 重跑确定性 `rerun` 门禁（同 seed 双次运行哈希一致）、跨运行汇总 `priorRuns` 哈希链、审批/到期 Exception WAIVED 呈现（不豁免 FAIL 门禁）、change-scope 独立示例清空 kind 缺口、unit `minCoverageRatio` 覆盖率协议（L1.3 收尾）。**v1.7.0**（2026-09-26，用户提出首运行引导对话）= 350 测试：档位化模板库（lite/pro/max × 7 模板 + 10 附加门禁）、CLI `templates`/`init` 确定性装配（占位符 fail-closed、写入仅在 CLI 层）、`/quality-gate-init` 引导命令（agent 只问询不代写）、SessionStart/缺配置报错指向引导（RTM O1、ADR-0014）。**v1.7.1**（同日，实机验收反馈）= 363 测试：配置生命周期分权（`leftovers`+`init --fresh` 列表确认后清理重初始化；`inspect`/`update`+`/quality-gate-update` 增量调整；`template` 溯源字段）与登记文件集中管理（`.quality-gate/registries/` + `migrateRegistries` 迁移，RTM O2/O3、ADR-0015）。**v1.7.2**（同日，1.7.0 实机验收三项反馈收尾）= 367 测试：answers/changes `ontology` 替换（fibo-pinned 随包 sha 经 `templates` ontologyHint 发布）、metrics `thresholds` 自有指标名替换、init/update 登记门禁引用预检 `preflightGateRefs`（RTM O4）。**v1.7.3**（同日，夹具基线化发现）= 367 测试：preflightRefs 深度收集嵌套登记引用；expense-approval-fixture 固化为可复用验收基线。**v1.8.0**（2026-09-26，主线"功能裁剪"）= 354 测试/35 示例/32 kinds：按用户决定移除 migration/operational/readiness、scan 的 dependency/secret/iac/dast、metrics 证据纪律与 releasePackage/priorRuns（破坏性配置变更）。
+**已达成（v1.7–v1.23.0；逐版一行完成记录与测试/kind/示例计数见 [history/VERSION-HISTORY.md](history/VERSION-HISTORY.md)，细节见各版 [RELEASE](release/)）**：v1.7 首运行引导与配置生命周期（[ADR-0014](adr/ADR-0014-guided-onboarding.md)/[ADR-0015](adr/ADR-0015-config-lifecycle.md)）→ v1.8.0 功能裁剪（移除 migration/operational/readiness 门禁、扫描 dependency/secret/iac/dast 类别、metrics 证据纪律与 releasePackage/priorRuns，破坏性配置变更）→ v1.9 信任边界收敛（空登记阻断、自引用保护、观察可信度、登记完备性、语义-行为桥）→ v1.10–v1.12 拓扑语义 R1–R4、原始证据内核解析（TAP/JUnit）、Python/Java/ORM 参考适配器、consumer-matrix 兼容矩阵 → v1.13 观察工具链（rawTranscript 声明即核验、浏览器截图参考 runner、consumer-usage）→ v1.14 Stop 摩擦优化（归档复用、会话基准前置、new-only）→ v1.15 基线内容绑定与变更影响建议 → v1.16 统一语言治理（GLOSSARY 唯一登记处、协议键迁移 schemaVersion 0.2）→ v1.17–v1.21 对齐防护四轨道收官（任务意图、约定对齐、符号存在性、trace 贯通与回放基线）→ v1.22 SHACL 引擎协议与多语言术语（v1.22.1 组件全集内核原生化）→ v1.23 OWL 推理深化四件套（L3.7 达成，37 kinds 定型）。以上各版客户端实机验收均已分轮收尾（[history/](history/) 各 LIVE-ACCEPTANCE）。
 
-**已达成（v1.9.0 → v1.22.1，逐版一行；细节见各版发行说明与 [PLAN.md](PLAN.md) 历史版本记录）**：
+**已达成（v1.24.0–v1.31.0，2026-10-01/06）**：v1.24.0 = 首次 GitHub 开源发行＋2026-10-01 全项目审查 11 组错误放行/错误阻断问题修复（Stop 复用条件、OWL 推理方向、账本整数精度、根目录符号扫描、SHACL 单边约束、Stop 预算、内置模块识别、引擎组件与 Unicode、reasoner 事实、配置数组、deferred ADR——复现转回归 [RELEASE-1.24.0](release/RELEASE-1.24.0.md)，支持范围见 [OPEN-SOURCE-STATUS](OPEN-SOURCE-STATUS.md)）；v1.25.0–v1.27.0 = 受控表达三批（X12/X13 达成/X14 首轮达成——报告表达、来源列与声明关联等证明范围显示）；v1.28.0 = 评审残余收尾（SKIP 原因显式化、不适用跳过审计、零文件面可见）；v1.29.0 = 评审后续推进（内容级核验/真实故障/真实测量/像素重算/组合验证/OpenAPI 子集/延迟分布——L2.1/L4.1/L4.6/L5.3 按完成条件达成，653 测试/37 kinds/48 示例，[RELEASE-1.29.0](release/RELEASE-1.29.0.md)）；v1.30.0 = 二轮评审修复（evidence/project-review-2026-10-06 六组实现问题收敛：F01 登记内 runner 计入统一执行预算＋剩余期限停止启动、F02 requireLive 缺失 mode 即缺证据 FAIL、F03 反向认可须显式 inverseOf、F04 PNG tRNS 透明键与结构防线、F05 依赖图提取跳过注释/字符串并计副作用 import/export-from、F06 OpenAPI 提取 fail-closed＋参数 name+in 覆盖＋输出 kind:'api'——672 测试 0 SKIP，[RELEASE-1.30.0](release/RELEASE-1.30.0.md)）；v1.31.0 = 证明链补齐（AC→真实用例身份与当轮结果绑定 cases/requireCaseBinding——缺失/被跳过/无关成功门禁均不得作为 AC 通过依据；来源信号覆盖 kernel-recompute 与 contentCheck、PASS 无信号门禁显式"无信号"——678 测试 0 SKIP，[RELEASE-1.31.0](release/RELEASE-1.31.0.md)）；v1.31.1 = 反思轮补丁（PNG 重复 tRNS 拒绝、依赖提取正则字面量语境守卫、visual 字节一致计入核验信号、GLOSSARY 术语补登记，[RELEASE-1.31.1](release/RELEASE-1.31.1.md)）。客户端实机验收 1.24.0–1.27.0 已四版同轮收尾（[LIVE-ACCEPTANCE-1.27](history/LIVE-ACCEPTANCE-1.27.md)）。
 
-- v1.9.0（2026-09-26，信任边界收敛 W1–W5：空登记阻断/自引用保护/观察可信度/登记完备性/语义-行为桥；376 测试/32 kinds）→ v1.9.1（E4 requireContentCheck＋alignment sourceFingerprint；378）；
-- v1.10.0（新 kind topology 承载 R1–R4＋E3 快照默认强制；386/33）→ v1.10.1（R12 证据力汇聚；390）→ v1.11.0（B1 原始证据内核解析＋E7 Python/Java 参考适配器＋E5 ORM 参考；407）→ v1.12.0（新 kind consumer-matrix 兼容矩阵与分层来源；415/34）；
-- v1.13.0（behavior/journey rawTranscript 声明即核验＋visual 浏览器参考 runner＋consumer-usage 工具化；433/34/37 示例）→ v1.14.0（Stop Hook 摩擦优化：归档复用/SessionStart 基准行/new-only 降级；445）；
-- v1.15.0（基线内容绑定＋两源一致＋inspect 建议块＋consumer-matrix 字段级使用面；460/34/37）→ v1.16.0（统一语言治理：GLOSSARY 唯一登记处＋概念拆义＋协议键迁移 schemaVersion 0.2；464/34/37；实机验收含 v1.15.0 并入已收尾）；
-- v1.17.0（任务意图登记＋漂移对账＋新 kind symbol-grounding；497/35/39）→ v1.17.1（意图软形态 Hook；506）→ v1.18.0（AC 结构化协议双验证器——轨道 A 收官；515/35）→ v1.19.0（convention-alignment＋ADR 绑定＋自举——轨道 B 收官；525/36/40）→ v1.20.0（symbol-grounding 三扩展＋Py/Java 适配器——轨道 C 收官；555/36/42）→ v1.21.0（trace-continuity＋replayBaseline——轨道 D 收官，四轨道全部收官；575/37/44）→ v1.21.1（内核预算上限 60000；578）→ v1.22.0（SHACL 引擎协议＋深度匹配＋terminology 多语言；590/37/45）→ v1.22.1（SHACL 组件全集内核原生化——OD-116 默认零外部依赖；592/37/45）。
-
-以上各版客户端实机验收均已收尾（最近两轮：1.17.0–1.20.0 五版同轮 [LIVE-ACCEPTANCE-1.20](history/LIVE-ACCEPTANCE-1.20.md)、v1.21.0–v1.23.0 五版同轮 [LIVE-ACCEPTANCE-1.23](history/LIVE-ACCEPTANCE-1.23.md)）。
-
-**已达成（v1.23.0，2026-10-01，主线"C6-2 语义深化·下——OWL 推理深化·确定性子集更大集"——两裁决 Q1=C 更大集[用户覆盖推荐 A]/Q2=双人核准取消[移出范围]，37 kinds 零破坏）**= 602 测试（601 过/1 skip）/37 kinds/46 示例：等价类/并类/子属性层级/逆属性/传递链四件套（对称物化进扩展包含图＋建时矛盾 fail-closed＋semantic-relation 推理满足判定与 inferred 证据）；alignment/consistency 经 provider 免费继承。RTM L3.7→达成。工作包与证据见 [RELEASE-1.23.0](release/RELEASE-1.23.0.md)。实机验收已随五版同轮收尾（LIVE-ACCEPTANCE-1.23）。
-
-**通往 v2.0 的路线**（2026-10-01 经 AskUserQuestion 选定：一轨一轮 8 版，目标=v0.9 演进基线全部完成——四轨道闭环＋RTM 无"部分"行[双轨制：技术可及项升级，证明哲学性边界以"边界即达成"终审转正]；详规见 [PLAN.md](PLAN.md) 路线图）：v1.17.1–v1.23.0 七版已全部落地（对齐防护四轨道收官＋C6 语义深化上下）；余 **v2.0.0 收尾终审轮**——剩余"部分"行逐行终审（首日裁决 L2.1 AsyncAPI 纳入与否）、transcript 强制化默认裁决、RTM 终版清算、v0.9 基线标记完成。
+**通往 v2.0 的路线**（2026-10-01 经 AskUserQuestion 选定：一轨一轮，目标=v0.9 演进基线全部完成——四轨道闭环＋RTM 无"部分"行[双轨制：技术可及项升级，证明哲学性边界以"边界即达成"终审转正]；详规见 [PLAN.md](PLAN.md) 路线图）：v1.17.1–v1.31.1 已全部落地（对齐防护四轨道收官、C6 语义深化、开源与审查修复、受控表达四批、评审收尾与后续推进、二轮评审修复与证明链补齐，见上两段）；余 **v2.0.0 收尾终审轮**——剩余"部分"行（L3.5）终审（另裁决 L2.1 AsyncAPI 纳入与否）、transcript 强制化默认裁决、RTM 终版清算、v0.9 基线标记完成。外部真实项目使用验证属进一步需求收集（2026-10-06 用户裁定）：不作为本项目需求跟踪与验收条件，使用方反馈作为后续新需求来源。
 
 **基线外并行候选**（不随路线图排期）：第二个 agent adapter（先固定核心-宿主事件协议并以同案例比对输出）；生产工具接入：专业扫描器/浏览器/负载/遥测/迁移工具经 runner 协议与 KNOWN_TOOLS 登记接入真实项目（协议侧已就绪，属各项目工程工作）。
 

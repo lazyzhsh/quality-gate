@@ -11,6 +11,7 @@ const registries='.quality-gate/registries';
 // 逐门禁负例：每例在临时副本注入一个真实缺陷，断言目标门禁 FAIL 且整体退出码 1（不要求其他门禁同时失败）
 const mutations=[
   {gate:'rtm',kind:'traceability',domain:'L0',description:'AC-01 source link points to a missing file',apply:root=>editJson(root,`${registries}/requirements.json`,doc=>{doc.requirements[0].acceptanceCriteria[0].codeFiles[0]='src/missing.mjs';})},
+  {gate:'rtm',kind:'traceability',domain:'L0',description:'AC-02 case binding names a case the run never reports (acCaseMissing)',apply:root=>editJson(root,`${registries}/requirements.json`,doc=>{const ac=doc.requirements[0].acceptanceCriteria.find(a=>a.id==='AC-02');ac.cases[0].caseIds[0]='never-reported';})},
   {gate:'design-decisions',kind:'decisions',domain:'L0',description:'Reopen resolved decision D-01',apply:root=>editJson(root,`${registries}/decisions.json`,doc=>{doc.decisions[0].status='open';})},
   {gate:'syntax',kind:'command',domain:'L1',description:'Break source syntax with an unclosed paren',apply:root=>append(root,'src/claims.mjs','\nconst broken = (;\n')},
   {gate:'engineering',kind:'engineering',domain:'L1',description:'Accept zero amount by weakening validation (unit F2P fails)',apply:root=>replace(root,'src/claims.mjs','input.amountCents <= 0','input.amountCents < 0')},

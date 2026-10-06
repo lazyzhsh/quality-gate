@@ -1,10 +1,10 @@
 # 配置功能指引
 
-适用 schemaVersion `0.1`。项目在根目录放置 `.quality-gate.json`；执行方式见插件 README（CLI `node bin/qgate.mjs <项目根> [edit|close|pr|release]`，退出码 0=PASS、1=FAIL、2=ERROR/SKIP）。本文是全部可配置项的模板样例与说明：每个门禁 kind 附一段**完整可校验**的 `jsonc` 样例（`tests/config-guide.test.mjs` 会剥除注释后交给内核 `validate()` 校验，并检查 kind 全覆盖与选项均有文档）；数据登记文件选项单独列出。新增或调整可配置项时必须同步本文，回归会强制样例不失效。
+适用 schemaVersion `0.2`。项目在根目录放置 `.quality-gate.json`；执行方式见插件 README（CLI `node bin/qgate.mjs <项目根> [edit|close|pr|release]`，退出码 0=PASS、1=FAIL、2=ERROR/SKIP）。本文是全部可配置项的模板样例与说明：每个门禁 kind 附一段**完整可校验**的 `jsonc` 样例（`tests/config-guide.test.mjs` 会剥除注释后交给内核 `validate()` 校验，并检查 kind 全覆盖与选项均有文档）；数据登记文件选项单独列出。新增或调整可配置项时必须同步本文，回归会强制样例不失效。
 
-全部 35 个示例的单一事实源是 [examples/examples.manifest.json](../plugins/quality-gate/examples/examples.manifest.json)（角色/门禁 kind/冒烟测试阶段；[examples/README.md](../plugins/quality-gate/examples/README.md) 为索引表）——`tests/examples.test.mjs` 强制清单、索引、目录与每个 gate kind ≥1 示例、每个示例 ≥1 自动化依据保持同步。
+全部 48 个示例的单一事实源是 [examples/examples.manifest.json](../plugins/quality-gate/examples/examples.manifest.json)（角色/门禁 kind/冒烟测试阶段；[examples/README.md](../plugins/quality-gate/examples/README.md) 为索引表）——`tests/examples.test.mjs` 强制清单、索引、目录与每个 gate kind ≥1 示例、每个示例 ≥1 自动化依据保持同步。
 
-规模与预算约束：`claims` ≥1；门禁 1..32 个。CLI edit/close 阶段总预算 ≤60000ms，pr/release ≤300000ms（含 `coverage`、`reasoner`、`shacl`）；runner `timeoutMs` 默认仍为 1..60000ms，仅阶段全为 pr/release 的 `command` 可到 300000ms。Stop 宿主期限 55 秒，adapter 只接受 close 已声明预算 ≤50000ms，超出落盘 ERROR 并阻断，长检查移到 CLI pr/release；`exceptions` ≤20，proposed 登记即阻断、已审批且未过期呈现 WAIVED（不豁免任何 FAIL 门禁）；`requiredLevels` 每阶段最多 6 个域。
+规模与预算约束：`claims` ≥1；门禁 1..32 个。CLI edit/close 阶段总预算 ≤60000ms，pr/release ≤300000ms（含 `coverage`、`reasoner`、`shacl`，以及**登记文件内嵌 runner**——conventions.json 的 argv 规则、scope.json 的 `contentCheck`，v1.30 F01 起一并计入；登记不可读即 fail-closed 拒绝执行。内核内置的有界操作（如 change-scope 的 git 调用，每次 10 秒上限）不属声明预算面——其上限由内核固定约束，剩余期限守卫在 contentCheck 等内嵌 runner 启动前生效）；runner `timeoutMs` 默认仍为 1..60000ms，仅阶段全为 pr/release 的 `command` 可到 300000ms。Stop 宿主期限 55 秒，adapter 只接受 close 总预算（顶层声明＋登记内嵌）≤50000ms，超出落盘 ERROR 并阻断；宿主预算同时是执行期限——剩余期限不足以启动新任务（门禁或登记内单条规则）时停止启动并记 ERROR `budget-exhausted`（不放行为 SKIP），长检查移到 CLI pr/release（CLI 运行无宿主期限，仅做声明预算校验）；`exceptions` ≤20，proposed 登记即阻断、已审批且未过期呈现 WAIVED（不豁免任何 FAIL 门禁）；`requiredLevels` 每阶段最多 6 个域。
 
 ## 顶层字段
 
@@ -111,7 +111,7 @@ answers 文件选项（未知字段/未知目标即拒绝；`init` 对已有配�
 
 ## 检查与增量更新（`qgate.mjs inspect` / `qgate.mjs update`，v1.7.1）
 
-配置已存在时的升级、修复与增量调整走独立入口（[ADR-0015](adr/ADR-0015-config-lifecycle.md)），不与首次/重初始化混用。`inspect <项目根>` 只读输出：有效性（validate 结果与错误）、门禁清单、各阶段预算用量（60s 上限，v1.21.1 起）、`requiredLevels`、`template` 溯源、模板匹配（有溯源=按来源模板输出双向 gate 集差异；无溯源=按 kind 集相似度给出最近模板）、可用附加门禁项（与既有 gate id 无冲突）、登记文件存在性，以及 **变更影响驱动的建议块 `suggestions`**（v1.15：附加门禁库 `suggest` 元数据 × 未提交变更面 `git status --porcelain -uall` 的路径匹配——`'**'` 任意/`'*.<ext>'` 扩展名/段通配三种语义；`.quality-gate/` 运行数据不计入；非 git 仓库如实 `available:false` 不做无依据推荐；**建议性输出，不代写配置**，采纳与否经 `/quality-gate-update` 对话由项目决定）。ZCode 会话内经 `/quality-gate-update` 引导：inspect 呈现（含建议块）→ 选择增量 → changes 文件 → `update` 写入 → close 验证。
+配置已存在时的升级、修复与增量调整走独立入口（[ADR-0015](adr/ADR-0015-config-lifecycle.md)），不与首次/重初始化混用。`inspect <项目根>` 只读输出：有效性（validate 结果与错误）、门禁清单、各阶段预算用量（60s 上限，v1.21.1 起；v1.30 F01 起 usedMs 含登记内嵌 runner，与 run/Stop 同源，登记不可读时该阶段如实给出 error）、`requiredLevels`、`template` 溯源、模板匹配（有溯源=按来源模板输出双向 gate 集差异；无溯源=按 kind 集相似度给出最近模板）、可用附加门禁项（与既有 gate id 无冲突）、登记文件存在性，以及 **变更影响驱动的建议块 `suggestions`**（v1.15：附加门禁库 `suggest` 元数据 × 未提交变更面 `git status --porcelain -uall` 的路径匹配——`'**'` 任意/`'*.<ext>'` 扩展名/段通配三种语义；`.quality-gate/` 运行数据不计入；非 git 仓库如实 `available:false` 不做无依据推荐；**建议性输出，不代写配置**，采纳与否经 `/quality-gate-update` 对话由项目决定）。ZCode 会话内经 `/quality-gate-update` 引导：inspect 呈现（含建议块）→ 选择增量 → changes 文件 → `update` 写入 → close 验证。
 
 changes 文件选项（未知字段/未知目标/gate id 冲突/残留占位符一律拒绝且不写盘；`update` 无需 `--force`——其目的即增量修改）：
 
@@ -139,7 +139,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 | 字段 | 说明 |
 |---|---|
 | `id` / `kind` / `level` / `enabled` / `stages` / `claimId` | 标识、kind 白名单（见 `GATE_KINDS`）、`L0`–`L5`、启停、`edit/close/pr/release`、所属 Claim |
-| `argv` / `timeoutMs` | command 是退出码协议，不收观察 stdin；仅 pr/release 的 command 超时可到 300000ms，其他 runner 仍为 1..60000ms。runner 类门禁（command/persistence/behavior/metrics/alignment/invariant/journey/visual/property/semantic-alignment/scan/resilience/documentation/trace-continuity）：`$NODE` 展开为当前 Node；stdin 收当次 `runId`，stdout 须回带同一 `runId` 的结构化观察 |
+| `argv` / `timeoutMs` | command 是退出码协议，不收观察 stdin；仅 pr/release 的 command 超时可到 300000ms，其他 runner 仍为 1..60000ms。配置 argv 的观察类门禁（persistence/behavior/journey/visual/metrics/alignment/consumer-matrix/invariant/property/scan/resilience/documentation/trace-continuity/semantic-* 与 engineering 逐子检查，观察形状见下文各 kind 节）：`$NODE` 展开为当前 Node；stdin 收当次 `runId`，stdout 须回带同一 `runId` 的结构化观察 |
 | `file` / 数据文件 | 登记类门禁（assumptions/decisions/change-scope/traceability/debt/ontology-map/semantic-profile） |
 
 ## 外部依赖与安装指引
@@ -162,13 +162,13 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 
 **decisions.json**：`decisions[{id, question, status: resolved|open|deferred, owner, resolution, evidence, revisitBy, affectsPaths: [], affectsGateIds: []}]`；`evidence` 同上支持结构化引用；`affectsPaths` 核验存在性（缺失 FAIL、逃逸 ERROR）；`affectsGateIds` 未知即 ERROR。`status: deferred` 必须携带 `revisitBy: YYYY-MM-DD` 复审期限（v1.9 W1，缺期限 ERROR fail-closed；期限已过该决策 FAIL"暂缓决策已过复审期限"）。
 
-**conventions.json**（convention-alignment，v1.19 轨道 B）：`rules[{id, type, source:{file, section?}, severity?: fail|advisory, …}]` 1..50 条，id 唯一，每条必带溯源 `source`（约定的文档形态与可执行形态双向可追）。`type:"banned-words"`：`words[]`（1..100，字面词）＋`scope[]`（glob 扫描面；`.git`/`node_modules`/`.quality-gate`/`dist` 恒排除）＋可选 `exemptions[]`——每条恰用一种机制键：`lineContains`（行含标记即该行豁免，`word` 可选限定词）、`precededBy`（前一字符等于该值则豁免）、`followedBy`（命中后紧跟该值则豁免）；映射记法（命中后紧跟 `→` 的对照行）恒豁免；逐命中（含豁免命中）入证据呈审计面。`type:"argv"`：`argv[]`＋`timeoutMs` 复用统一观察协议（stdin `{schemaVersion,runId,ruleId}` → stdout `{schemaVersion,runId,source,findings:[{path,detail,category?,line?}]}`，runner 无权自判放行；扫描型 runner 注意自引用陷阱——应跳过自身文件，参考 convention-align-demo）。`severity:"advisory"` 命中只记录不阻断（默认 fail 阻断）。边界：只对账字面词/结构化条目，不核验约定文件全文语义。本仓库自举：根 `.quality-gate/registries/conventions.json` 承载 GLOSSARY §6 弃用词扫描（v1.19 起，glossary 防回归测试整体退役——两处清单同步为人工纪律，用户裁决 2026-10-01）。
+**conventions.json**（convention-alignment，v1.19 轨道 B）：`rules[{id, type, source:{file, section?}, severity?: fail|advisory, …}]` 1..50 条，id 唯一，每条必带溯源 `source`（约定的文档形态与可执行形态双向可追）。`type:"banned-words"`：`words[]`（1..100，字面词）＋`scope[]`（glob 扫描面；`.git`/`node_modules`/`.quality-gate`/`dist` 恒排除）＋可选 `exemptions[]`——每条恰用一种机制键：`lineContains`（行含标记即该行豁免，`word` 可选限定词）、`precededBy`（前一字符等于该值则豁免）、`followedBy`（命中后紧跟该值则豁免）；映射记法（命中后紧跟 `→` 的对照行）恒豁免；命中清单只含未豁免命中——被豁免的命中不入证据、无审计面（豁免可被滥用，完整豁免审计属后续增量）。`type:"argv"`：`argv[]`＋`timeoutMs`（计入阶段/宿主执行预算，v1.30 F01 起；宿主期限下逐条做剩余期限守卫）复用统一观察协议（stdin `{schemaVersion,runId,ruleId}` → stdout `{schemaVersion,runId,source,findings:[{path,detail,category?,line?}]}`，runner 无权自判放行；扫描型 runner 注意自引用陷阱——应跳过自身文件，参考 convention-align-demo）。`severity:"advisory"` 命中只记录不阻断（默认 fail 阻断）。边界：只对账字面词/结构化条目，不核验约定文件全文语义。本仓库自举：根 `.quality-gate/registries/conventions.json` 承载 GLOSSARY §6 弃用词扫描（v1.19 起，glossary 防回归测试整体退役——两处清单同步为人工纪律，用户裁决 2026-10-01）。
 
-**scope.json**（change-scope）：`baseRef`（Git 基准引用）、`allowedPaths`（glob，超出即 FAIL）、`requiredPaths`（必须出现的变更）、`protectedPaths[{id, patterns, acknowledged, acknowledgedBase}]`（确认可绑定基准 commit，基准移动后失效）、`contentCheck{argv, timeoutMs}`（内容级 finding 检查 runner）、`acceptedFindings[{path, category, reason}]`（未显式接受的 finding 一律 FAIL）。v1.9 W2 新增：`selfGuard:{acknowledgedSpecSha256}`（spec 自绑定——内核对**去掉 selfGuard 字段后**的 spec JSON 串（原键序）计算 sha256 比对，不符即 FAIL `spec-changed`，allowedPaths/baseRef/protectedPaths 的任何静默修改立即失效，须重新确认并更新哈希）；`pinnedBase:{commit}`（基准绑定——内核解析 baseRef 得基准 commit，与 pinned 不一致即 FAIL `base-moved`，基准前移使 diff 清空的路径被封死）。R/C 变更（rename/copy）的**源路径**以 `R-source`/`C-source` 类型一并进入变更集参与 allowed/protected 判定——受保护文件改名挪走时删除侧不再绕过确认。`requireContentCheck:true`（v1.9.1 E4，可选）：开启后受保护路径发生变更而未配置 `contentCheck` 即 FAIL"缺少内容级检查"——确认覆盖路径变更，内容语义另需内容级检查；配置了 contentCheck 则由其协议接管。v1.17 轨道 A 新增（漂移对账，OD-107 裁决=交集——任务范围只会比项目允许更窄）：`taskIntent{file, acknowledgedSha256?}`（绑定任务意图登记——`file` 指向下方 task-intent.json，存在性+防逃逸+形状核验 fail-closed，内容哈希入证据；`acknowledgedSha256`（64 位十六进制，可选）绑定后与登记当前内容哈希比对，不符即 FAIL `intent-file-modified`——意图被修改必须显式修订：登记内补 `revisions` 留痕并更新本哈希重新绑定）；`requireTaskIntent:true`（可选）：开启后无意图登记（未绑定 taskIntent 或登记文件不存在）即 FAIL"缺少任务意图登记"——没有意图基准的"完成"只是 agent 自述。对账语义：变更集逐文件与意图 `scope` glob 对账（交集——先过项目 allowed 再过任务 scope），超出即 FAIL 指名越界文件清单；可判定约束 `no-new-dependencies`（constraints 数组中的字面量）由内核对账基准 commit 与工作树的 package.json 依赖清单 diff，新增依赖键即 FAIL；其余约束登记性呈现（由 alignment/consumer-matrix 等既有门禁自然承载）。
+**scope.json**（change-scope）：`baseRef`（Git 基准引用）、`allowedPaths`（glob，超出即 FAIL）、`requiredPaths`（必须出现的变更）、`protectedPaths[{id, patterns, acknowledged, acknowledgedBase}]`（确认可绑定基准 commit，基准移动后失效）、`contentCheck{argv, timeoutMs}`（内容级 finding 检查 runner；timeoutMs 计入阶段/宿主执行预算并受剩余期限守卫，v1.30 F01 起）、`acceptedFindings[{path, category, reason}]`（未显式接受的 finding 一律 FAIL）。v1.9 W2 新增：`selfGuard:{acknowledgedSpecSha256}`（spec 自绑定——内核对**去掉 selfGuard 字段后**的 spec JSON 串（原键序）计算 sha256 比对，不符即 FAIL `spec-changed`，allowedPaths/baseRef/protectedPaths 的任何静默修改立即失效，须重新确认并更新哈希）；`pinnedBase:{commit}`（基准绑定——内核解析 baseRef 得基准 commit，与 pinned 不一致即 FAIL `base-moved`，基准前移使 diff 清空的路径被封死）。R/C 变更（rename/copy）的**源路径**以 `R-source`/`C-source` 类型一并进入变更集参与 allowed/protected 判定——受保护文件改名挪走时删除侧不再绕过确认。`requireContentCheck:true`（v1.9.1 E4，可选）：开启后受保护路径发生变更而未配置 `contentCheck` 即 FAIL"缺少内容级检查"——确认覆盖路径变更，内容语义另需内容级检查；配置了 contentCheck 则由其协议接管。v1.17 轨道 A 新增（漂移对账，OD-107 裁决=交集——任务范围只会比项目允许更窄）：`taskIntent{file, acknowledgedSha256?}`（绑定任务意图登记——`file` 指向下方 task-intent.json，存在性+防逃逸+形状核验 fail-closed，内容哈希入证据；`acknowledgedSha256`（64 位十六进制，可选）绑定后与登记当前内容哈希比对，不符即 FAIL `intent-file-modified`——意图被修改必须显式修订：登记内补 `revisions` 留痕并更新本哈希重新绑定）；`requireTaskIntent:true`（可选）：开启后无意图登记（未绑定 taskIntent 或登记文件不存在）即 FAIL"缺少任务意图登记"——没有意图基准的"完成"只是 agent 自述。对账语义：变更集逐文件与意图 `scope` glob 对账（交集——先过项目 allowed 再过任务 scope），超出即 FAIL 指名越界文件清单；可判定约束 `no-new-dependencies`（constraints 数组中的字面量）由内核对账基准 commit 与工作树的 package.json 依赖清单 diff，新增依赖键即 FAIL；其余约束登记性呈现（由 alignment/consumer-matrix 等既有门禁自然承载）。
 
 **task-intent.json**（任务意图登记，v1.17 轨道 A，OD-101 裁决：registries 单文件、活跃意图唯一）：`{taskId, statement, scope: [glob…], acceptance?[{text, type?}], constraints?: [], source?: {kind, ref?}, createdAt, confirmedBy, revisions?[]}`——`scope` 为任务级变更范围（1..100 个 glob，规则同 allowedPaths：项目相对、`**` 跨段、禁绝对路径/`..`/反斜杠）；`acceptance` 为验收条件——缺省 `format` 为自由文本（`type` 可选取 normal/boundary/negative/exception/state-transition，登记性）；可选 `format:'gherkin'|'ears'` 声明即校验（v1.18 AC 结构化协议）：Gherkin 须含场景（场景/Scenario[ Outline]/场景大纲）与步骤关键字（假如/当/那么/而且/但是 或 Given/When/Then/And/But，And/But 继承上一关键字），每场景经继承后至少一个 when 与一个 then，允许多场景（AC 类型=各场景 `@类型` 标签并集，标签取五枚类型词）；EARS 逐行匹配五模板（英文 The/When/While/If…then/Where…shall 与中文 `<主语>应当…`/`当…时…应当`/`在…期间…应当`/`如果…则…应当`/`其中…应当`，允许多语句，类型=模板映射集：无处不在/事件→normal、状态→state-transition、不需要行为→negative|exception、可选特征→normal）；结构违规或显式 `type` 与派生类型集不一致 → 漂移对账 FAIL 指名 `ac-structure-invalid`/`ac-type-conflict`（`lib/ac-structure.mjs` 只校验结构不判语义）；`constraints` 登记性文本数组（唯一可判定项 `no-new-dependencies`）；`source` 为登记性来源（如 `{kind:"user-prompt", ref:"任务首轮"}`，不回读对话）；`createdAt`（ISO 8601）与 `confirmedBy` 必填——确认留痕是登记与用户真实意图一致性的唯一背书（框架不判语义）；`revisions[{revisedAt, reason, confirmedBy, previousSha256}]` 修订链——修订=新内容+理由+确认人+前一版本内容哈希（对解析后 JSON 串计算，空白不算变更），须按时间升序、previousSha256 不得重复（链断裂 fail-closed），旧版本内容留档于 git 历史与 run 归档。写入走确定性通道（agent 只问询不代写）：`qgate.mjs intent <project-root> <answers-file>` 登记 / `--revise`（answers 须含 `reason`）修订——CLI 结构自校验后写登记文件，并同步更新所有声明了 `taskIntent` 的 change-scope spec 的 `acknowledgedSha256`（重新绑定）；省略 answers 文件即只读渲染当前基准与绑定核验状态。close PASS 后意图内容哈希随 run 归档，新任务须新登记或显式修订。
 
-**requirements.json**（traceability）：`requirements[{id, statement, requiredTypes: [normal|boundary|negative|exception|state-transition], prdRef: {file, section}, acceptanceCriteria[{id, type, statement, format?, codeFiles, testGateIds}]}]`——`acceptanceCriteria` 可选 `format:'gherkin'|'ears'`（v1.18）：结构校验同 task-intent（违规 FAIL 指名 ac-structure-invalid）；AC 类型覆盖集=标签/模板派生类型（显式 `type` 在派生集内时收窄为该类型，不一致 FAIL `ac-type-conflict`）——`defaultRequiredTypes` 的缺失类型检查按覆盖集判定，声明 format 的 AC 可不带显式 type（标签/模板即类型来源）；v1.9 W4 起可选 `prdRef`——`file` 走结构化引用核验（存在性+防逃逸，缺失 FAIL 指名、逃逸 ERROR），`section` 为记录性文本不核验；门禁选项 `defaultRequiredTypes` 声明后，未自带 `requiredTypes` 的需求按默认集判定缺失类型。
+**requirements.json**（traceability）：`requirements[{id, statement, requiredTypes: [normal|boundary|negative|exception|state-transition], prdRef: {file, section}, acceptanceCriteria[{id, type, statement, format?, codeFiles, testGateIds}]}]`——`acceptanceCriteria` 可选 `format:'gherkin'|'ears'`（v1.18）：结构校验同 task-intent（违规 FAIL 指名 ac-structure-invalid）；AC 类型覆盖集=标签/模板派生类型（显式 `type` 在派生集内时收窄为该类型，不一致 FAIL `ac-type-conflict`）——`defaultRequiredTypes` 的缺失类型检查按覆盖集判定，声明 format 的 AC 可不带显式 type（标签/模板即类型来源）；v1.9 W4 起可选 `prdRef`——`file` 走结构化引用核验（存在性+防逃逸，缺失 FAIL 指名、逃逸 ERROR），`section` 为记录性文本不核验；门禁选项 `defaultRequiredTypes` 声明后，未自带 `requiredTypes` 的需求按默认集判定缺失类型。**v1.31（证明链补齐）起 AC 可选 `cases:[{gateId, caseIds}]` 用例绑定**——`gateId` 必须在该 AC 的 `testGateIds` 内（1..20 个绑定、gateId 唯一；`caseIds` 1..50 非空唯一）：运行时内核在**当轮**被绑定门禁的证据中逐用例复核（逐用例身份来自 behavior `details.cases` 与 engineering unit/test 检查的 `checks[].cases`），缺失（`acCaseMissing`——被绑定门禁无逐用例身份或未回报该用例，无关成功门禁不能充当 AC 证据）、被跳过（`acCaseSkipped`）、未通过（`acCaseFailed`）均 FAIL 指名，AC 证据含 `caseBindings` 逐用例结果；同名用例跨检查取更差结果（fail-closed）。`requireCaseBinding:true` 开启后未声明绑定的 AC FAIL `acCaseUnbound`。证明边界：绑定复核证明"这些用例当轮真实执行且通过"，AC 与用例的语义对应仍由人工负责。
 
 **catalog.json**（ontology local-catalog）：`{id, version, concepts[{iri, label, altLabels?, subClassOf?, disjointWith?, relations?}]}`；`altLabels`/`subClassOf`/`disjointWith` 均为可选非空唯一字符串数组，`relations` 为可选 `[{predicate, to}]`（≤50，谓词建议 IRI，目标须在目录内）；`subClassOf` 目标必须存在于目录且无环，且不得与 `disjointWith` 推理闭包矛盾（互斥沿继承传播；违规/矛盾即 ERROR fail-closed）。provider 证据含 `catalogSha256`（文件内容摘要）。
 
@@ -246,6 +246,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 | `file` | string，必填 | 指向上表 requirements.json |
 | `coverage` | `{argv, timeoutMs}`，可选 | 覆盖证据协议：runner 按逐 AC 文件清单回报 `covered`；未覆盖 FAIL；超时计入阶段预算 |
 | `requirePrdRefs` | bool，默认 false（v1.9 W4） | 开启后每条需求必须携带 `prdRef`（缺绑定 FAIL"缺少 PRD 绑定"）。证明边界：只核验引用的 PRD 文件存在，不证需求涵盖 PRD 全部内容（后者靠评审） |
+| `requireCaseBinding` | bool，默认 false（v1.31 证明链补齐） | 开启后每条 AC 必须携带 `cases` 用例绑定（缺绑定 FAIL 指名 `acCaseUnbound`）。证明边界：绑定复核只认当轮逐用例身份，AC 写作与用例设计仍由人工负责（不自动由 PRD 生成） |
 | `defaultRequiredTypes` | string[] 1..5 唯一，可选（v1.9 W4） | requiredTypes 默认集（normal/boundary/negative/exception/state-transition）：未自带 requiredTypes 的需求按默认集判定缺失类型；声明后这些需求的 AC 必须携带 type |
 
 ```jsonc
@@ -256,7 +257,9 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
     // 可选：AC↔代码执行覆盖核验；argv/timeoutMs 语义与其他 runner 一致
     "coverage": {"argv": ["$NODE", "scripts/coverage.mjs"], "timeoutMs": 5000},
     // 可选（v1.9 W4）：强制每条需求绑定 PRD 引用；未自带 requiredTypes 的需求按默认集判定
-    "requirePrdRefs": true, "defaultRequiredTypes": ["normal", "negative"]}],
+    "requirePrdRefs": true, "defaultRequiredTypes": ["normal", "negative"],
+    // 可选（v1.31）：强制每条 AC 声明用例绑定（见下方 requirements.json 的 cases 字段）
+    "requireCaseBinding": true}],
   "risks": [], "exceptions": []
 }
 ```
@@ -418,7 +421,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 | `compatibilityLevel` | backward/forward/full，contract-diff 必填 | 声明兼容方向并传给 runner；方向语义由 runner 按声明判定，内核只消费结构化结论 |
 | `file` | string，必填 | 预期契约文件 `{kind, items}` |
 | `ignorePaths` | string[]，可选 | JSON Pointer 模式（`*` 匹配一段，如 `/items/*/serverTime`）；命中的差异跳过并计入证据 `ignoredDifferences`，未声明的差异照常 FAIL |
-| `requireLive` | bool，默认 false（v1.9 W3） | 观察模式声明：runner 观察可回报 `mode: live\|static`（static=未发真实请求/未连真实存储，仅静态读取）。static 默认放行但摘要**降级标注**（观察为静态读取）；`requireLive:true` 下 static 即 FAIL 指名；畸形 mode 值 ERROR |
+| `requireLive` | bool，默认 false（v1.9 W3） | 观察模式声明：runner 观察可回报 `mode: live\|static`（static=未发真实请求/未连真实存储，仅静态读取）。static 默认放行但摘要**降级标注**（观察为静态读取）；`requireLive:true` 要求**显式 `mode:'live'`**（v1.30 F02）——static 即 FAIL 指名，**缺失 mode 同样 FAIL** 指名（`missingObservationMode`：无法区分实时观察与不回报模式声明的旧 runner，缺失来源不比诚实 static 更易放行；旧 runner 兼容请关闭 requireLive）；畸形 mode 值 ERROR。该判定在 alignment（api/schema）、alignment（contract-diff）、consumer-matrix 三条消费路径一致 |
 | `requireSourceFingerprint` | bool，默认 false（v1.9.1） | 观察端来源指纹：观察可回报 `sourceFingerprint:{file, sha256}`——**声明即核验**（存在性+防逃逸+与磁盘文件哈希比对，不符 FAIL 指名，畸形/逃逸 ERROR），把观察绑定到具体项目制品；开启后未声明即 FAIL。适用于文件型观察面（如迁移后 schema 快照）；live HTTP 面走 mode+requireLive，附指纹（如服务实现文件哈希）同样有效 |
 
 ```jsonc
@@ -439,7 +442,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 | `compatibilityLevel`（consumer 级） | `backward`（默认）/`exact` | backward：期望端点/字段须存在且类型相等（provider 新增自由）；exact：另将期望端点上的多出字段计 `unexpectedField`（不容忍加字段的消费者） |
 | `ignoreRoutes` | string[]，可选（1..50，`/` 起路由模式，`*` 通配一段） | 只豁免声明的路由模式（如 `/internal/*`）；被忽略项留在证据 `ignoredBreaking`，不放行未声明的漂移 |
 | `consumerUsage`（观察字段，非配置） | 可选观察 | 分层来源协议观察层：runner 可回报逐消费者使用面 `[{consumer, usage: scanned\|contract-test\|declared, items:[{path,method,field?}]}]`——使用面超出该消费者声明期望即 FAIL"使用面超出声明期望"（期望过期不可静默）；`declared` 来源无扫描/契约测试佐证，摘要降级标注（W3 模式）；contract-test=消费者契约测试产物（最强来源） |
-| `requireLive` / `requireSourceFingerprint` | bool，可选（同 alignment） | 观察可信度：static 观察（mode 声明）默认放行但降级标注，requireLive 下 FAIL；观察可选 `sourceFingerprint:{file,sha256}` 声明即核验（不符 FAIL、强制缺声明 FAIL） |
+| `requireLive` / `requireSourceFingerprint` | bool，可选（同 alignment） | 观察可信度：static 观察（mode 声明）默认放行但降级标注；requireLive 要求显式 `mode:'live'`（v1.30 F02）——static 或缺失 mode 均 FAIL 指名（缺失＝缺证据 `missingObservationMode`）；观察可选 `sourceFingerprint:{file,sha256}` 声明即核验（不符 FAIL、强制缺声明 FAIL） |
 
 ```jsonc
 {
@@ -461,7 +464,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 ### invariant
 | 选项 | 类型/默认 | 作用 |
 |---|---|---|
-| `assertions` | 1..50，必填 | `{id, left, operator: eq/neq/le/lt/ge/gt, right | value, when}`；operand 由 runner 观察提供。`when` 条件支持 `{field, equals/notEquals/in}`，数组表示 AND 组合；条件不满足时该断言 SKIP |
+| `assertions` | 1..50，必填 | `{id, left, operator: eq/neq/le/lt/ge/gt, right \| value, when}`；operand 由 runner 观察提供。`when` 条件支持 `{field, equals/notEquals/in}`，数组表示 AND 组合；条件不满足时该断言 SKIP |
 
 ```jsonc
 {
@@ -574,7 +577,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 | 选项 | 类型/默认 | 作用 |
 |---|---|---|
 | `baselineFile` | string，必填 | 基线制品；runner 产出 actualFile 后默认做严格字节比较 |
-| `maxDiffPixels` / `maxDiffRatio` | int ≥0 / 0..1，可选 | 配置任一即切换像素容差模式：runner 须回报 `diff: {pixels, totalPixels}`，超过阈值才 FAIL（字节一致恒 PASS）；两侧 SHA 与度量均入证据。基线变更保护：把基线文件列入 change-scope 的 `protectedPaths` 即可实现"改基线须显式确认" |
+| `maxDiffPixels` / `maxDiffRatio` | int ≥0 / 0..1，可选 | 配置任一即切换像素容差模式：超过阈值才 FAIL（字节一致恒 PASS）；两侧 SHA 与度量均入证据。**v1.29 起像素差内核重算**：两侧均为 PNG 时内核自行解码并计算 `diff`（声明子集＝8 位 RGB/RGBA、非隔行；越界或尺寸不一致 ERROR fail-closed；**v1.30 F04 结构防线**：逐 chunk CRC、IEND 存在且为末尾、未知关键 chunk 拒绝、解压上限锁定；RGB 真彩色 tRNS 透明键展开（键色 alpha=0），RGBA 携带 tRNS 即 ERROR；像素相等＝解码样本字节相等，不做色彩管理）——runner 自报 `diff: {pixels, totalPixels}` 仍在时做交叉核验，不符即 ERROR；非 PNG 文件维持 runner 自报协议。基线变更保护：把基线文件列入 change-scope 的 `protectedPaths` 即可实现"改基线须显式确认" |
 
 ```jsonc
 {
@@ -591,7 +594,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 | 选项 | 类型/默认 | 作用 |
 |---|---|---|
 | `seed` / `minCases` | int，必填 | 固定种子与最少案例数（1..500），保证可复现 |
-| `assertions` | 1..20，必填 | `{id, left, operator: eq/neq/le/lt/ge/gt, right | value, when}`，与 invariant 同一语义（`when` 支持 in/notEquals/AND，条件不满足即 SKIP） |
+| `assertions` | 1..20，必填 | `{id, left, operator: eq/neq/le/lt/ge/gt, right \| value, when}`，与 invariant 同一语义（`when` 支持 in/notEquals/AND，条件不满足即 SKIP） |
 | `allowedTransitions` | 1..50，必填 | `{from, to}` 状态机白名单 |
 
 ```jsonc
@@ -666,7 +669,7 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 ### semantic-constraint
 | 选项 | 类型/默认 | 作用 |
 |---|---|---|
-| `concept` | string，必填 | 目标概念 IRI；其目录 `constraints` 声明（`[{id, left, operator, right|value, when?}]`，≤20，与 invariant/property 同一断言语义）即被检约束集 |
+| `concept` | string，必填 | 目标概念 IRI；其目录 `constraints` 声明（`[{id, left, operator, right\|value, when?}]`，≤20，与 invariant/property 同一断言语义）即被检约束集 |
 | `minCases` | 1..500，默认 1 | runner 至少须提供的观察案例数 |
 | `constraintIds` | 0..20 id，可选 | 只检查概念约束的指定子集（未知 id 即 ERROR） |
 | `acknowledgedOntology` | `{id, version, catalogSha256}`，可选 | 同其他本体门禁的指纹确认 |
@@ -931,12 +934,14 @@ runner 协议：stdin `{schemaVersion, runId, minCases}`，stdout `{schemaVersio
 |---|---|---|
 | `version` | string，必填 | 四类制品（code/api/user/operator）须一致的版本 |
 | `requiredTopics` | string[]，必填 | 每类制品必须覆盖的主题；runner 回报的制品 path 由内核核验存在且非空（缺失 FAIL、逃逸 ERROR） |
+| `requireContentCheck` | boolean，默认 false（v1.29） | 内容级核验：内核实读制品内容，`requiredTopics` 逐个字面出现、版本串出现；自报与内容不符按制品 FAIL 指名（主题未出现/版本串未出现＝内容陈旧或自报失实） |
+| `requiredContent` | `[{id, role, contains}]`，可选（v1.29） | 逐条关键字段核验：指定角色的制品内容须包含字面量 `contains`（如协议关键句/配置键原文）；缺失按 `id` 指名；`id` 须唯一、`role` 限四类角色 |
 
 ```jsonc
 {
   "schemaVersion": "0.2",
   "claims": [{"id": "CL-1", "statement": "Documents stay versioned and cover required topics"}],
-  "gates": [{"id": "docs", "kind": "documentation", "level": "L5", "enabled": true, "stages": ["release"], "claimId": "CL-1", "argv": ["$NODE", "runner.mjs"], "timeoutMs": 5000, "version": "1.1.0", "requiredTopics": ["setup", "rollback"]}],
+  "gates": [{"id": "docs", "kind": "documentation", "level": "L5", "enabled": true, "stages": ["release"], "claimId": "CL-1", "argv": ["$NODE", "runner.mjs"], "timeoutMs": 5000, "version": "1.1.0", "requiredTopics": ["setup", "rollback"], "requireContentCheck": true, "requiredContent": [{"id": "cli-verbatim", "role": "operator", "contains": "qgate.mjs"}]}],
   "risks": [], "exceptions": []
 }
 ```

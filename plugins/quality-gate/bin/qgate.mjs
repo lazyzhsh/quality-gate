@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {run,exitCode,validate,stageBudget,STAGE_BUDGET_MS} from '../lib/kernel.mjs';
+import {run,exitCode,validate,STAGE_BUDGET_MS} from '../lib/kernel.mjs';
+import {executionBudget} from '../lib/execution-budget.mjs';
 import {renderSummary,renderBrief} from '../lib/summary.mjs';
 import {runProposalAudit} from '../lib/proposals.mjs';
 import {writeTaskIntent,readTaskIntentStatus} from '../lib/task-intent.mjs';
@@ -118,10 +119,14 @@ if(args[0]==='proposals'){
    const config=readJson(configPath);
    let valid=true,error=null;
    try{validate(config);}catch(e){valid=false;error=e.message;}
+   // 预算与 run/Stop 同源（F01）：登记内嵌 runner（convention argv 规则、contentCheck）
+   // 一并计入 usedMs；登记不可读时该阶段如实给出 error 而不是回退仅声明预算
    const budgets={};
    for(const stage of ['edit','close','pr','release']){
-    const used=stageBudget({...config,gates:config.gates??[]},stage);
-    budgets[stage]={usedMs:used,budgetMs:STAGE_BUDGET_MS[stage]};
+    try{
+     const b=executionBudget(root,{...config,gates:config.gates??[]},stage);
+     budgets[stage]={usedMs:b.totalMs,declaredMs:b.declaredMs,nestedMs:b.nestedMs,budgetMs:STAGE_BUDGET_MS[stage],...(b.nested.length?{nested:b.nested}:{})};
+    }catch(error){budgets[stage]={usedMs:null,budgetMs:STAGE_BUDGET_MS[stage],error:error.message};}
    }
    const configGateIds=new Set((config.gates??[]).map(g=>g.id));
    let templateMatch;

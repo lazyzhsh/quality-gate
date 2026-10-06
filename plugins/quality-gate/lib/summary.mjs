@@ -2,7 +2,18 @@ const symbol={PASS:'✅',FAIL:'❌',ERROR:'⚠️',SKIP:'⏭️'};
 const domainMark={PASS:'✓',FAIL:'✗',ERROR:'⚠',SKIP:'–'};
 const maxReasons=3;
 // 分级呈现：PASS 只占一行（对话内不刷屏），非 PASS 展示全表；建议列按状态给出下一步动作
-const suggestions={PASS:'—',FAIL:'按原因修复后重跑',ERROR:'检查 runner/配置输入',SKIP:'不在本阶段执行'};
+const suggestions={PASS:'—',FAIL:'按原因修复后重跑',ERROR:'检查 runner/配置输入'};
+// SKIP 建议按原因区分（v1.28）：未启用、阶段未选中、已执行但断言条件未命中（不适用）是三种
+// 不同形态；旧归档的合并字符串按泛化文案呈现。不适用项若属必要证据，属验收要求调整，须显式决策。
+const skipSuggestions={'stage-not-selected':'不在本阶段执行',disabled:'未启用（enabled:false）','disabled-or-stage':'未执行（未启用或不在本阶段）','not-applicable':'断言条件未命中（不适用）——视为必要证据属验收要求调整，须显式决策'};
+function skipCause(entry){
+ const d=entry.details;
+ if(typeof d==='string')return d.startsWith('Disabled')?'disabled-or-stage':'stage-not-selected';
+ if(Array.isArray(d?.assertions)&&d.assertions.length&&d.assertions.every(a=>a.status==='SKIP'))return 'not-applicable';
+ if(d?.reason==='disabled')return 'disabled';
+ return 'stage-not-selected';
+}
+const suggestionFor=entry=>entry.status==='SKIP'?skipSuggestions[skipCause(entry)]:suggestions[entry.status]??'';
 // 对话内呈现：绝对路径会撑出横向滚动，展示层按当前工作目录相对化（仅显示，不影响证据本身）
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -78,7 +89,7 @@ const extractors={
   if(details.taskIntent?.status==='no-task-intent')reasons.push('缺少任务意图登记（requireTaskIntent）: 没有意图基准的"完成"只是 agent 自述，先登记 .quality-gate/registries/task-intent.json 再收尾');
   if(details.taskIntent?.outsideTaskScope?.length)reasons.push(`超任务范围变更（须还原，或显式修订意图 scope）: ${list(details.taskIntent.outsideTaskScope,3)}`);
   for(const item of details.taskIntent?.constraintChecks??[])if(item.status==='violated')reasons.push(`任务约束 ${item.constraint} 被违反: 新增依赖 ${list(item.newDependencies,3)}`);
-  for(const item of details.taskIntent?.acceptanceStructure?.violations??[])reasons.push(`验收条件 AC[${item.acceptance}] ${item.rule==='ac-type-conflict'?`声明类型 ${item.declared} 与结构派生类型（${item.derived.join('/')}）不一致`:`结构无效（${item.rule}${item.line!==undefined?` @ ${item.line}`:item.scenario!==undefined?` @ ${item.scenario}`:''}）`}——修正 Gherkin/EARS 结构，或去掉 format 改回自由文本`);
+  for(const item of details.taskIntent?.acceptanceStructure?.violations??[])reasons.push(`验收条件 AC[${item.acceptance}] ${item.rule==='ac-type-conflict'?`声明类型 ${item.declared} 与结构派生类型（${item.derived.join('/')}）不一致`:`结构无效（${item.rule}${item.line!==undefined?` @ ${item.line}`:item.scenario!==undefined?` @ ${item.scenario}`:''}）`}——修正 Gherkin/EARS 结构；改回自由文本属验收要求变更，须显式修订任务意图登记，不作为修复动作`);
   return reasons;
  },
  traceability:details=>{
@@ -93,8 +104,11 @@ const extractors={
      else if(file.covered===false)reasons.push(`${criterion.id} 文件未被覆盖: ${file.path}`);
     }
     for(const gate of criterion.testGates??[])if(gate.status!=='PASS')reasons.push(`${criterion.id} 测试 ${gate.id}=${gate.status}`);
-    for(const violation of criterion.structureViolations??[])reasons.push(`${criterion.id} 结构无效（${violation.rule}${violation.line!==undefined?` @ ${violation.line}`:violation.scenario!==undefined?` @ ${violation.scenario}`:''}）——修正 Gherkin/EARS 结构或改回自由文本`);
+    for(const violation of criterion.structureViolations??[])reasons.push(`${criterion.id} 结构无效（${violation.rule}${violation.line!==undefined?` @ ${violation.line}`:violation.scenario!==undefined?` @ ${violation.scenario}`:''}）——修正 Gherkin/EARS 结构；改回自由文本属验收要求变更，须显式修订需求登记，不作为修复动作`);
     if(criterion.typeConflict)reasons.push(`${criterion.id} 声明类型 ${criterion.typeConflict.declared} 与 ${criterion.format} 派生类型（${criterion.typeConflict.derived.join('/')}）不一致`);
+    // 用例绑定（v1.31 证明链补齐）：缺用例/被跳过/未通过均指名门禁与用例——AC 不得凭无关成功门禁放行
+    for(const finding of criterion.caseFindings??[])reasons.push(`${criterion.id} 绑定用例 ${finding.caseId}（${finding.gateId}）${finding.rule==='acCaseMissing'?'不在当轮证据中——该门禁无逐用例身份或未回报此用例，无关成功门禁不能充当 AC 证据':finding.rule==='acCaseSkipped'?'被跳过——跳过不是通过':'未通过'}`);
+    if(criterion.caseUnbound)reasons.push(`${criterion.id} 未声明用例绑定（requireCaseBinding 开启——AC 须绑定当轮真实执行且通过的用例）`);
    }
   }
   return reasons;
@@ -125,10 +139,10 @@ const extractors={
   if(check.type==='artifact')return `${check.id}: 制品哈希不符 (${check.artifact.path})`;
   return `${check.id}(${check.type}) 未通过`;
  }),
- alignment:details=>[...(details.requireLive!==undefined?['观察为静态读取（requireLive）']:[]),...(details.missingSourceFingerprint?['观察缺少来源指纹（requireSourceFingerprint）']:[]),...(details.sourceFingerprint?.status==='MISMATCH'?[`观察来源指纹不符: ${details.sourceFingerprint.file}`]:[]),...(details.breakingChanges??[]).map(change=>`破坏性变更: ${change.path} ${change.rule}`),...(details.differences??[]).map(difference=>`${difference.path} ${difference.rule}${difference.expected!==undefined?`（期望 ${json(difference.expected)}，实际 ${json(difference.actual)}）`:''}`)],
+ alignment:details=>[...(details.requireLive!==undefined?[details.missingObservationMode?'观察缺少模式声明：requireLive 要求显式 live（缺证据）':'观察为静态读取（requireLive）']:[]),...(details.missingSourceFingerprint?['观察缺少来源指纹（requireSourceFingerprint）']:[]),...(details.sourceFingerprint?.status==='MISMATCH'?[`观察来源指纹不符: ${details.sourceFingerprint.file}`]:[]),...(details.breakingChanges??[]).map(change=>`破坏性变更: ${change.path} ${change.rule}`),...(details.differences??[]).map(difference=>`${difference.path} ${difference.rule}${difference.expected!==undefined?`（期望 ${json(difference.expected)}，实际 ${json(difference.actual)}）`:''}`)],
  consumer_matrix:details=>{
   const ruleText={missingEndpoint:'端点缺失',missingField:'缺少字段',typeChanged:'类型变更',unexpectedField:'多出字段（exact）'};
-  return [...(details.attribution??[]).flatMap(item=>item.brokenConsumers.map(consumer=>`${consumer}: ${item.method} ${item.path}${item.field?` ${item.field}`:''} ${ruleText[item.rule]??item.rule}${item.rule==='typeChanged'?`（期望 ${item.expected}，实际 ${item.actual}）`:''}`)),...(details.usageFindings??[]).map(finding=>`${finding.consumer}: 使用面超出声明期望 ${finding.method} ${finding.path}${finding.field?` ${finding.field}`:''}——期望文件已过期`),...(details.requireLive!==undefined?['观察为静态读取（requireLive）']:[]),...(details.missingSourceFingerprint?['观察缺少来源指纹（requireSourceFingerprint）']:[]),...(details.sourceFingerprint?.status==='MISMATCH'?[`观察来源指纹不符: ${details.sourceFingerprint.file}`]:[])];
+  return [...(details.attribution??[]).flatMap(item=>item.brokenConsumers.map(consumer=>`${consumer}: ${item.method} ${item.path}${item.field?` ${item.field}`:''} ${ruleText[item.rule]??item.rule}${item.rule==='typeChanged'?`（期望 ${item.expected}，实际 ${item.actual}）`:''}`)),...(details.usageFindings??[]).map(finding=>`${finding.consumer}: 使用面超出声明期望 ${finding.method} ${finding.path}${finding.field?` ${finding.field}`:''}——期望文件已过期`),...(details.requireLive!==undefined?[details.missingObservationMode?'观察缺少模式声明：requireLive 要求显式 live（缺证据）':'观察为静态读取（requireLive）']:[]),...(details.missingSourceFingerprint?['观察缺少来源指纹（requireSourceFingerprint）']:[]),...(details.sourceFingerprint?.status==='MISMATCH'?[`观察来源指纹不符: ${details.sourceFingerprint.file}`]:[])];
  },
  invariant:details=>(details.assertions??[]).filter(assertion=>assertion.status==='FAIL').map(assertion=>`断言 ${assertion.id} 失败: ${json(assertion.left)} 对 ${assertion.rightField??json(assertion.right)}`),
  journey:details=>{
@@ -218,7 +232,7 @@ const extractors={
   return [...(details.findings??[]).map(f=>`${f.service}${f.dependency?`→${f.dependency}`:''}: ${ruleText[f.rule]??f.rule}${f.min!==undefined?`（${f.replicas} < ${f.min}）`:f.required!==undefined?`（${f.replicas} < ${f.required}）`:''}`),...(details.minCutOrder1??[]).map(cut=>`单点: ${cut.service}${cut.dependency?`→${cut.dependency}`:''}（${cut.domain}）`)];
  },
  rerun:details=>(details.violations??[]).map(violation=>violation.rule==='outputDivergence'?`任务 ${violation.job}: 同 seed 双次运行输出哈希不一致（出现 ${violation.hashes.length} 个不同输出）`:`任务 ${violation.job}: 复式恒等式不成立（借 ${violation.debits} ≠ 贷 ${violation.credits}）`),
- convention_alignment:details=>[...(details.rules??[]).filter(rule=>rule.severity!=='advisory'&&rule.hits?.length).flatMap(rule=>rule.hits.slice(0,5).map(hit=>`约定 ${rule.id} 命中: ${hit.word} @ ${hit.path}:${hit.line??'?'}——修复用词或更新豁免（来源 ${rule.source.file}${rule.source.section?` §${rule.source.section}`:''}）`))],
+ convention_alignment:details=>[...(details.rules??[]).filter(rule=>rule.severity!=='advisory'&&rule.hits?.length).flatMap(rule=>rule.hits.slice(0,5).map(hit=>`约定 ${rule.id} 命中: ${hit.word} @ ${hit.path}:${hit.line??'?'}——修复制品用词；更新豁免属调整规则，须核对约定来源后显式变更登记，不作为默认修复（来源 ${rule.source.file}${rule.source.section?` §${rule.source.section}`:''}）`))],
  trace_continuity:details=>(details.links??[]).filter(link=>link.status==='FAIL').flatMap(link=>(link.problems??[]).map(problem=>`断链 ${link.call}（${problem.rule}）: ${problem.problem}`)),
  symbol_grounding:details=>[
   ...(details.unresolved??[]).map(entry=>`${entry.path}:${entry.lines[0]} 说明符 ${entry.specifier} 无法对账（三分类均不可解析，尝试 ${clip(entry.attempts[0]??'',60)}）——引用不存在的东西是幻觉的典型形态，修正说明符或补声明面`),
@@ -233,6 +247,14 @@ const extractors={
  documentation:details=>(details.artifacts??[]).filter(artifact=>artifact.status==='FAIL').map(artifact=>{
   if(artifact.fileStatus&&artifact.fileStatus!=='FOUND')return `${artifact.role} 制品${artifact.fileStatus==='EMPTY'?'为空':'文件缺失'}: ${artifact.path}`;
   if(!artifact.path)return `${artifact.role} 制品缺失`;
+  if(artifact.contentCheck?.status==='FAIL'){
+   const problems=[];
+   if(artifact.contentCheck.reason)return `${artifact.role} 制品内容不可读: ${artifact.path}`;
+   if(artifact.contentCheck.missingTopicsInContent?.length)problems.push(`主题未出现在内容: ${list(artifact.contentCheck.missingTopicsInContent,3)}`);
+   if(artifact.contentCheck.versionInContent===false)problems.push(`版本串 ${artifact.expectedVersion} 未出现在内容（内容陈旧或自报失实）`);
+   if(artifact.contentCheck.missingKeys?.length)problems.push(`关键字段缺失: ${list(artifact.contentCheck.missingKeys,3)}`);
+   return problems.length?`${artifact.role} 制品 ${artifact.path} ${problems.join('；')}`:`${artifact.role} 制品内容核验未通过: ${artifact.path}`;
+  }
   if(artifact.version!==artifact.expectedVersion)return `${artifact.role} 版本 ${artifact.version} ≠ ${artifact.expectedVersion}`;
   return `${artifact.role} 缺少主题: ${list(artifact.missingTopics,3)}`;
  }),
@@ -302,22 +324,24 @@ const headline=(report,entries,active,passed,skipped)=>{
 
 // 证据降级标注（W3）：观察来源声明为可信度较弱的一类时（embedded 基线/static 观察/
 // declared 来源），即使 PASS 也在报告中显式降级——数值仍自报，本框架只封来源声明。
-export function downgradeNotes(report){
- const notes=[];
- for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
-  const details=entry.details;
-  if(typeof details!=='object'||details===null)continue;
-  if(entry.kind==='behavior'&&details.baseline?.status==='embedded')notes.push(`${entry.gateId}: 基线为内嵌声明（embedded，非真实历史）`);
-  if(entry.kind==='engineering')for(const check of details.checks??[])if(check.baseline?.status==='embedded')notes.push(`${entry.gateId}.${check.id}: 基线为内嵌声明（embedded，非真实历史）`);
-  if(entry.kind==='alignment'&&details.observationMode==='static')notes.push(`${entry.gateId}: 观察为静态读取（static，未发真实请求/未连真实存储）`);
-  if(entry.kind==='consumer-matrix'){
-   if(details.observationMode==='static')notes.push(`${entry.gateId}: 观察为静态读取（static，未发真实请求/未连真实存储）`);
-   for(const row of details.matrix??[])if(row.usageSource==='declared')notes.push(`${entry.gateId}: 消费者 ${row.consumer} 使用面为 declared（runner 自报，无扫描/契约测试佐证）`);
-  }
-  if(entry.kind==='consistency')for(const check of details.checks??[])if(check.type==='append-only'&&check.sourceType==='declared')notes.push(`${entry.gateId}.${check.id}: append-only 来源为 declared（runner 自报，无外部日志佐证）`);
-  if(entry.kind==='topology')for(const degradation of details.degradations??[])notes.push(`${entry.gateId}.${degradation.service}: 故障域信息不可核验（项目显式声明 domainVerification:unavailable，域判定降级）`);
+// v1.26（X13）拆为逐门禁结构化检测（tag 供来源列短标签、note 供降级行句子），渲染不变。
+function entryDowngrades(entry){
+ const found=[];
+ const details=entry.details;
+ if(typeof details!=='object'||details===null)return found;
+ if(entry.kind==='behavior'&&details.baseline?.status==='embedded')found.push({tag:'内嵌基线',note:`${entry.gateId}: 基线为内嵌声明（embedded，非真实历史）`});
+ if(entry.kind==='engineering')for(const check of details.checks??[])if(check.baseline?.status==='embedded')found.push({tag:'内嵌基线',note:`${entry.gateId}.${check.id}: 基线为内嵌声明（embedded，非真实历史）`});
+ if(entry.kind==='alignment'&&details.observationMode==='static')found.push({tag:'静态观察',note:`${entry.gateId}: 观察为静态读取（static，未发真实请求/未连真实存储）`});
+ if(entry.kind==='consumer-matrix'){
+  if(details.observationMode==='static')found.push({tag:'静态观察',note:`${entry.gateId}: 观察为静态读取（static，未发真实请求/未连真实存储）`});
+  for(const row of details.matrix??[])if(row.usageSource==='declared')found.push({tag:'declared 使用面',note:`${entry.gateId}: 消费者 ${row.consumer} 使用面为 declared（runner 自报，无扫描/契约测试佐证）`});
  }
- return notes;
+ if(entry.kind==='consistency')for(const check of details.checks??[])if(check.type==='append-only'&&check.sourceType==='declared')found.push({tag:'declared 来源',note:`${entry.gateId}.${check.id}: append-only 来源为 declared（runner 自报，无外部日志佐证）`});
+ if(entry.kind==='topology')for(const degradation of details.degradations??[])found.push({tag:'域不可核验',note:`${entry.gateId}.${degradation.service}: 故障域信息不可核验（项目显式声明 domainVerification:unavailable，域判定降级）`});
+ return found;
+}
+export function downgradeNotes(report){
+ return (Array.isArray(report.evidence)?report.evidence:[]).flatMap(entryDowngrades).map(item=>item.note);
 }
 
 // 证据力汇聚（R12，v1.10.1）：只读聚合各门禁 details 的实测信号，回答"这次 PASS 由什么强度的证据支撑"。
@@ -327,7 +351,7 @@ export function downgradeNotes(report){
 // 降级声明（复用 downgradeNotes，优先级最高）。只统计 PASS 门禁（非 PASS 证据不支撑准出）；
 // 本层不新增采集、不改变任何门禁判定。
 export function evidenceStrength(report){
- const signals={gitBaselines:0,fingerprints:0,rerunDeterministic:0,snapshots:0,rawOutputs:0,baselineContents:0};
+ const signals={gitBaselines:0,fingerprints:0,rerunDeterministic:0,snapshots:0,rawOutputs:0,baselineContents:0,kernelRecomputes:0,contentChecks:0,byteIdentical:0};
  const tests={total:0,passed:0,failed:0,skipped:0,checks:0};
  const coverage=[];const mutation=[];let property=null;let behaviorCases=0;
  for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
@@ -358,9 +382,13 @@ export function evidenceStrength(report){
   if(entry.kind==='rerun')for(const job of details.jobs??[])if(job.deterministic)signals.rerunDeterministic++;
   if(entry.kind==='persistence'&&details.snapshots)signals.snapshots++;
   if(entry.kind==='alignment'&&details.sourceFingerprint?.status==='VERIFIED')signals.fingerprints++;
+  // v1.31：内核像素重算与文档内容级核验计入独立核验信号（此前已执行却不入信号表）
+  if(entry.kind==='visual'&&details.diffSource==='kernel-recompute')signals.kernelRecomputes++;
+  if(entry.kind==='visual'&&details.comparison==='exact-bytes')signals.byteIdentical++;
+  if(entry.kind==='documentation'&&(details.artifacts??[]).some(artifact=>artifact?.contentCheck?.status==='PASS'))signals.contentChecks++;
  }
  const quantitative=tests.checks+coverage.length+mutation.length+(property?1:0)+(behaviorCases>0?1:0);
- const anchorCount=signals.gitBaselines+signals.fingerprints+signals.rerunDeterministic+signals.snapshots+signals.rawOutputs+signals.baselineContents;
+ const anchorCount=signals.gitBaselines+signals.fingerprints+signals.rerunDeterministic+signals.snapshots+signals.rawOutputs+signals.baselineContents+signals.kernelRecomputes+signals.contentChecks+signals.byteIdentical;
  const signalTotal=quantitative+anchorCount;
  const downgrades=downgradeNotes(report).length;
  const level=signalTotal===0?'none':downgrades>0?'downgraded':anchorCount>0?'anchored':'declared';
@@ -368,8 +396,131 @@ export function evidenceStrength(report){
 }
 
 const strengthLabels={anchored:'核验级',declared:'声明级',downgraded:'降级'};
-// 单行呈现：证据信号与定量信号各截前 4 项；none 时返回 null（无可汇聚信号不虚报一行）
-function strengthLine(strength){
+
+// ---- 逐门禁来源细分（X13，v1.26）：来源可并存（核验信号＋声明定量＋降级声明），不压成单一等级 ----
+// 一个强信号只为它所在门禁背书：混合来源的运行里，无锚点的门禁仍如实显示为"声明"。
+function entryAnchorTags(entry){
+ const tags=[];
+ const details=entry.details;
+ if(typeof details!=='object'||details===null)return tags;
+ if(details.baseline?.contentVerified)tags.push('基线内容核验');
+ else if(details.baseline?.status==='verified')tags.push('git 基线核验');
+ if(entry.kind==='engineering')for(const check of details.checks??[]){
+  if(check.baseline?.contentVerified)tags.push('基线内容核验');
+  else if(check.baseline?.status==='verified')tags.push('git 基线核验');
+  if(check.rawOutput?.crossCheck==='match'||check.baselineRawOutput?.crossCheck==='match')tags.push('原始输出解析');
+ }
+ if((entry.kind==='behavior'||entry.kind==='journey')&&details.rawTranscript?.crossCheck==='match')tags.push('原始输出解析');
+ if(entry.kind==='rerun'&&(details.jobs??[]).some(job=>job.deterministic))tags.push('双次运行一致');
+ if(entry.kind==='persistence'&&details.snapshots)tags.push('持久化快照');
+ if(entry.kind==='alignment'&&details.sourceFingerprint?.status==='VERIFIED')tags.push('来源指纹');
+ // v1.31（二轮评审"来源展示覆盖缺口"）：内核重算与内容级核验计入核验信号——
+ // 此前 PNG 内核重算已执行却仍显示零核验来源；v1.31.1 补字节一致（exact-bytes＝内核
+ // 计算两侧 SHA256 相等，同为内核可独立核验的信号）
+ if(entry.kind==='visual'&&details.diffSource==='kernel-recompute')tags.push('内核像素重算');
+ if(entry.kind==='visual'&&details.comparison==='exact-bytes')tags.push('字节一致');
+ if(entry.kind==='documentation'&&(details.artifacts??[]).some(artifact=>artifact?.contentCheck?.status==='PASS'))tags.push('内容级核验');
+ return [...new Set(tags)];
+}
+// 定量自报信号（测试计数/覆盖率/变异/性质/行为用例；v1.31 补 metrics 指标值与 scan findings
+// 报告——它们是经内核校验形状的自报数值/观察，此前落在"无任何来源分类"里）——有量无锚 = "声明"来源
+function entryDeclaredQuantities(entry){
+ const details=entry.details;
+ if(typeof details!=='object'||details===null)return 0;
+ let quantitative=0;
+ if(entry.kind==='engineering')for(const check of details.checks??[]){
+  if(check.type==='test'&&Number.isInteger(check.total))quantitative++;
+  if(check.type==='test'&&check.coverage?.ratio!==undefined)quantitative++;
+  if(check.type==='metric'&&check.score!==undefined)quantitative++;
+ }
+ if(entry.kind==='property'&&details.caseCount!==undefined)quantitative++;
+ if(entry.kind==='behavior'&&Array.isArray(details.cases)&&details.cases.length)quantitative++;
+ if(entry.kind==='metrics'&&Array.isArray(details.metrics)&&details.metrics.length)quantitative++;
+ if(entry.kind==='scan'&&Array.isArray(details.findings))quantitative++;
+ return quantitative;
+}
+// 来源列（仅 PASS 门禁；非 PASS 显示 —，证据不支撑准出的门禁不参与来源标注）。
+// v1.31：PASS 而无任何来源信号的门禁显式显示"无信号"——与 非 PASS 的 "—" 分担不同含义，
+// 不再让同一符号承担多种语义
+const sourceCell=entry=>{
+ if(entry.status!=='PASS')return '—';
+ const parts=[];
+ const anchors=entryAnchorTags(entry);
+ if(anchors.length)parts.push(`核验（${anchors.join('＋')}）`);
+ if(entryDeclaredQuantities(entry)>0)parts.push('声明');
+ const tags=[...new Set(entryDowngrades(entry).map(item=>item.tag))];
+ if(tags.length)parts.push(`降级（${tags.join('＋')}）`);
+ return parts.length?parts.join('；'):'无信号';
+};
+// 来源分布（优先级同 evidenceStrength：降级 > 核验 > 声明；逐门禁只计一次；
+// v1.31 起 PASS 无信号门禁计入 none——三类之外的门禁不再隐形）
+export function sourceDistribution(report){
+ const counts={verified:0,declared:0,downgraded:0,none:0};
+ for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
+  if(entry.status!=='PASS')continue;
+  if(entryDowngrades(entry).length){counts.downgraded++;continue;}
+  if(entryAnchorTags(entry).length){counts.verified++;continue;}
+  if(entryDeclaredQuantities(entry)>0){counts.declared++;continue;}
+  counts.none++;
+ }
+ return counts;
+}
+// advisory 命中可见性（X13）：约定登记的 advisory 规则命中不阻断判定，但必须可见——
+// "检查已接入但用户看不到"等于没接入。数据取自内核 details（advisoryHits/rules 均已在报告协议中）。
+function advisoryHits(report){
+ const parts=[];let total=0;
+ for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
+  if(entry.kind!=='convention-alignment'||typeof entry.details!=='object'||entry.details===null)continue;
+  const rules=(entry.details.rules??[]).filter(rule=>rule.severity==='advisory'&&rule.hits?.length);
+  if(!rules.length)continue;
+  total+=rules.reduce((sum,rule)=>sum+rule.hits.length,0);
+  parts.push(`${entry.gateId}: ${rules.map(rule=>`${rule.id} ×${rule.hits.length}`).join('、')}`);
+ }
+ return total>0?{total,parts}:null;
+}
+// 扫描零文件可见性（X14）：banned-words 规则范围未命中任何文件时显式提示——
+// 零文件不能作为"所有文档符合规范"的证据（范围配置失效是常见静默故障）。
+// v1.28 扩展到 symbol-grounding（mode:all 且过滤后零文件）；changed-files 模式零文件
+// 属"没有变更"，不在此列。
+function zeroScanRules(report){
+ const parts=[];
+ for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
+  if(entry.kind==='convention-alignment'&&typeof entry.details==='object'&&entry.details!==null){
+   for(const rule of entry.details.rules??[])if(rule.scannedFiles===0)parts.push(`${rule.id}（${entry.gateId}）`);
+  }
+  if(entry.kind==='symbol-grounding'&&entry.details?.mode==='all'&&entry.details?.scannedFiles===0)parts.push(`${entry.gateId}（include/exclude 过滤后零文件）`);
+ }
+ return parts;
+}
+// 不适用跳过（v1.28）：门禁已执行、断言条件（when）全部未命中的 SKIP——与未启用/阶段未选中
+// 不同，这是"合法不适用"的显式审计面；必要证据是否缺失由读者结合声明判断，不由本行推断。
+function notApplicableSkips(report){
+ const parts=[];
+ for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
+  if(entry.status!=='SKIP'||skipCause(entry)!=='not-applicable')continue;
+  parts.push(`${entry.gateId}（断言条件未命中 ${(entry.details.assertions??[]).length} 项）`);
+ }
+ return parts;
+}
+// 声明关联（X13）：逐 claimId 关联门禁与结论——关联数可确定性计算；"声明已被证明"
+// 不能仅靠关联关系推断，边界句随行。旧归档条目无 claimId 时不呈现（不误报"未关联"）。
+// v1.28：未验证原因区分"无关联门禁"与"关联门禁全部 SKIP（未执行或不适用）"。
+export function claimCoverage(report){
+ const entries=Array.isArray(report.evidence)?report.evidence:[];
+ const claims=Array.isArray(report.claims)?report.claims:[];
+ if(!claims.length||!entries.some(entry=>typeof entry.claimId==='string'))return null;
+ return claims.map(claim=>{
+  const linked=entries.filter(entry=>entry.claimId===claim.id);
+  const active=linked.filter(entry=>entry.status!=='SKIP');
+  const unverified=active.length===0;
+  return {id:claim.id,gates:linked.map(entry=>`${entry.gateId} ${entry.status}`),unverified,...(unverified?{cause:linked.length?'all-skipped':'no-gates'}:{})};
+ });
+}
+const unverifiedClaimText=row=>row.cause==='all-skipped'?'关联门禁未执行或全部不适用':'无关联门禁执行';
+
+// 单行呈现：证据信号与定量信号各截前 4 项；none 时返回 null（无可汇聚信号不虚报一行）；
+// 来源分布（X13）随行——混合来源不得呈现为全部已核验
+function strengthLine(strength,report){
  if(!strength||strength.level==='none')return null;
  const parts=[strengthLabels[strength.level]];
  const anchorBits=[];
@@ -379,6 +530,9 @@ function strengthLine(strength){
  if(strength.signals.snapshots)anchorBits.push(`持久化快照 ${strength.signals.snapshots}`);
  if(strength.signals.rawOutputs)anchorBits.push(`原始输出解析 ${strength.signals.rawOutputs}`);
  if(strength.signals.baselineContents)anchorBits.push(`基线内容核验 ${strength.signals.baselineContents}`);
+ if(strength.signals.kernelRecomputes)anchorBits.push(`内核像素重算 ${strength.signals.kernelRecomputes}`);
+ if(strength.signals.contentChecks)anchorBits.push(`内容级核验 ${strength.signals.contentChecks}`);
+ if(strength.signals.byteIdentical)anchorBits.push(`字节一致 ${strength.signals.byteIdentical}`);
  if(anchorBits.length)parts.push(`信号 ${list(anchorBits,4)}`);
  const quantityBits=[];
  if(strength.tests.checks)quantityBits.push(`测试 ${strength.tests.passed}/${strength.tests.total}${strength.tests.skipped?`（跳过 ${strength.tests.skipped}）`:''}`);
@@ -387,6 +541,13 @@ function strengthLine(strength){
  if(strength.property)quantityBits.push(`性质 ${strength.property.cases} 例（seed ${strength.property.seed}）`);
  if(strength.behaviorCases)quantityBits.push(`行为 ${strength.behaviorCases} 例`);
  if(quantityBits.length)parts.push(`定量 ${list(quantityBits,4)}`);
+ const distribution=sourceDistribution(report);
+ const distributionBits=[];
+ if(distribution.verified)distributionBits.push(`核验 ${distribution.verified}`);
+ if(distribution.declared)distributionBits.push(`声明 ${distribution.declared}`);
+ if(distribution.downgraded)distributionBits.push(`降级 ${distribution.downgraded}`);
+ if(distribution.none)distributionBits.push(`无信号 ${distribution.none}`);
+ if(distributionBits.length)parts.push(`来源 ${distributionBits.join('、')}`);
  return `证据力: ${parts.join(' · ')}`;
 }
 
@@ -405,8 +566,23 @@ export function renderBrief(report){
   if(unmetLevels?.length)lines.push(`未满足必需层级: ${unmetLevels.join(', ')}`);
   const notes=downgradeNotes(report);
   if(notes.length)lines.push(`证据降级: ${list(notes,3)}`);
-  const strength=strengthLine(evidenceStrength(report));
+  const strength=strengthLine(evidenceStrength(report),report);
   if(strength)lines.push(strength);
+  const advisory=advisoryHits(report);
+  if(advisory)lines.push(`advisory 建议命中: 共 ${advisory.total} 项（${list(advisory.parts,3)}）——不阻断判定，详情见完整证据`);
+  // 例外可见性（X13）：PASS 不隐藏例外——已豁免例外免的是登记阻断，从不改变门禁判定
+  if(report.exceptions?.length){
+   const blockingBrief=report.exceptions.filter(item=>item.waiver?.status!=='waived');
+   const waivedBrief=report.exceptions.filter(item=>item.waiver?.status==='waived');
+   if(blockingBrief.length)lines.push(`未决例外: ${list(blockingBrief.map(item=>item.id),3)}——登记即阻断`);
+   if(waivedBrief.length)lines.push(`已豁免例外: ${list(waivedBrief.map(item=>`${item.id}（至 ${item.expiresAt}）`),3)}——不改变门禁判定，仅免于登记阻断`);
+  }
+  const unverifiedBrief=(claimCoverage(report)??[]).filter(row=>row.unverified);
+  if(unverifiedBrief.length)lines.push(`未验证声明: ${list(unverifiedBrief.map(row=>row.id),3)}（${unverifiedBrief.some(row=>row.cause==='all-skipped')?'关联门禁未执行或全部不适用':'无关联门禁执行'}）`);
+  const notApplicableBrief=notApplicableSkips(report);
+  if(notApplicableBrief.length)lines.push(`不适用跳过: ${list(notApplicableBrief,3)}——门禁已执行、断言条件全部未命中`);
+  const zeroScans=zeroScanRules(report);
+  if(zeroScans.length)lines.push(`扫描零文件: ${list(zeroScans,3)}——范围未命中任何文件，零文件不构成检查证据`);
   lines.push(`完整证据: ${stripCwd(report.reportPath??`${report.root}/.quality-gate/runs/${report.id}.json`)} · 全表: node "${qgateCli}" report "${stripCwd(report.root)}" ${id8(report)}`);
   return lines.join('\n');
  }catch(error){return `${symbol[report.status??'ERROR']} **Quality Gate ${report.status??'ERROR'}** · 摘要渲染失败: ${error.message}`;}
@@ -427,14 +603,24 @@ export function renderSummary(report){
   if(unmetLevels?.length)lines.push(`未满足必需层级: ${unmetLevels.join(', ')}`);
   const notes=downgradeNotes(report);
   if(notes.length)lines.push(`证据降级: ${list(notes,3)}`);
-  const strength=strengthLine(evidenceStrength(report));
+  const strength=strengthLine(evidenceStrength(report),report);
   if(strength)lines.push(strength);
+  const advisory=advisoryHits(report);
+  if(advisory)lines.push(`advisory 建议命中: 共 ${advisory.total} 项（${list(advisory.parts,3)}）——不阻断判定，详情见完整证据`);
   // 任务意图基准行（v1.17 轨道 A）：登记存在与绑定核验结果一行可见——漂移细节仍在失败原因列
   const intent=entries.map(entry=>entry.details&&typeof entry.details==='object'?entry.details.taskIntent:null).find(item=>item&&typeof item==='object');
   if(intent){
    const stateText=intent.status==='verified'?'内容哈希绑定一致':intent.status==='intent-file-modified'?'内容哈希绑定不符——修订须显式（--revise+reason）':intent.status==='no-task-intent'?'未登记——没有意图基准的"完成"只是 agent 自述':'未绑定哈希（漂移对账无守护）';
    lines.push(`任务意图基准: ${intent.taskId??'—'}（${stateText}${intent.status!=='no-task-intent'?` · scope ${intent.scopePatterns?.length??'?'} 项 · ${intent.outsideTaskScope?.length?`越界 ${intent.outsideTaskScope.length} 项`:'对账通过'}`:''}）`);
   }
+  // 声明关联（X13，v1.26）：逐声明列出关联门禁与结论；边界句固定随行——关联与结论是确定性
+  // 事实，"声明已被证明"不是（各门禁只证明其配置输入与 runner 观察）
+  const claims=claimCoverage(report);
+  if(claims)lines.push(`声明关联: ${claims.map(row=>`${row.id} → ${row.unverified?`未验证（${unverifiedClaimText(row)}）`:row.gates.join('、')}`).join(' · ')}——门禁 PASS 证明其配置输入与观察，不等于声明全文已被证明`);
+  const notApplicableFull=notApplicableSkips(report);
+  if(notApplicableFull.length)lines.push(`不适用跳过: ${list(notApplicableFull,3)}——门禁已执行、断言条件全部未命中；视为必要证据属验收要求调整，须显式决策`);
+  const zeroScansFull=zeroScanRules(report);
+  if(zeroScansFull.length)lines.push(`扫描零文件: ${list(zeroScansFull,3)}——范围未命中任何文件，零文件不构成检查证据`);
   if(report.exceptions?.length){
    const blocking=report.exceptions.filter(item=>item.waiver?.status!=='waived');
    const waived=report.exceptions.filter(item=>item.waiver?.status==='waived');
@@ -444,13 +630,13 @@ export function renderSummary(report){
   if(report.dependencies?.missing?.length)lines.push(`缺少外部依赖: ${report.dependencies.missing.map(item=>`${item.tool}（门禁 ${list(item.gateIds,3)}）`).join('；')}；安装指引: ${report.dependencies.missing.map(item=>item.url).join(' / ')}`);
   lines.push('');
   if(entries.length){
-   lines.push('| ID | 域 | Kind | 状态 | 耗时 | 原因 | 建议 |');
-   lines.push('|----|----|------|------|------|------|------|');
+   lines.push('| ID | 域 | Kind | 状态 | 来源 | 耗时 | 原因 | 建议 |');
+   lines.push('|----|----|------|------|------|------|------|------|');
    for(const entry of entries){
     const reasons=failureReasons(entry);
     const reason=reasons.length?cell(list(reasons,maxReasons)):'—';
     const duration=durationText(entry.startedAt,entry.finishedAt)??'—';
-    lines.push(`| ${cell(entry.gateId)} | ${cell(entry.level??entry.domain??'?')} | ${cell(entry.kind??'?')} | ${symbol[entry.status]??''} ${entry.status} | ${duration} | ${reason} | ${suggestions[entry.status]??''} |`);
+    lines.push(`| ${cell(entry.gateId)} | ${cell(entry.level??entry.domain??'?')} | ${cell(entry.kind??'?')} | ${symbol[entry.status]??''} ${entry.status} | ${cell(sourceCell(entry))} | ${duration} | ${reason} | ${cell(suggestionFor(entry))} |`);
    }
   }else lines.push('本次运行没有执行任何门禁。');
   lines.push('');

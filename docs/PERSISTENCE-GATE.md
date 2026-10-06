@@ -15,7 +15,7 @@ node scripts/verify-persistence.mjs
 
 ## 配置与 runner 协议
 
-Gate 配置见 examples/persistence-demo/.quality-gate.json：kind=persistence、domain=L2，配置 argv、timeoutMs、expectedHttpStatus、correlationField、expected。expected 必须枚举返回记录的全部字段，包括可空字段；correlationField 的预期必须是 `$RUN_ID`，每次运行由内核生成新 UUID。匹配是区分类型的深度相等，字段不存在不等于 null；额外字段同样失败。每个数据库列单独生成 fields 证据；对象型列按整个值深度比较，不做本体语义解释。
+Gate 配置见 examples/persistence-demo/.quality-gate.json：kind=persistence、level=L2，配置 argv、timeoutMs、expectedHttpStatus、correlationField、expected。expected 必须枚举返回记录的全部字段，包括可空字段；correlationField 的预期必须是 `$RUN_ID`，每次运行由内核生成新 UUID。匹配是区分类型的深度相等，字段不存在不等于 null；额外字段同样失败。每个数据库列单独生成 fields 证据；对象型列按整个值深度比较，不做本体语义解释。
 
 快照协议（v1.10.0 E3 起 `requireSnapshots` 默认强制）：runner 须回报 API 调用前后的数据库快照 `snapshots:{before,after}`，after 须取自独立会话/连接（[ADR-0013](adr/ADR-0013-persistence-readback.md)，demo 以重新查询实现），内核输出字段 delta 且快照与独立观察不一致即 ERROR；不回报快照即 ERROR 指名默认强制与退出方式，退出须显式 `"requireSnapshots": false`（可见声明，details 入证据）；批量 `expectedRecordCount>1` 与快照互斥，必须显式退出。
 

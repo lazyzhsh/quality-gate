@@ -20,7 +20,7 @@ test('run-mode stderr is tiered: brief line on PASS, full table on FAIL',t=>{
  const fail=runCli(f.root,'close');
  assert.equal(fail.status,1);
  assert.match(fail.stderr,/❌ FAIL/);
- assert.match(fail.stderr,/\| ID \| 域 \| Kind \| 状态 \| 耗时 \| 原因 \| 建议 \|/);
+ assert.match(fail.stderr,/\| ID \| 域 \| Kind \| 状态 \| 来源 \| 耗时 \| 原因 \| 建议 \|/);
  assert.match(fail.stderr,/按原因修复后重跑/);
  void report;
 });
@@ -33,7 +33,7 @@ test('report re-renders the latest archived run with an archival marker',t=>{
  const latest=runCli('report',f.root);
  assert.equal(latest.status,0,latest.stderr);
  assert.match(latest.stdout,new RegExp(`（归档运行 · 生成于 .+ · run=${id} · 非当前状态`));
- assert.match(latest.stdout,/\| ID \| 域 \| Kind \| 状态 \| 耗时 \| 原因 \| 建议 \|/);
+ assert.match(latest.stdout,/\| ID \| 域 \| Kind \| 状态 \| 来源 \| 耗时 \| 原因 \| 建议 \|/);
  assert.match(latest.stdout,/✅ PASS/);
  const explicit=runCli('report',f.root,id);
  assert.equal(explicit.status,0,explicit.stderr);

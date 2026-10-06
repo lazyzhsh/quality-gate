@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [
+    {
+      "id": "A-1",
+      "statement": "The source tree obeys the declared layering: no forbidden dependency direction and no import cycles"
+    }
+  ],
+  "gates": [
+    {
+      "id": "dependency-fitness",
+      "kind": "metrics",
+      "enabled": true,
+      "stages": [
+        "close"
+      ],
+      "claimId": "A-1",
+      "argv": [
+        "$NODE",
+        "runner.mjs"
+      ],
+      "timeoutMs": 5000,
+      "thresholds": {
+        "forbiddenDependencies": {
+          "max": 0
+        },
+        "cycles": {
+          "max": 0
+        },
+        "measuredModules": {
+          "min": 4
+        },
+        "measuredEdges": {
+          "min": 4
+        }
+      },
+      "level": "L4"
+    }
+  ],
+  "risks": [
+    {
+      "id": "A-R1",
+      "gateId": "dependency-fitness",
+      "description": "Measurement covers static ESM relative imports under src/; dynamic imports, external packages and non-JS assets remain declared boundaries"
+    }
+  ],
+  "exceptions": [],
+  "requiredLevels": {
+    "close": [
+      "L4"
+    ]
+  }
+}

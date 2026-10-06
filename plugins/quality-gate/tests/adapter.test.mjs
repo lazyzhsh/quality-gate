@@ -68,3 +68,27 @@ test('v1.14 SessionStart injects baseline status of the last run',t=>{
  invoke({cwd:f.root,hook_event_name:'Stop'});
  assert.match(invoke({cwd:f.root,hook_event_name:'SessionStart'}).hookSpecificOutput.additionalContext,/基准: 最近一次 close 运行 FAIL/);
 });
+// X13（v1.26）：adapter 外层异常非阻断且不得被当作质量判定——必须指向 CLI 取得权威结论
+test('X13 adapter outer error is non-blocking and defers to the CLI verdict',()=>{
+ const r=spawnSync(process.execPath,[hook],{input:'not-json',encoding:'utf8'});
+ assert.equal(r.status,0);
+ const out=JSON.parse(r.stdout);
+ assert.equal(out.decision,undefined);
+ assert.match(out.systemMessage,/adapter error/);
+ assert.match(out.systemMessage,/不构成质量判定/);
+ assert.match(out.systemMessage,/qgate\.mjs/);
+});
+// X13（v1.26）：复用归档的阻断必须可追溯——标记带原运行时间与运行标识，并说明未重跑。
+// 复用面按 freshness 约束只覆盖纯文件式确定性 kind（command 等外部 runner 恒重跑），故用
+// configuration 门禁构造既有 FAIL。
+test('X13 Stop reuse of a failing archive marks the original run time',t=>{
+ const f=fixture(t);
+ f.c.gates=[{id:'G',claimId:'C1',kind:'configuration',level:'L5',enabled:true,stages:['close'],files:{a:'a.json',b:'b.json'},allowedDifferences:[]}];f.save();
+ fs.writeFileSync(path.join(f.root,'a.json'),'{"v":1}');
+ fs.writeFileSync(path.join(f.root,'b.json'),'{"v":2}');
+ assert.equal(invoke({cwd:f.root,hook_event_name:'Stop'}).decision,'block');
+ const second=invoke({cwd:f.root,hook_event_name:'Stop'});
+ assert.equal(second.decision,'block');
+ assert.match(second.reason,/复用归档 run [0-9a-f]{8}·原运行 \S+/);
+ assert.match(second.reason,/未重跑门禁/);
+});

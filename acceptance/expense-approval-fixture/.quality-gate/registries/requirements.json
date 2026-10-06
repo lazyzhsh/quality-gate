@@ -1,83 +1,125 @@
 {
-"requirements": [
-{
-"id": "REQ-01",
-"statement": "A tenant employee can submit a positive integer CNY claim, obtain independent approval, and receive one balanced reimbursement",
-"requiredTypes": [
-"normal",
-"boundary",
-"negative",
-"exception",
-"state-transition"
-],
-"acceptanceCriteria": [
-{
-"id": "AC-01",
-"type": "normal",
-"statement": "Submission, approval and reimbursement create two equal ledger entries",
-"codeFiles": [
-"src/claims.mjs",
-"src/store.mjs",
-"tests/claims.test.mjs"
-],
-"testGateIds": [
-"behavior",
-"rerun-evidence"
-]
-},
-{
-"id": "AC-02",
-"type": "boundary",
-"statement": "100000 cents is approvable and 100001 is not",
-"codeFiles": [
-"src/claims.mjs",
-"tests/claims.test.mjs"
-],
-"testGateIds": [
-"behavior"
-]
-},
-{
-"id": "AC-03",
-"type": "negative",
-"statement": "Invalid amounts do not create records",
-"codeFiles": [
-"src/claims.mjs",
-"tests/claims.test.mjs"
-],
-"testGateIds": [
-"behavior"
-]
-},
-{
-"id": "AC-04",
-"type": "exception",
-"statement": "Cross tenant and self approval are denied",
-"codeFiles": [
-"src/claims.mjs",
-"tests/claims.test.mjs"
-],
-"testGateIds": [
-"behavior"
-]
-},
-{
-"id": "AC-05",
-"type": "state-transition",
-"statement": "Early or repeated state changes are denied",
-"codeFiles": [
-"src/claims.mjs",
-"tests/claims.test.mjs"
-],
-"testGateIds": [
-"behavior"
-]
-}
-],
-"prdRef": {
-"file": "docs/PRD.md",
-"section": "1. 报销审批需求"
-}
-}
-]
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "statement": "A tenant employee can submit a positive integer CNY claim, obtain independent approval, and receive one balanced reimbursement",
+      "requiredTypes": [
+        "normal",
+        "boundary",
+        "negative",
+        "exception",
+        "state-transition"
+      ],
+      "acceptanceCriteria": [
+        {
+          "id": "AC-01",
+          "type": "normal",
+          "statement": "Submission, approval and reimbursement create two equal ledger entries",
+          "codeFiles": [
+            "src/claims.mjs",
+            "src/store.mjs",
+            "tests/claims.test.mjs"
+          ],
+          "testGateIds": [
+            "behavior",
+            "rerun-evidence"
+          ],
+          "cases": [
+            {
+              "gateId": "behavior",
+              "caseIds": [
+                "normal"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "AC-02",
+          "type": "boundary",
+          "statement": "100000 cents is approvable and 100001 is not",
+          "codeFiles": [
+            "src/claims.mjs",
+            "tests/claims.test.mjs"
+          ],
+          "testGateIds": [
+            "behavior"
+          ],
+          "cases": [
+            {
+              "gateId": "behavior",
+              "caseIds": [
+                "limit",
+                "above-limit"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "AC-03",
+          "type": "negative",
+          "statement": "Invalid amounts do not create records",
+          "codeFiles": [
+            "src/claims.mjs",
+            "tests/claims.test.mjs"
+          ],
+          "testGateIds": [
+            "behavior"
+          ],
+          "cases": [
+            {
+              "gateId": "behavior",
+              "caseIds": [
+                "invalid-amount"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "AC-04",
+          "type": "exception",
+          "statement": "Cross tenant and self approval are denied",
+          "codeFiles": [
+            "src/claims.mjs",
+            "tests/claims.test.mjs"
+          ],
+          "testGateIds": [
+            "behavior"
+          ],
+          "cases": [
+            {
+              "gateId": "behavior",
+              "caseIds": [
+                "cross-tenant",
+                "self-approval"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "AC-05",
+          "type": "state-transition",
+          "statement": "Early or repeated state changes are denied",
+          "codeFiles": [
+            "src/claims.mjs",
+            "tests/claims.test.mjs"
+          ],
+          "testGateIds": [
+            "behavior"
+          ],
+          "cases": [
+            {
+              "gateId": "behavior",
+              "caseIds": [
+                "double-approval"
+              ]
+            }
+          ]
+        }
+      ],
+      "prdRef": {
+        "file": "docs/PRD.md",
+        "section": "1. 报销审批需求"
+      }
+    }
+  ]
 }

@@ -4,7 +4,7 @@ Configurable, evidence-producing quality gates for agent-assisted software deliv
 
 把“软件可交付”变成可追溯的 **Claim → Evidence → Gate → Risk → Exception** 证明链。内核采用 Node.js 标准库，无 npm 依赖，可通过独立 CLI 运行；ZCode 插件是首个宿主 adapter。
 
-**当前版本：1.24.0，早期开源发行。** 已有 37 种门禁和 46 个示例，覆盖 L0–L5 六个质量证明域。支持范围、修复内容与后续缺口见 [开源状态](docs/OPEN-SOURCE-STATUS.md)、[发布说明](docs/release/RELEASE-1.24.0.md) 和 [RTM](docs/RTM.md)。
+**当前版本：1.31.1。** 37 种门禁、48 个示例，覆盖 L0–L5 六个质量证明域。近版脉络：1.24.0 首次开源发行（含全项目审查 11 组判定问题修复）→ 1.25.0–1.27.0 受控表达三批（指令纠正、报告来源与声明关联、随包文风检查 advisory）→ 1.28.0 评审残余收尾 → 1.29.0 评审后续推进 → 1.30.0 二轮评审六组实现问题修复（登记内 runner 计入执行预算并受剩余期限约束、requireLive 缺失 mode 即缺证据、semantic-relation 反向认可须显式互逆、PNG tRNS 透明与结构防线、依赖图提取跳过注释/字符串、OpenAPI 提取 fail-closed）→ 1.31.0 证明链补齐（AC→真实用例绑定 requireCaseBinding、来源信号覆盖内核像素重算/内容级核验与无信号显式化）→ 1.31.1 反思轮补丁（重复 tRNS 拒绝、依赖提取正则语境守卫、字节一致核验信号，[发布说明](docs/release/RELEASE-1.31.1.md)）——支持范围与后续缺口见 [开源状态](docs/OPEN-SOURCE-STATUS.md) 和 [RTM](docs/RTM.md)。
 
 ## 快速开始
 
@@ -47,7 +47,7 @@ node plugins/quality-gate/bin/qgate.mjs <项目绝对路径> close
 
 在 ZCode 插件市场添加克隆目录或解包目录作为本地来源，安装并启用 `quality-gate`，新建会话。升级流程与验证规则见 [交接入口](PROJECT-HANDOFF.md)。插件支持 SessionStart、UserPromptSubmit、PreToolUse 和 Stop；正式项目必须配置自己的 `.quality-gate.json`。
 
-Stop 的 55 秒宿主期限内最多接受 50 秒已声明执行预算，余量用于核验与落盘；长检查用 CLI 的 pr/release 阶段。根项目的 close 只检查活文档约定，完整回归在 pr/release 执行，close PASS 不代表完整回归已执行。
+Stop 的 55 秒宿主期限内最多接受 50 秒已声明执行预算，余量用于核验与落盘；长检查用 CLI 的 pr/release 阶段。根项目的 close 检查活文档约定与入口文档版本口径（G-CONVENTIONS＋G-DOCS，2026-10-06 起），完整回归在 pr/release 执行，close PASS 不代表完整回归已执行。
 
 ## 开发与验证
 

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {projectFile} from './kernel.mjs';
+import {liveModeBlock} from './alignment.mjs';
 
 // E6 API 消费者链层（v1.12.0，用户选定方案 B：独立 kind）：回答"provider 当前契约对每个
 // 消费者是否兼容、一次变更破坏了谁"。分层来源协议：
@@ -116,13 +117,15 @@ export function runConsumerMatrix(g,root){
    }
    matrix.push({consumer:consumer.id,compatibilityLevel,status:judged.length?'broken':'compatible',breakingCount:judged.length,ignoredCount:ignored.length,...(usage?{usageSource:usage.usage,usageItemCount:(usage.items??[]).length}:{})});
   }
-  const staticBlocked=mode==='static'&&g.requireLive===true;
+  // requireLive 缺失语义与 alignment/contract-diff 同一判定（F02）：缺失＝缺证据 FAIL 指名
+  const liveBlock=liveModeBlock(mode,g.requireLive);
+  const liveBlocked=liveBlock!==null;
   const fingerprintBlocked=(g.requireSourceFingerprint===true&&fingerprint===null)||fingerprint?.status==='MISMATCH';
   const broken=breakingByItem.size||usageFindings.length;
-  return {status:broken||staticBlocked||fingerprintBlocked?'FAIL':'PASS',details:{
+  return {status:broken||liveBlocked||fingerprintBlocked?'FAIL':'PASS',details:{
    ...execution,source:observation.source,expectedSha256,
    ...(mode?{observationMode:mode}:{}),...(fingerprint?{sourceFingerprint:fingerprint}:{}),
-   ...(staticBlocked?{requireLive:g.requireLive}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),
+   ...(liveBlocked?{requireLive:g.requireLive,...(liveBlock.missing?{missingObservationMode:true}:{})}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),
    matrix,attribution:[...breakingByItem.values()],
    ...(ignoredBreaking.length?{ignoredBreaking,ignoreRoutes:g.ignoreRoutes}:{}),
    ...(observation.consumerUsage?{consumerUsage:observation.consumerUsage}:{}),

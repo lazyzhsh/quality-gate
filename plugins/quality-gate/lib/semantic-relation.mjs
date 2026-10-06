@@ -55,16 +55,20 @@ export function runSemanticRelation(g,c,root){
      list.push({to:rel.to,index});
      edges.set(rel.from,list);
     });
-    const queue=[[expected.from,[]]],seen=new Set([expected.from]);
-    while(queue.length){
-     const [node,trail]=queue.shift();
-     if(node===expected.to&&trail.length>0)return {via:'transitive',trail};
-     for(const edge of edges.get(node)??[]){
-      if(seen.has(edge.to))continue;
-      seen.add(edge.to);
-      queue.push([edge.to,[...trail,edge.index]]);
+     // 链可达 BFS：从起点的出边出发（≥1 条边），seen 只含后继——起点不经环回
+     // 不可平凡自达；from===to 须真实环回（v1.29 W6 组合对照发现的缺陷修复）
+     const startEdges=edges.get(expected.from)??[];
+     const queue=startEdges.map(edge=>[edge.to,[edge.index]]);
+     const seen=new Set(startEdges.map(edge=>edge.to));
+     while(queue.length){
+      const [node,trail]=queue.shift();
+      if(node===expected.to)return {via:'transitive',trail};
+      for(const edge of edges.get(node)??[]){
+       if(seen.has(edge.to))continue;
+       seen.add(edge.to);
+       queue.push([edge.to,[...trail,edge.index]]);
+      }
      }
-    }
    }
    return null;
   };
@@ -83,12 +87,14 @@ export function runSemanticRelation(g,c,root){
     else{chain.trail.forEach(index=>covered.add(index));inferred.push({from:expected.from,predicate:expected.predicate,to:expected.to,via:'transitive',trail:chain.trail.map(index=>observed.relations[index].location)});}
    }
    // 本体认可：目录在 from 概念上声明了 D(→to) 且 D⊑*... D ⊒ P（声明更强属性认可更弱主张）；
-   // 或目录在 to 概念上以互逆谓词声明了反向关系
+   // 或目录在 to 概念上以互逆谓词声明了反向关系。反向认可必须存在 inverseOf 声明——
+   // 同谓词反向（B—P→A）不是 A—P→B 的认可：无互逆声明时目录对反向主张不提供第三方约束
+   // （第二轮评审 F03，2026-10-06；对称语义须经显式声明 P.inverseOf=P 才成立）
    const forwardSanctioned=(fromConcept.concept.relations??[]).some(relation=>relation.to===expected.to&&superProps(expected.predicate).has(relation.predicate));
    const inverseSanctioned=(toConcept.concept.relations??[]).some(relation=>{
     if(relation.to!==expected.from)return false;
     const inv=inverseOf(expected.predicate);
-    return relation.predicate===expected.predicate||(inv!==null&&superProps(inv).has(relation.predicate));
+    return inv!==null&&superProps(inv).has(relation.predicate);
    });
    if(!forwardSanctioned&&!inverseSanctioned)findings.push({...expected,rule:'unsanctionedRelation'});
   }

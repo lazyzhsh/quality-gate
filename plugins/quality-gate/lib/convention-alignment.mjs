@@ -18,8 +18,8 @@ export function validateConventionAlignment(g){
 // banned-words 为内核原生扫描（机制泛化本仓库 glossary 防回归测试的成熟实践：映射记法
 // "词→替换" 行内豁免、行内白名单标记、前缀/后缀跳过）；argv 规则复用统一观察协议
 // （与 contentCheck 同形：stdin runId、stdout 结构化 findings，runner 无权自判放行）。
-// 边界如实：只对账结构化条目（字面词命中），不核验约定文件全文语义；豁免可被滥用，
-// 逐条命中（含豁免命中）入证据呈审计面。
+// 边界如实：只对账结构化条目（字面词命中），不核验约定文件全文语义；豁免即放行——被豁免
+// 的命中不入证据、无审计面（豁免可被滥用，完整豁免审计属后续增量，见 RTM X14）。
 function validateRegistry(data){
  check(data!==null&&typeof data==='object'&&!Array.isArray(data)&&Array.isArray(data.rules)&&data.rules.length>0&&data.rules.length<=50,'Expected 1..50 convention rules');
  check(new Set(data.rules.map(rule=>rule.id)).size===data.rules.length,'Duplicate convention rule id');
@@ -81,8 +81,11 @@ function scanBannedWords(root,rule){
  return {scannedFiles:files.length,hits};
 }
 
-function runArgvRule(root,rule){
+function runArgvRule(root,rule,deadline){
  const runId=randomUUID();
+ // 剩余期限守卫（F01）：宿主期限下不再启动声明预算超出剩余期限的规则——逐条检查，
+ // 先行规则的实际耗时（含 spawn 开销）会压缩后续规则的可用期限
+ if(deadline!==undefined&&deadline!==null&&Date.now()+rule.timeoutMs>deadline)throw new Error(`Execution budget exhausted before convention rule ${rule.id}: remaining ${Math.max(0,deadline-Date.now())}ms < declared ${rule.timeoutMs}ms`);
  const argv=rule.argv.map(item=>item==='$NODE'?process.execPath:item);
  const result=spawnSync(argv[0],argv.slice(1),{cwd:root,shell:false,encoding:'utf8',input:JSON.stringify({schemaVersion:'0.1',runId,ruleId:rule.id})+'\n',timeout:rule.timeoutMs,maxBuffer:65536,windowsHide:true});
  check(!result.error&&!result.signal&&result.status===0,`Convention runner failed for ${rule.id}: ${result.error?.message??(typeof result.stderr==='string'?result.stderr.trim().split('\n').pop():undefined)??'non-zero exit'}`);
@@ -92,7 +95,7 @@ function runArgvRule(root,rule){
  return {source:observed.source,execution:{runId,argv,exitCode:result.status},hits:observed.findings.map(finding=>({path:finding.path,line:finding.line??null,word:finding.detail,...(finding.category!==undefined?{category:finding.category}:{})}))};
 }
 
-export function runConventionAlignment(g,root){
+export function runConventionAlignment(g,root,{deadline}={}){
  const data=JSON.parse(fs.readFileSync(projectFile(root,g.file),'utf8').replace(/^\uFEFF/,''));
  validateRegistry(data);
  const rules=data.rules.map(rule=>{
@@ -100,7 +103,7 @@ export function runConventionAlignment(g,root){
    const scan=scanBannedWords(root,rule);
    return {id:rule.id,type:rule.type,severity:rule.severity??'fail',source:rule.source,scannedFiles:scan.scannedFiles,hits:scan.hits};
   }
-  const execution=runArgvRule(root,rule);
+  const execution=runArgvRule(root,rule,deadline);
   return {id:rule.id,type:rule.type,severity:rule.severity??'fail',source:rule.source,scannedFiles:null,hits:execution.hits,observation:{source:execution.source,execution:execution.execution}};
  });
  const blocking=rules.filter(rule=>rule.severity==='fail');

@@ -21,6 +21,15 @@ const observationMode=observation=>{
  check(observation.mode===undefined||['live','static'].includes(observation.mode),'Invalid observation mode');
  return observation.mode??null;
 };
+// requireLive 缺失语义（F02，2026-10-06 二轮评审）：开启后要求显式 mode:'live'——static 即
+// FAIL（既有语义）；缺失 mode 是缺证据（无法区分实时观察与不回报模式声明的旧 runner），
+// 同样 FAIL 指名（缺失来源不比诚实 static 更易放行）；畸形值仍由 observationMode ERROR。
+// 未开启 requireLive 时缺失＝未声明，保持旧 runner 兼容不阻断。三条消费路径共用本判定：
+// alignment api/schema、alignment contract-diff、consumer-matrix。
+export function liveModeBlock(mode,requireLive){
+ if(requireLive!==true||mode==='live')return null;
+ return {missing:mode===null};
+}
 // 指纹声明即核验：存在性+防逃逸（复用 projectFile），与磁盘文件哈希不符即 FAIL
 const sourceFingerprintCheck=(observation,root)=>{
  if(observation.sourceFingerprint===undefined||observation.sourceFingerprint===null)return null;
@@ -49,9 +58,10 @@ export function runAlignment(g,root){
    check(object(observation)&&observation.schemaVersion==='0.1'&&observation.runId===runId&&observation.kind==='contract-diff'&&text(observation.source)&&observation.checked===true&&Array.isArray(observation.breaking)&&observation.breaking.every(b=>object(b)&&text(b.path)&&text(b.rule)),'Invalid or stale contract diff observation');
    const mode=observationMode(observation);
    const fingerprint=sourceFingerprintCheck(observation,root);
-   const staticBlocked=mode==='static'&&g.requireLive===true;
+   const liveBlock=liveModeBlock(mode,g.requireLive);
+   const liveBlocked=liveBlock!==null;
    const fingerprintBlocked=(g.requireSourceFingerprint===true&&fingerprint===null)||fingerprint?.status==='MISMATCH';
-   return {status:observation.breaking.length||staticBlocked||fingerprintBlocked?'FAIL':'PASS',details:{...execution,scope:g.scope,compatibilityLevel:g.compatibilityLevel,source:observation.source,...(mode?{observationMode:mode}:{}),...(fingerprint?{sourceFingerprint:fingerprint}:{}),...(staticBlocked?{requireLive:g.requireLive}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),currentSha256:createHash('sha256').update(raw).digest('hex'),...(observation.breaking.length?{breakingChanges:observation.breaking}:{})}};
+   return {status:observation.breaking.length||liveBlocked||fingerprintBlocked?'FAIL':'PASS',details:{...execution,scope:g.scope,compatibilityLevel:g.compatibilityLevel,source:observation.source,...(mode?{observationMode:mode}:{}),...(fingerprint?{sourceFingerprint:fingerprint}:{}),...(liveBlocked?{requireLive:g.requireLive,...(liveBlock.missing?{missingObservationMode:true}:{})}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),currentSha256:createHash('sha256').update(raw).digest('hex'),...(observation.breaking.length?{breakingChanges:observation.breaking}:{})}};
   }catch(error){return {status:'ERROR',details:{...execution,error:error.message}};}
  }
  check(object(expected)&&expected.kind===g.scope&&Array.isArray(expected.items)&&expected.items.length>0,'Invalid alignment specification');
@@ -65,11 +75,12 @@ export function runAlignment(g,root){
   check(object(observation)&&observation.schemaVersion==='0.1'&&observation.runId===runId&&observation.kind===g.scope&&text(observation.source)&&Array.isArray(observation.items),'Invalid or stale alignment observation');
   const mode=observationMode(observation);
   const fingerprint=sourceFingerprintCheck(observation,root);
-  const staticBlocked=mode==='static'&&g.requireLive===true;
+  const liveBlock=liveModeBlock(mode,g.requireLive);
+  const liveBlocked=liveBlock!==null;
   const fingerprintBlocked=(g.requireSourceFingerprint===true&&fingerprint===null)||fingerprint?.status==='MISMATCH';
   const allDifferences=diff(expected.items,observation.items,'/items');
   // ignorePaths 只豁免声明过的易变路径；跳过的差异必须留在证据里，不放行未声明的漂移
   const {differences,ignoredDifferences}=filterDifferences(allDifferences,g.ignorePaths);
-  return {status:differences.length||staticBlocked||fingerprintBlocked?'FAIL':'PASS',details:{...execution,scope:g.scope,source:observation.source,...(mode?{observationMode:mode}:{}),...(fingerprint?{sourceFingerprint:fingerprint}:{}),...(staticBlocked?{requireLive:g.requireLive}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),expectedSha256:createHash('sha256').update(raw).digest('hex'),expectedItems:expected.items,observedItems:observation.items,differences,...(ignoredDifferences.length?{ignoredDifferences}:{}),...(g.ignorePaths?{ignorePaths:g.ignorePaths}:{})}};
+  return {status:differences.length||liveBlocked||fingerprintBlocked?'FAIL':'PASS',details:{...execution,scope:g.scope,source:observation.source,...(mode?{observationMode:mode}:{}),...(fingerprint?{sourceFingerprint:fingerprint}:{}),...(liveBlocked?{requireLive:g.requireLive,...(liveBlock.missing?{missingObservationMode:true}:{})}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),expectedSha256:createHash('sha256').update(raw).digest('hex'),expectedItems:expected.items,observedItems:observation.items,differences,...(ignoredDifferences.length?{ignoredDifferences}:{}),...(g.ignorePaths?{ignorePaths:g.ignorePaths}:{})}};
  }catch(error){return {status:'ERROR',details:{...execution,error:error.message}};}
 }

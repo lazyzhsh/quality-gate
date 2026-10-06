@@ -147,6 +147,18 @@ test('requireLive rejects static observation',t=>{
  const result=run(root);
  assert.equal(gate(result).status,'FAIL');
  assert.ok(failureReasons(gate(result)).some(reason=>reason.includes('静态读取（requireLive）')));
+ // F02：缺失 mode 同样 FAIL 指名（缺证据），不比诚实 static 更易放行；未开启时兼容放行
+ const observe=path.join(root,'scripts','observe.mjs');
+ const original=fs.readFileSync(observe,'utf8');
+ fs.writeFileSync(observe,original.replace(/\s*mode:'static',/,''));
+ const missing=run(root);
+ assert.equal(gate(missing).status,'FAIL');
+ assert.equal(gate(missing).details.missingObservationMode,true);
+ assert.ok(failureReasons(gate(missing)).some(reason=>reason.includes('观察缺少模式声明')));
+ config.gates[0].requireLive=undefined;
+ saveConfig(root,config);
+ assert.equal(gate(run(root)).status,'PASS');
+ fs.writeFileSync(observe,original);
 });
 
 test('malformed inputs fail closed',t=>{

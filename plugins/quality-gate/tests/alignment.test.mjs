@@ -70,6 +70,20 @@ test('observation mode: static downgrades in summary and fails under requireLive
  apiGate.argv=originalArgv;fs.writeFileSync(configPath,JSON.stringify(config));
  result=run(root);
  assert.equal(result.evidence[0].status,'PASS');
+ // F02：缺失 mode 的旧 runner——未开启 requireLive 时保持兼容放行（无 observationMode 字段）
+ fs.writeFileSync(path.join(root,'static-observe.mjs'),'let raw="";for await(const c of process.stdin)raw+=c;const r=JSON.parse(raw);console.log(JSON.stringify({schemaVersion:"0.1",runId:r.runId,kind:"api",source:"legacy-runner-no-mode",items:[{method:"POST",path:"/quote",requestFields:["amount","currency"],responseStatus:200,responseFields:["decision","fee"]}]}));');
+ apiGate.argv=['$NODE','static-observe.mjs'];apiGate.requireLive=undefined;fs.writeFileSync(configPath,JSON.stringify(config));
+ result=run(root);
+ assert.equal(result.evidence[0].status,'PASS');
+ assert.equal(result.evidence[0].details.observationMode,undefined);
+ // F02：requireLive 开启下缺失 mode 是缺证据——FAIL 指名，不比诚实 static 更易放行
+ apiGate.requireLive=true;fs.writeFileSync(configPath,JSON.stringify(config));
+ result=run(root);
+ assert.equal(result.evidence[0].status,'FAIL');
+ assert.equal(result.evidence[0].details.missingObservationMode,true);
+ assert.equal(result.evidence[0].details.observationMode,undefined);
+ assert.deepEqual(failureReasons(result.evidence[0]),['观察缺少模式声明：requireLive 要求显式 live（缺证据）']);
+ apiGate.requireLive=undefined;apiGate.argv=originalArgv;fs.writeFileSync(configPath,JSON.stringify(config));
  // 畸形 mode 值 fail-closed
  apiGate.argv=['$NODE','static-observe.mjs'];fs.writeFileSync(configPath,JSON.stringify(config));
  fs.writeFileSync(path.join(root,'static-observe.mjs'),'let raw="";for await(const c of process.stdin)raw+=c;const r=JSON.parse(raw);console.log(JSON.stringify({schemaVersion:"0.1",runId:r.runId,kind:"api",source:"static-file-read",mode:"replay",items:[{method:"POST",path:"/quote",requestFields:["amount","currency"],responseStatus:200,responseFields:["decision","fee"]}]}));');

@@ -40,9 +40,11 @@ function parseNameStatus(raw){
  return files;
 }
 
-function observeContent(spec,root,request){
+function observeContent(spec,root,request,deadline){
  check(Array.isArray(spec.contentCheck.argv)&&spec.contentCheck.argv.length>0&&spec.contentCheck.argv.every(text)&&Number.isInteger(spec.contentCheck.timeoutMs)&&spec.contentCheck.timeoutMs>0&&spec.contentCheck.timeoutMs<=20000,'Invalid contentCheck runner');
  const runId=randomUUID();
+ // 剩余期限守卫（F01）：宿主期限下声明预算超出剩余期限即不再启动 contentCheck runner
+ if(deadline!==undefined&&deadline!==null&&Date.now()+spec.contentCheck.timeoutMs>deadline)throw new Error(`Execution budget exhausted before contentCheck: remaining ${Math.max(0,deadline-Date.now())}ms < declared ${spec.contentCheck.timeoutMs}ms`);
  const argv=spec.contentCheck.argv.map(item=>item==='$NODE'?process.execPath:item);
  const result=spawnSync(argv[0],argv.slice(1),{cwd:root,shell:false,encoding:'utf8',input:JSON.stringify({...request,runId})+'\n',timeout:spec.contentCheck.timeoutMs,maxBuffer:65536,windowsHide:true});
  const execution={runId,argv,exitCode:result.status,signal:result.signal,stderr:result.stderr};
@@ -53,7 +55,7 @@ function observeContent(spec,root,request){
  return {source:observed.source,execution,findings:observed.findings};
 }
 
-export function runChangeScope(g,root){
+export function runChangeScope(g,root,{deadline}={}){
  check(g.level==='L0','change-scope requires L0');
  const spec=JSON.parse(fs.readFileSync(projectFile(root,g.file),'utf8').replace(/^\uFEFF/,''));
  check(text(spec.baseRef)&&!spec.baseRef.startsWith('-')&&spec.baseRef.length<=100,'Invalid baseRef');
@@ -104,7 +106,7 @@ export function runChangeScope(g,root){
  const protectedChangedWithoutContentCheck=spec.requireContentCheck===true&&spec.contentCheck===undefined?files.filter(file=>file.protected.length>0).map(file=>file.path):[];
  let contentCheck=null;
  if(spec.contentCheck!==undefined){
-  const observation=observeContent(spec,root,{schemaVersion:'0.1',baseRef:spec.baseRef,baseCommit,files:changed});
+  const observation=observeContent(spec,root,{schemaVersion:'0.1',baseRef:spec.baseRef,baseCommit,files:changed},deadline);
   const accepted=spec.acceptedFindings??[];
   const unaccepted=observation.findings.filter(finding=>!accepted.some(item=>item.path===finding.path&&item.category===finding.category));
   contentCheck={source:observation.source,execution:observation.execution,findings:observation.findings,acceptedFindings:accepted,unaccepted};

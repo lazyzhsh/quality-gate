@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {run} from '../lib/kernel.mjs';
 import {renderSummary} from '../lib/summary.mjs';
@@ -46,7 +47,7 @@ try {
   }catch{output={};}
  }
  else if(event==='SessionStart'){
-  let context='Quality Gate enabled. Before closing, run configured quality gates. No .quality-gate.json means onboarding is required; never claim quality PASS without evidence. Stop feedback has a runtime retry limit; use CLI in CI for enforcement. After running gates, show the graded report in your reply as Markdown (never wrapped in a code fence; PASS: the brief stderr line; otherwise the full table with durations, reasons and the suggestion column); qgate.mjs report <root> [runId] re-renders archived runs (unique id prefix accepted).';
+  let context='Quality Gate enabled. Before closing, run configured quality gates. No .quality-gate.json means onboarding is required; never claim quality PASS without evidence. Stop feedback has a runtime retry limit; use CLI in CI for enforcement. After running gates, show the graded report in your reply as Markdown (never wrapped in a code fence; PASS: the brief stderr line; otherwise the full table with durations, per-gate evidence sources, reasons and the suggestion column); qgate.mjs report <root> [runId] re-renders archived runs (unique id prefix accepted).';
   if(Number(process.versions.node.split('.')[0])<20)context+=` Node ${process.versions.node} is below the required 20+; upgrade via https://nodejs.org/`;
   // 新项目接入：读得到配置时预检外部依赖并给出安装指引；读不到时区分缺配置（指向引导命令）与配置损坏
   let config=null,configError=null;
@@ -136,10 +137,10 @@ try {
      }catch{/* 基线缺失/损坏 → 全部视为新失败，阻断 */}
     }
     if(blockMode==='new-only'&&report.status==='FAIL'&&failing.length>0&&failing.every(e=>preexisting.includes(e))){
-     output={systemMessage:`Quality Gate: ${failing.length} 个门禁 FAIL 为会话开始前既有（${failing.map(e=>e.gateId).join(', ')}），stop.blockMode=new-only 放行本次 Stop；证据 ${report.reportPath??path.join(reportDir??'.quality-gate/runs',report.id+'.json')}。既有失败请安排修复，不要视为已通过。`};
+     output={systemMessage:`Quality Gate: 本次报告仍为 FAIL——${failing.length} 个门禁失败均为会话开始前既有（${failing.map(e=>e.gateId).join(', ')}），stop.blockMode=new-only 允许本次 Stop 收尾；证据 ${report.reportPath??path.join(reportDir??'.quality-gate/runs',report.id+'.json')}。既有失败请安排修复，不要视为已通过。`};
     }else{
      const reason=renderSummary(report)
-      +(reusedFrom?`\n（输入未变，复用归档 run ${reusedFrom.slice(0,8)}，未重跑门禁）`:'')
+      +(reusedFrom?`\n（输入核验一致，复用归档 run ${reusedFrom.slice(0,8)}·原运行 ${report.finishedAt}，未重跑门禁）`:'')
       +(preexisting.length?`\n其中会话前既有失败: ${preexisting.map(e=>e.gateId).join(', ')}——但存在新失败或其输入已变，仍阻断。`:'');
      output={decision:'block',reason};
     }
@@ -147,4 +148,4 @@ try {
   }
  }
  console.log(JSON.stringify(output));
-}catch(e){console.log(JSON.stringify({systemMessage:'Quality Gate adapter error (non-blocking): '+e.message}));}
+}catch(e){console.log(JSON.stringify({systemMessage:`Quality Gate adapter error (non-blocking): ${e.message}——宿主本次未阻断；该消息不构成质量判定，请以 CLI 结果为准: node "${fileURLToPath(new URL('../bin/qgate.mjs',import.meta.url))}" <project-root> close`}));}

@@ -7,7 +7,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {fixture} from './fixture.mjs';
 import {run,GATE_KINDS} from '../lib/kernel.mjs';
-import {renderSummary,renderBrief,durationText,stripCwd,failureReasons,hasFailureExtractor,evidenceStrength} from '../lib/summary.mjs';
+import {renderSummary,renderBrief,durationText,stripCwd,failureReasons,hasFailureExtractor,evidenceStrength,sourceDistribution} from '../lib/summary.mjs';
 const adapter=fileURLToPath(new URL('../hooks/adapter.mjs',import.meta.url));
 const invoke=input=>{const result=spawnSync(process.execPath,[adapter],{input:JSON.stringify(input)+'\n',encoding:'utf8'});assert.equal(result.status,0);return JSON.parse(result.stdout);};
 
@@ -16,7 +16,8 @@ test('passing run renders table, archive footer and a compact brief',t=>{
  const result=run(f.root);
  const summary=renderSummary(result);
  assert.match(summary,/\*\*Quality Gate PASS\*\* · close · 1\/1 通过/);
- assert.match(summary,/\| build \| L1 \| command \| ✅ PASS \| [\d.]+s \| — \| — \|/);
+ // v1.31：PASS 而无任何来源信号的门禁显式显示"无信号"——与非 PASS 的 "—" 分担不同含义
+ assert.match(summary,/\| build \| L1 \| command \| ✅ PASS \| 无信号 \| [\d.]+s \| — \| — \|/);
  assert.match(summary,/全部通过；证据已归档。/);
  assert.equal(result.evidence[0].kind,'command');
  assert.equal(result.evidence[0].level,'L1');
@@ -150,7 +151,7 @@ test('Stop hook block reason carries the summary table',t=>{
  f.c.gates[0].argv[2]='process.exit(1)';f.save();
  const output=invoke({cwd:f.root,hook_event_name:'Stop'});
  assert.equal(output.decision,'block');
- assert.match(output.reason,/\| ID \| 域 \| Kind \| 状态 \| 耗时 \| 原因 \| 建议 \|/);
+ assert.match(output.reason,/\| ID \| 域 \| Kind \| 状态 \| 来源 \| 耗时 \| 原因 \| 建议 \|/);
  assert.match(output.reason,/❌ FAIL/);
  assert.match(output.reason,/退出码 1/);
 });
@@ -204,6 +205,159 @@ test('per-kind extractors produce specific failure reasons across L0-L5',()=>{
   const reasons=failureReasons({kind,status:'FAIL',details});
   assert.ok(reasons.some(reason=>reason.includes(needle)),`${kind} should mention: ${needle}; got ${JSON.stringify(reasons)}`);
  }
+});
+
+// ---- 受控表达第一批（X12，v1.25）：失败建议先修复制品；放松验收属显式变更，不并列成可选修复 ----
+
+test('failure suggestions lead with fixing the artifact and demote acceptance changes (X12)',()=>{
+ // AC 结构/类型违规：修复=修正结构；"改回自由文本"不再作为并列修复选项
+ const acReasons=failureReasons({kind:'change-scope',status:'FAIL',details:{taskIntent:{acceptanceStructure:{violations:[
+  {acceptance:'AC-1',rule:'missing-then',line:4},
+  {acceptance:'AC-2',rule:'ac-type-conflict',declared:'normal',derived:['state-transition']}
+ ]}}}});
+ assert.ok(acReasons.every(reason=>reason.includes('修正 Gherkin/EARS 结构')),JSON.stringify(acReasons));
+ assert.ok(acReasons.every(reason=>reason.includes('验收要求变更')&&reason.includes('显式')),JSON.stringify(acReasons));
+ assert.ok(acReasons.every(reason=>!reason.includes('或去掉 format')&&!reason.includes('或改回自由文本')),JSON.stringify(acReasons));
+ const traceReasons=failureReasons({kind:'traceability',status:'FAIL',details:{requirements:[{id:'R1',acceptanceCriteria:[{id:'AC-1',structureViolations:[{rule:'leading-and',scenario:'退款'}]}]}]}});
+ assert.ok(traceReasons.every(reason=>reason.includes('修正 Gherkin/EARS 结构')&&reason.includes('验收要求变更')),JSON.stringify(traceReasons));
+ // 约定命中：修复=改制品用词；更新豁免定位为规则调整，不再与修复并列
+ const conventionReasons=failureReasons({kind:'convention-alignment',status:'FAIL',details:{rules:[{id:'TERM-x',severity:'fail',source:{file:'AGENTS.md',section:'术语约定'},hits:[{path:'docs/a.md',line:3,word:'旧词'}]}]}});
+ assert.ok(conventionReasons.every(reason=>reason.includes('修复制品用词')),JSON.stringify(conventionReasons));
+ assert.ok(conventionReasons.every(reason=>reason.includes('属调整规则')&&reason.includes('显式变更登记')),JSON.stringify(conventionReasons));
+ assert.ok(conventionReasons.every(reason=>!reason.includes('修复用词或更新豁免')),JSON.stringify(conventionReasons));
+ assert.ok(conventionReasons.every(reason=>reason.includes('来源 AGENTS.md §术语约定')),JSON.stringify(conventionReasons));
+});
+
+// ---- 受控表达第二批（X13，v1.26）：逐门禁来源/advisory 可见性/例外不隐藏/声明关联 ----
+
+const x13Report=(evidence,extra={})=>({
+ status:'PASS',stage:'close',id:'0123456789abcdef0123456789abcdef',root:'.',reportPath:'runs/x.json',
+ startedAt:'2026-01-01T00:00:00.000Z',finishedAt:'2026-01-01T00:00:01.000Z',
+ evidence,...extra
+});
+
+test('mixed sources render per gate and never as all kernel-verified (X13)',()=>{
+ const report=x13Report([
+  {gateId:'anchored',claimId:'C1',level:'L1',kind:'engineering',status:'PASS',details:{checks:[{id:'unit',type:'test',status:'PASS',total:8,passed:8,failed:0,skipped:0,rawOutput:{crossCheck:'match'}}]}},
+  {gateId:'declared',claimId:'C1',level:'L1',kind:'engineering',status:'PASS',details:{checks:[{id:'unit',type:'test',status:'PASS',total:5,passed:5,failed:0,skipped:0}]}},
+  {gateId:'downgraded',claimId:'C1',level:'L3',kind:'behavior',status:'PASS',details:{baseline:{status:'embedded'},cases:[{id:'b1'}]}}
+ ]);
+ const full=renderSummary(report),brief=renderBrief(report);
+ // 逐门禁来源列：同一运行内三类来源各自如实呈现
+ assert.match(full,/\| anchored \| L1 \| engineering \| ✅ PASS \| 核验（原始输出解析）；声明 \|/);
+ assert.match(full,/\| declared \| L1 \| engineering \| ✅ PASS \| 声明 \|/);
+ assert.match(full,/\| downgraded \| L3 \| behavior \| ✅ PASS \| 声明；降级（内嵌基线） \|/);
+ // 反例：仅声明来源的门禁不得显示为核验
+ assert.ok(!/\| declared [^\n]*核验/.test(full),'declared-only gate must not render as 核验');
+ // 分布随证据力行：核验 1、声明 1、降级 1
+ assert.match(brief,/来源 核验 1、声明 1、降级 1/);
+ // 非 PASS 门禁不参与来源标注
+ const failing=x13Report([{gateId:'bad',claimId:'C1',level:'L1',kind:'command',status:'ERROR',details:{error:'spawn x ENOENT'}}]);
+ assert.match(renderSummary(failing),/\| bad \| L1 \| command \| ⚠️ ERROR \| — \|/);
+});
+
+test('kernel recompute and content check anchor sources; unsignaled PASS shows explicitly (v1.31)',()=>{
+ const report=x13Report([
+  {gateId:'png',claimId:'C1',level:'L3',kind:'visual',status:'PASS',details:{diffSource:'kernel-recompute',diff:{pixels:0,totalPixels:4}}},
+  {gateId:'docs',claimId:'C1',level:'L5',kind:'documentation',status:'PASS',details:{artifacts:[{role:'user',path:'README.md',version:'1.31.0',missingTopics:[],status:'PASS',contentCheck:{status:'PASS'}}]}},
+  {gateId:'metric',claimId:'C1',level:'L4',kind:'metrics',status:'PASS',details:{metrics:[{name:'cycles',actual:0,threshold:{max:0},status:'PASS'}]}},
+  {gateId:'quiet',claimId:'C1',level:'L1',kind:'command',status:'PASS',details:{exitCode:0}},
+ ]);
+ const full=renderSummary(report),brief=renderBrief(report);
+ // 二轮评审缺口：内核已重算像素仍显示零核验——现计入核验信号；内容级核验同理
+ assert.match(full,/\| png \| L3 \| visual \| ✅ PASS \| 核验（内核像素重算）/);
+ // 字节一致（exact-bytes）＝内核计算两侧 SHA256 相等——同为内核核验信号（v1.31.1）
+ const exact=x13Report([{gateId:'svg',claimId:'C1',level:'L3',kind:'visual',status:'PASS',details:{comparison:'exact-bytes'}}]);
+ assert.match(renderSummary(exact),/\| svg \| L3 \| visual \| ✅ PASS \| 核验（字节一致）/);
+ assert.match(full,/\| docs \| L5 \| documentation \| ✅ PASS \| 核验（内容级核验）/);
+ // metrics 自报指标值归入声明（此前无分类）；PASS 无信号门禁显式"无信号"不再与 非 PASS 的 — 混用
+ assert.match(full,/\| metric \| L4 \| metrics \| ✅ PASS \| 声明/);
+ assert.match(full,/\| quiet \| L1 \| command \| ✅ PASS \| 无信号/);
+ assert.match(brief,/来源 核验 2、声明 1、无信号 1/);
+ const strength=evidenceStrength(report);
+ assert.equal(strength.signals.kernelRecomputes,1);
+ assert.equal(strength.signals.contentChecks,1);
+ assert.equal(strength.level,'anchored');
+ const distribution=sourceDistribution(report);
+ assert.deepEqual(distribution,{verified:2,declared:1,downgraded:0,none:1});
+ // 未执行内容级核验的 documentation 仍是声明来源（不因 kind 误标核验）
+ const declared=x13Report([{gateId:'docs2',claimId:'C1',level:'L5',kind:'documentation',status:'PASS',details:{artifacts:[{role:'user',path:'README.md',version:'1.31.0',missingTopics:[],status:'PASS'}]}}]);
+ assert.match(renderSummary(declared),/\| docs2 \| L5 \| documentation \| ✅ PASS \| 无信号/);
+});
+
+test('advisory convention hits stay visible without changing the verdict (X13)',()=>{
+ const report=x13Report([
+  {gateId:'conv',claimId:'C1',level:'L0',kind:'convention-alignment',status:'PASS',details:{ruleCount:2,blockingHits:0,advisoryHits:2,rules:[
+   {id:'STYLE-long',severity:'advisory',source:{file:'AGENTS.md'},hits:[{path:'docs/a.md',line:3,word:'长句'},{path:'docs/b.md',line:9,word:'长句'}]},
+   {id:'STYLE-vague',severity:'advisory',source:{file:'AGENTS.md'},hits:[{path:'docs/c.md',line:1,word:'适当'}]}
+  ]}}
+ ]);
+ const brief=renderBrief(report),full=renderSummary(report);
+ assert.equal(report.status,'PASS');
+ for(const text of [brief,full]){
+  assert.match(text,/advisory 建议命中: 共 3 项（conv: STYLE-long ×2、STYLE-vague ×1）——不阻断判定/);
+ }
+ // 无 advisory 命中时不显示该行（不虚报）
+ const clean=x13Report([{gateId:'conv',claimId:'C1',level:'L0',kind:'convention-alignment',status:'PASS',details:{ruleCount:1,blockingHits:0,advisoryHits:0,rules:[{id:'R',severity:'fail',source:{file:'a.md'},hits:[]}]}}]);
+ assert.ok(!renderBrief(clean).includes('advisory 建议命中'));
+});
+
+test('brief does not hide waived exceptions on PASS (X13)',()=>{
+ const report=x13Report([
+  {gateId:'g',claimId:'C1',level:'L1',kind:'command',status:'PASS',details:{}}
+ ],{exceptions:[{id:'EX-1',status:'approved',approvedBy:'owner',approvedAt:'2026-01-01',expiresAt:'2099-12-31',waiver:{status:'waived'}}]});
+ const brief=renderBrief(report);
+ assert.match(brief,/已豁免例外: EX-1（至 2099-12-31）——不改变门禁判定，仅免于登记阻断/);
+ assert.ok(!brief.includes('未决例外'),'waived-only run must not render 未决例外');
+ // 未决例外在全表呈现（此时整体必为 FAIL——由内核判定，渲染只如实展示）
+ const blocking=x13Report([{gateId:'g',claimId:'C1',level:'L1',kind:'command',status:'PASS',details:{}}],{status:'FAIL',exceptions:[{id:'EX-2',status:'proposed',waiver:{status:'blocking',reason:'not-yet-effective'}}]});
+ assert.match(renderSummary(blocking),/未决例外: EX-2（审批未生效）——登记即阻断/);
+});
+
+test('claim association lists gate outcomes and flags unverified claims (X13)',()=>{
+ const report=x13Report([
+  {gateId:'g1',claimId:'C1',level:'L1',kind:'command',status:'PASS',details:{}},
+  {gateId:'g2',claimId:'C2',level:'L1',kind:'command',status:'SKIP',details:'stage'}
+ ],{claims:[{id:'C1',statement:'regression'},{id:'C2',statement:'perf'},{id:'C3',statement:'security'}]});
+ // C2 有关联门禁但全部 SKIP、C3 无关联 → 均未验证但原因不同（v1.28 起区分）；边界句固定随行
+ assert.match(renderSummary(report),/声明关联: C1 → g1 PASS · C2 → 未验证（关联门禁未执行或全部不适用） · C3 → 未验证（无关联门禁执行）——门禁 PASS 证明其配置输入与观察，不等于声明全文已被证明/);
+ assert.match(renderBrief(report),/未验证声明: C2、C3（关联门禁未执行或全部不适用）/);
+ // 旧归档兼容：条目无 claimId（pre-v1.0 形状）时不呈现声明关联、不误报未验证
+ const legacy=x13Report([{gateId:'g1',level:'L1',kind:'command',status:'PASS',details:{}}],{claims:[{id:'C1',statement:'x'}]});
+ assert.ok(!renderSummary(legacy).includes('声明关联'));
+ assert.ok(!renderBrief(legacy).includes('未验证声明'));
+});
+
+// ---- v1.28（评审残余收口）：SKIP 原因显式化与不适用跳过审计 ----
+test('skip suggestion distinguishes disabled, stage-not-selected and not-applicable (v1.28)',()=>{
+ const mk=details=>x13Report([{gateId:'g',claimId:'C1',level:'L1',kind:'invariant',status:'SKIP',details}],{status:'SKIP'});
+ assert.match(renderSummary(mk({reason:'disabled'})),/SKIP \|.*\| 未启用.enabled:false. \|/);
+ assert.match(renderSummary(mk({reason:'stage-not-selected',stages:['pr']})),/SKIP \|.*\| 不在本阶段执行 \|/);
+ assert.match(renderSummary(mk('Disabled or stage not selected')),/SKIP \|.*\| 未执行（未启用或不在本阶段） \|/);
+ // 旧形状（无 reason 的对象）按阶段未选中呈现，不误报未启用
+ assert.match(renderSummary(mk({})),/SKIP \|.*\| 不在本阶段执行 \|/);
+});
+
+test('all-conditions-missed invariant renders as not-applicable audit line, not stage skip (v1.28)',()=>{
+ const report=x13Report([
+  {gateId:'g-inv',claimId:'C1',level:'L2',kind:'invariant',status:'SKIP',details:{source:'obs',values:{flag:false},assertions:[{id:'A',status:'SKIP',reason:'Condition not met',when:{field:'flag',equals:true}}]}},
+  {gateId:'g-ok',claimId:'C1',level:'L1',kind:'command',status:'PASS',details:{}}
+ ]);
+ const summary=renderSummary(report),brief=renderBrief(report);
+ assert.match(summary,/不适用跳过: g-inv（断言条件未命中 1 项）——门禁已执行、断言条件全部未命中；视为必要证据属验收要求调整，须显式决策/);
+ assert.match(summary,/invariant \|[^\n]*SKIP \|[^\n]*断言条件未命中（不适用）——视为必要证据属验收要求调整，须显式决策 \|/);
+ assert.match(brief,/不适用跳过: g-inv（断言条件未命中 1 项）——门禁已执行、断言条件全部未命中/);
+ // 声明 C1 仍有活跃门禁（g-ok PASS），不因 g-inv 不适用而误报未验证
+ assert.ok(!brief.includes('未验证声明'),'claim with active PASS gate must not be flagged unverified');
+});
+
+test('symbol-grounding all-mode zero-scan surfaces, changed-files zero does not (v1.28)',()=>{
+ const mk=details=>x13Report([{gateId:'g-sym',claimId:'C1',level:'L1',kind:'symbol-grounding',status:'PASS',details}],{});
+ assert.match(renderSummary(mk({mode:'all',scannedFiles:0,unresolved:[],unresolvedMember:[],unresolvedReference:[]})),/扫描零文件: g-sym（include\/exclude 过滤后零文件）——范围未命中任何文件，零文件不构成检查证据/);
+ assert.ok(!renderSummary(mk({mode:'changed-files',baseRef:'HEAD',scannedFiles:0,unresolved:[],unresolvedMember:[],unresolvedReference:[]})).includes('扫描零文件'),'changed-files zero = 没有变更，不提示零文件面');
+ // 约定登记零扫描仍呈现（X14 原行为），行文案改为中性措辞
+ const conv=x13Report([{gateId:'g-conv',claimId:'C1',level:'L0',kind:'convention-alignment',status:'PASS',details:{rules:[{id:'TERM-x',severity:'fail',scannedFiles:0,hits:[]}]}}],{});
+ assert.match(renderSummary(conv),/扫描零文件: TERM-x（g-conv）——范围未命中任何文件，零文件不构成检查证据/);
 });
 
 test('symbol-grounding failure reasons cover named members and api references (v1.20)',()=>{

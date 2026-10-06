@@ -46,3 +46,43 @@ test('breaker drill requires the full state sequence with logged events',t=>{
  result=run(root);
  assert.ok(result.evidence[0].details.scenarios.find(s=>s.id==='breaker').transitionProblem.includes('未记录日志'));
 });
+
+// ---- W2（v1.29）：真实进程故障参考 runner——故障真实发生、恢复真实观测 ----
+const processSource=fileURLToPath(new URL('../examples/resilience-process-demo',import.meta.url));
+function processProject(t){const root=fs.mkdtempSync(path.join(os.tmpdir(),'qgate-resil-proc-'));t.after(()=>fs.rmSync(root,{recursive:true}));fs.cpSync(processSource,root,{recursive:true});return root;}
+test('real process kill with supervised restart passes and reports real recovery (W2)',t=>{
+ const r=run(processProject(t));
+ assert.equal(r.status,'PASS',JSON.stringify(r.evidence[0].details).slice(0,400));
+ const scenario=r.evidence[0].details.scenarios[0];
+ assert.equal(scenario.status,'PASS');
+ assert.ok(scenario.recoveryMs>=0,'real elapsed time expected');
+ assert.match(r.evidence[0].details.source,/real process kill/);
+});
+test('real process kill without restart fails on recovery budget and final state (W2)',t=>{
+ const root=processProject(t);
+ const configPath=path.join(root,'.quality-gate.json');
+ const config=JSON.parse(fs.readFileSync(configPath,'utf8'));
+ config.gates[0].scenarios=[{id:'process-kill-no-restart',maxRecoveryMs:1500,expectedFinalState:'ready',requiredSignals:['log']}];
+ fs.writeFileSync(configPath,JSON.stringify(config));
+ const r=run(root);
+ assert.equal(r.status,'FAIL');
+ const scenario=r.evidence[0].details.scenarios[0];
+ assert.equal(scenario.status,'FAIL');
+ assert.equal(scenario.finalState,'down');
+ assert.ok(scenario.recoveryMs>=1500,'observation window must actually elapse');
+});
+test('lying runner claiming instant recovery cannot fake a dead process (W2)',t=>{
+ // 反向证明观察真实性：服务真的被终止后，伪 runner 无法让支付端点响应——
+ // 这里用"真 runner＋去掉监督重启＋谎报 ready"验证内核只看协议值；
+ // 更关键的证据是上面 no-restart 用例的 finalState=down 来自真实探测
+ const root=processProject(t);
+ fs.writeFileSync(path.join(root,'runner.mjs'),fs.readFileSync(path.join(root,'runner.mjs'),'utf8')
+  .replace("finalState:!responsive?'down':'unexpectedly-ready'","finalState:'ready'"));
+ const configPath=path.join(root,'.quality-gate.json');
+ const config=JSON.parse(fs.readFileSync(configPath,'utf8'));
+ config.gates[0].scenarios=[{id:'process-kill-no-restart',maxRecoveryMs:1500,expectedFinalState:'ready',requiredSignals:['log']}];
+ fs.writeFileSync(configPath,JSON.stringify(config));
+ const r=run(root);
+ // 谎报 ready 使 finalState 匹配，但 recoveryMs ≥ 真实观察窗口 1500 > 预算 → FAIL（时间不可伪造）
+ assert.equal(r.status,'FAIL');
+});

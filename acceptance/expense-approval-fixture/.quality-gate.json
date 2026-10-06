@@ -62,7 +62,8 @@
       "claimId": "C-REQ",
       "file": ".quality-gate/registries/requirements.json",
       "requirePrdRefs": true,
-      "level": "L0"
+      "level": "L0",
+      "requireCaseBinding": true
     },
     {
       "id": "design-decisions",

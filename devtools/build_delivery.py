@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 VERSION = json.loads((ROOT / "marketplace.json").read_text(encoding="utf-8"))["plugins"][0]["version"]
 ARCHIVE = DIST / f"quality-gate-{VERSION}.zip"
-EXCLUDED_TOP_LEVEL = {".git", "dist", "devtools", "acceptance", ".zcode", "evidence", "graphify-out"}
+EXCLUDED_TOP_LEVEL = {".git", "dist", "devtools", "acceptance", ".zcode", "evidence", "experiments", "graphify-out"}
 EXCLUDED_FILES = {"AGENTS.md", ".gitignore", "PROJECT-HANDOFF.md"}
 
 

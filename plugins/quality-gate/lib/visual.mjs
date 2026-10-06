@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {projectFile} from './kernel.mjs';
+import {isPng,pixelDiff} from './png.mjs';
 
 const text=value=>typeof value==='string'&&value.trim().length>0;
 const check=(condition,message)=>{if(!condition)throw new Error(message);};
@@ -27,8 +28,18 @@ export function runVisual(g,root){
   check(fs.statSync(actual).isFile()&&fs.statSync(actual).size>0,'Actual visual artifact missing or empty');
   const baselineSha256=digest(baseline),actualSha256=digest(actual);
   const identical=baselineSha256===actualSha256;
-  let diff;
-  if(observed.diff!==undefined){
+  let diff,diffSource='runner-reported';
+  // 像素差内核重算（W4，v1.29）：两侧均为 PNG 时内核解码并重算 diff——runner 自报仍在则
+  // 交叉核验（不符即 ERROR），未自报则直接采用内核值；非 PNG 保持自报协议不变
+  const baselineIsPng=isPng(fs.readFileSync(baseline)),actualIsPng=isPng(fs.readFileSync(actual));
+  if(tolerance&&baselineIsPng&&actualIsPng){
+   const recomputed=pixelDiff(fs.readFileSync(baseline),fs.readFileSync(actual));
+   if(observed.diff!==undefined){
+    check(observed.diff.pixels===recomputed.pixels&&observed.diff.totalPixels===recomputed.totalPixels,'Runner-reported pixel diff contradicts kernel recompute');
+    diff={...observed.diff,crossCheck:'match'};
+   }else diff=recomputed;
+   diffSource='kernel-recompute';
+  }else if(observed.diff!==undefined){
    check(observed.diff!==null&&typeof observed.diff==='object'&&!Array.isArray(observed.diff)&&Number.isInteger(observed.diff.pixels)&&observed.diff.pixels>=0&&Number.isInteger(observed.diff.totalPixels)&&observed.diff.totalPixels>0&&observed.diff.pixels<=observed.diff.totalPixels,'Invalid visual diff metrics');
    diff=observed.diff;
   }else if(tolerance)check(false,'Pixel diff metrics required when maxDiffPixels/maxDiffRatio is configured');
@@ -38,6 +49,6 @@ export function runVisual(g,root){
    const ratio=diff.pixels/diff.totalPixels;
    status=(g.maxDiffPixels===undefined||diff.pixels<=g.maxDiffPixels)&&(g.maxDiffRatio===undefined||ratio<=g.maxDiffRatio)?'PASS':'FAIL';
   }
-  return {status,details:{...execution,source:observed.source,baselineFile:g.baselineFile,actualFile:observed.actualFile,baselineSha256,actualSha256,baselineBytes:fs.statSync(baseline).size,actualBytes:fs.statSync(actual).size,comparison:tolerance?'pixel-diff':'exact-bytes',...(diff?{diff,actualRatio:diff.pixels/diff.totalPixels}:{}),...(g.maxDiffPixels!==undefined?{maxDiffPixels:g.maxDiffPixels}:{}),...(g.maxDiffRatio!==undefined?{maxDiffRatio:g.maxDiffRatio}:{})}};
+  return {status,details:{...execution,source:observed.source,baselineFile:g.baselineFile,actualFile:observed.actualFile,baselineSha256,actualSha256,baselineBytes:fs.statSync(baseline).size,actualBytes:fs.statSync(actual).size,comparison:tolerance?'pixel-diff':'exact-bytes',diffSource,...(diff?{diff,actualRatio:diff.pixels/diff.totalPixels}:{}),...(g.maxDiffPixels!==undefined?{maxDiffPixels:g.maxDiffPixels}:{}),...(g.maxDiffRatio!==undefined?{maxDiffRatio:g.maxDiffRatio}:{})}};
  }catch(error){return {status:'ERROR',details:{...execution,error:error.message}};}
 }

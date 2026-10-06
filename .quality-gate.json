@@ -8,6 +8,10 @@
     {
       "id": "C-CONVENTIONS",
       "statement": "统一语言弃用词在活文档集零出现（约定对齐门禁，自举自 glossary 防回归测试 v1.19 迁移）。"
+    },
+    {
+      "id": "C-DOCS",
+      "statement": "入口文档（根 README、交接入口、PRD、插件 README）包含当版版本串与关键入口口径，documentation 内容级核验通过。"
     }
   ],
   "gates": [
@@ -26,7 +30,7 @@
         "--test-reporter=dot",
         "plugins/quality-gate/tests/*.test.mjs"
       ],
-      "timeoutMs": 180000,
+      "timeoutMs": 60000,
       "level": "L1"
     },
     {
@@ -41,6 +45,50 @@
       ],
       "file": ".quality-gate/registries/conventions.json",
       "level": "L0"
+    },
+    {
+      "id": "G-DOCS",
+      "kind": "documentation",
+      "claimId": "C-DOCS",
+      "enabled": true,
+      "stages": [
+        "close",
+        "pr",
+        "release"
+      ],
+      "argv": [
+        "$NODE",
+        "plugins/quality-gate/scripts/root-docs-artifacts.mjs"
+      ],
+      "timeoutMs": 5000,
+      "level": "L5",
+      "version": "1.31.1",
+      "requiredTopics": [
+        "Quality Gate"
+      ],
+      "requireContentCheck": true,
+      "requiredContent": [
+        {
+          "id": "readme-current-version",
+          "role": "user",
+          "contains": "当前版本"
+        },
+        {
+          "id": "handoff-entry",
+          "role": "operator",
+          "contains": "项目交接入口"
+        },
+        {
+          "id": "prd-version-baseline",
+          "role": "api",
+          "contains": "版本基线"
+        },
+        {
+          "id": "plugin-current-release",
+          "role": "code",
+          "contains": "Current release"
+        }
+      ]
     }
   ],
   "risks": [],
