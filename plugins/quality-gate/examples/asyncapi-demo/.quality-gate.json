@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "0.2",
+  "claims": [{"id": "C-EVENT", "statement": "Messages observed from the local order application satisfy its declared AsyncAPI operations and JSON constraints."}],
+  "gates": [{"id": "events", "kind": "alignment", "level": "L2", "enabled": true, "stages": ["close", "release"], "claimId": "C-EVENT", "scope": "event", "file": "asyncapi.json", "argv": ["$NODE", "runner.mjs"], "timeoutMs": 5000, "requireLive": true}],
+  "risks": [],
+  "exceptions": []
+}

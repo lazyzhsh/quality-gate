@@ -18,7 +18,7 @@
 | 内核产品域 | `plugins/quality-gate/lib`（配置 schema、判定、run 报告、观察协议、摘要） | §3 概念总表；协议键名以表中代码名为准 |
 | 宿主适配上下文 | `hooks/`、`commands/`、`skills/`（ZCode 插件层） | 复用内核语言；宿主专有概念（Hook/Command/Skill、市场快照）在 §3 单列 |
 | 参考工具适配器 | `adapters/`（visual/consumer-usage/python/java 参考实现） | 复用内核观察协议语言；"参考非认证"边界固定 |
-| 演示上下文 | `examples/`（48 个 demo） | 复用内核语言；demo 场景词汇不入本表 |
+| 演示上下文 | `examples/`（49 个 demo） | 复用内核语言；demo 场景词汇不入本表 |
 | 过程管理域 | PLAN/RTM/PRD/HANDOFF 的迭代管理词汇 | §3 标"过程"；不与产品域词汇互借 |
 | 历史档案 | docs/history、docs/release、evidence/、ADR-0001–0015 正文 | 只读；旧词=历史称谓（§10） |
 
@@ -26,6 +26,8 @@
 
 | 概念 | 规范中文 | 代码名 | 定义 | 弃用别名 |
 |---|---|---|---|---|
+| delivery file manifest | 交付文件清单 | `devtools/delivery-files.json` | 经项目源码审阅后固定的交付包文件路径清单；打包脚本只读取列出的文件，路径越界或链接目标出界时拒绝构建；清单调整须随源码变更接受审阅 | — |
+| event contract | 事件契约 | `alignment.scope:event` | 从 AsyncAPI 声明取得操作、通道、消息及载荷/应用头约束，由内核核验当轮 runner 回报的实际消息；send/receive 按被描述应用的视角解释，不证明消息中间件的投递保证 | — |
 | controlled expression | 受控表达 | —（表达细则见 WRITING-GUIDE；自动检查经约定登记 argv 规则 STYLE-writing 接入，无新协议键） | 使用固定术语、明确条件与主体、可追溯证据和限定结论范围的表达规则；适用于项目规范、智能体指令和报告。借鉴 ASD-STE100 原则，不表示通过该标准合规检查，也不证明智能体行为正确 | — |
 | input snapshot | 输入内容快照 | `inputSnapshot` | 运行前文件路径与内容摘要清单；用于检测新增/删除/重命名/内容变更，不证明外部状态 | — |
 | input stability | 输入稳定性 | `inputsStable` | 运行前后内容快照完整且一致；复用的必要条件，非业务判定 | — |

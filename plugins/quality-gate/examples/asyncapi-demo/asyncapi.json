@@ -1,0 +1,23 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {"title": "Local order application", "version": "1.0.0"},
+  "defaultContentType": "application/json",
+  "channels": {
+    "requests": {"address": "orders.request", "messages": {"submit": {"$ref": "#/components/messages/SubmitOrder"}}},
+    "accepted": {"address": "orders.accepted", "messages": {"accepted": {"$ref": "#/components/messages/OrderAccepted"}}}
+  },
+  "operations": {
+    "receiveOrder": {"action": "receive", "channel": {"$ref": "#/channels/requests"}, "messages": [{"$ref": "#/channels/requests/messages/submit"}]},
+    "sendAccepted": {"action": "send", "channel": {"$ref": "#/channels/accepted"}, "messages": [{"$ref": "#/channels/accepted/messages/accepted"}]}
+  },
+  "components": {
+    "schemas": {
+      "Headers": {"type": "object", "properties": {"requestId": {"type": "string", "minLength": 1}}, "required": ["requestId"], "additionalProperties": false},
+      "Order": {"type": "object", "properties": {"id": {"type": "string", "minLength": 1}, "amount": {"type": "integer", "minimum": 1}, "currency": {"type": "string", "enum": ["CNY", "USD"]}}, "required": ["id", "amount", "currency"], "additionalProperties": false}
+    },
+    "messages": {
+      "SubmitOrder": {"headers": {"$ref": "#/components/schemas/Headers"}, "payload": {"$ref": "#/components/schemas/Order"}},
+      "OrderAccepted": {"headers": {"$ref": "#/components/schemas/Headers"}, "payload": {"type": "object", "properties": {"order": {"$ref": "#/components/schemas/Order"}, "status": {"type": "string", "enum": ["accepted"]}}, "required": ["order", "status"], "additionalProperties": false}}
+    }
+  }
+}

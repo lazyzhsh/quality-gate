@@ -19,14 +19,14 @@
 | L1.4 | 变异测试协议（killed/total/score+存活明细） | §7.4 | `engineering` mutation | engineering-demo | 协议 | — |
 | L1.5 | 代码结构规则（逐 finding、分严重度阈值） | §7.5 | `engineering` structure | engineering-demo | 协议 | 生产需依赖图工具 |
 | L1.6 | 仓库约定对齐 | §7.6 | `engineering` convention | engineering-demo | 协议 | — |
-| L2.1 | API 契约对齐（声明 vs 运行观察，Pointer 差异，ignorePaths） | §8.1 | `alignment` | alignment-demo（真实 HTTP＋v1.29 openapi.json 经提取器等价验证） | 达成（v1.29） | OpenAPI 声明子集（3.0.x JSON、字段枚举、最小 2xx）经 `adapters/openapi/extract-contract.mjs` 转换、越界 fail-closed（tests/reference-adapters ×3）；完整 OpenAPI 与 AsyncAPI 不在范围（后者为扩范围裁决） |
+| L2.1 | API 与事件契约对齐（声明 vs 运行观察，Pointer 差异） | §8.1；2026-10-08 用户扩范围裁定 | `alignment`（api/schema/event） | alignment-demo（真实 HTTP）、tests/reference-adapters；asyncapi-demo（真实本地 TCP 收发）与 tests/asyncapi 正反例，见 [终审记录](history/FINAL-REVIEW-2.0.0.md) | 达成（v1.29；v2.0 扩 AsyncAPI） | OpenAPI 3.0.x 声明子集；AsyncAPI 3.0.x JSON 子集含本文件引用、操作/消息覆盖及载荷/应用头约束，越界 ERROR。事件来源仍由 runner 回报，消息中间件投递保证与完整规范未验证 |
 | L2.2 | Schema 结构对齐（migration 后实际列结构） | §8.2 | `alignment` | alignment-demo（SQLite）；E5 ORM 参考适配（adapters/python/persistence_orm.py，v1.11） | 达成（2026-10-06 裁定） | 原要求面（列结构：列名/类型/notNull/主键）仓内已覆盖；多方言覆盖与真实 ORM 项目验证属使用项目工程（外部验证＝进一步需求收集，2026-10-06 用户裁定移出跟踪）；外键约束超出"列结构"要求面，如需按新需求立项 |
 | L2.3 | Schema 语义检查（概念-字段约束） | §8.3 | `semantic-profile`（v1.22 起：深度匹配＋组件全集原生判定＋`shacl` 引擎可选集成——OD-114=B 用户裁决；v1.22.1 OD-116 起默认零外部依赖，pyshacl 为环境就绪时的第二实现） | fibo-demo、semantic-profile-demo、shacl-engine-demo | 达成（引擎边界如实） | 完整 SHACL 语义属外部引擎（pyshacl/pip 安装指引）；内核翻译的 JSON 子集不含 SPARQL 约束/路径表达式/sh:node 递归；object 型 valueType 近似 nodeKind |
 | L2.4 | 持久化行为验证（真实调用后独立回读逐字段核对） | §8.4+用户强调（[ADR-0013](adr/ADR-0013-persistence-readback.md)） | `persistence` | persistence-demo（HTTP→SQLite） | 原生 | — |
 | L2.5 | 跨表/跨服务不变量 | §8.5 | `invariant`（eq/neq/le/lt/ge/gt+when 条件）+ `consistency`（v1.5 起含 zero-sum 等支付五类子检查） | persistence-demo、ledger-demo | 原生 | 跨服务事务/最终一致未覆盖 |
 | L3.1–L3.3 | 冒烟/集成/E2E 旅程 | §9 | `journey`（逐步骤、ignorePaths） | journey-demo（真实本地 HTTP） | 协议 | 非浏览器旅程 |
 | L3.4 | 视觉/UI 核对 | §9.4 | `visual`（字节级＋像素容差；v1.29 起 PNG 像素差内核重算；v1.30 F04 结构防线与 tRNS 透明键展开） | visual-demo、tests/visual（W4 组＋F04 两组：tRNS 透明计入像素相等、结构损坏矩阵七型） | 达成（2026-10-06 裁定） | 仓内能力已齐：字节比较＋像素容差＋PNG 声明子集内核重算（自报交叉核验＋越界 ERROR；逐 chunk CRC/IEND/未知关键 chunk/解压上限，Pillow 独立解码器交叉核验一致）＋浏览器参考 runner＋同机 pin 协议；跨渲染环境基线治理属使用项目工程（外部验证＝进一步需求收集，2026-10-06 用户裁定移出跟踪） |
-| L3.5 | PRD 行为验证 | §9.5 | `behavior`（案例输入/预期，内核判 F2P/P2P 基线）；v1.31 证明链补齐——AC 可选 `cases:[{gateId,caseIds}]` 用例绑定＋`requireCaseBinding`，当轮逐用例复核（acCaseMissing/Skipped/Failed/Unbound 指名，无关成功门禁不能充当 AC 证据——二轮评审 AC-UNBOUND 反例收敛） | behavior-demo、fixture 夹具（逐 AC 绑定 behavior 用例＋requireCaseBinding 开启，四步全绿）、tests/traceability 证明链组 | 部分（技术差距已关闭，"不自动由 PRD 推导"设计边界维持——转正留 v2.0 终审裁决） | 不自动由 PRD 推导；绑定复核证明用例当轮真实执行且通过，AC 语义与用例对应仍人工负责 |
+| L3.5 | PRD 行为验证 | §9.5 | `behavior`（案例输入/预期，内核判 F2P/P2P 基线）；v1.31 证明链补齐——AC 可选 `cases:[{gateId,caseIds}]` 用例绑定＋`requireCaseBinding`，当轮逐用例复核（acCaseMissing/Skipped/Failed/Unbound 指名，无关成功门禁不能充当 AC 证据——二轮评审 AC-UNBOUND 反例收敛） | behavior-demo、fixture 夹具（逐 AC 绑定 behavior 用例＋requireCaseBinding 开启，四步全绿）、tests/traceability 证明链组 | 达成（v2.0，2026-10-08 用户终审裁定；[证据](history/FINAL-REVIEW-2.0.0.md)） | 不自动由 PRD 推导；绑定复核证明用例当轮真实执行且通过，AC 语义与用例对应仍人工负责 |
 | L3.6 | 领域不变量（性质/状态机，固定 seed 多案例） | §9.6 | `property` | property-demo、acceptance/zcode-v11-acceptance | 协议 | 无穷举证明/自动收缩 |
 | L3.7 | 本体语义门（IRI 对齐→术语→关系/约束/状态/实例/暴露/一致性八层） | §9.7 | `semantic-alignment`/`terminology`/`semantic-relation`/`semantic-constraint`/`semantic-state`/`semantic-instance`/`semantic-exposure`/`semantic-consistency`（v1.23 推理深化：等价类/并类/子属性/逆属性/传递链；v1.22 多语言） | 逐 semantic-*-demo + FIBO 固定目录 + owl-reasoning-demo | 达成（确定性子集边界如实） | 确定性 OWL 子集——无开世界假设/反例推理/unionOf 外类表达式；双人核准经用户裁决移出范围（2026-10-01） |
 | L4.1 | 架构适应度函数 | §10.1 | `metrics`（声明拓扑）＋v1.29 真实测量 | architecture-demo；architecture-dependency-demo（真实 import 图：分层违规/环路注入正反例，tests/metrics W3＋F05 组——注释/字符串/模板不计、副作用 import 与 export-from 计边、副作用边入环检测） | 达成（v1.29；v1.30 F05 提取收敛） | 真实依赖图测量参考 runner 落地（静态 ESM 相对 import 的注释/字符串感知提取，动态引用/外部包为声明边界、未解析项计入 unresolvedImports 指标）；R13 拓扑推导不回范围 |
@@ -42,9 +42,9 @@
 
 | ID | 需求 | 来源 | 实现 | 验证依据 | 状态 | 后续 |
 |---|---|---|---|---|---|---|
-| X1 | 证明链元模型 Claim→Evidence→Gate→Risk→Exception；Exception 只登记不豁免 | §12–§17 | 内核报告模型；v1.6 起 approved+有效期内呈现 WAIVED（不改变门禁判定） | 全部测试与报告 | 横切/已实现（含 v1.6 审批窗口） | 审批为声明字段，签名防伪造暂缓 |
+| X1 | 证明链元模型 Claim→Evidence→Gate→Risk→Exception；Exception 只登记不豁免 | §12–§17 | 内核报告模型；v1.6 起 approved+有效期内呈现 WAIVED（不改变门禁判定） | 全部测试与报告 | 横切/已实现（含 v1.6 审批窗口） | 审批为声明字段；签名已出项目范围（2026-09-26） |
 | X2 | 判定状态含 INCONCLUSIVE/WAIVED/NOT_APPLICABLE | §20–§21 | 实现 PASS/FAIL/SKIP/ERROR（+延后评估 PENDING）；SKIP 不算 PASS、框架错误不得 PASS；v1.6 起 WAIVED 限定用于已审批且未过期 Exception 的呈现 | kernel 测试 | **有意偏差**：INCONCLUSIVE 归入 ERROR（fail-closed）；门禁判定无 WAIVED（豁免走 approved Exception 呈现与 acceptedFindings 显式登记） | — |
-| X3 | 六质量域 × 生命周期阶段两维正交；enabled/stages/requiredLevels 裁剪 | §5 | 配置模型 | validate 测试、six-domain-demo | 横切/已实现 | 变更影响驱动的自动选择未做 |
+| X3 | 六质量域 × 生命周期阶段两维正交；enabled/stages/requiredLevels 裁剪 | §5 | 配置模型 | validate 测试、six-domain-demo | 横切/已实现 | 变更影响建议已由 TS1 承载；自动选择未纳入采用范围 |
 | X4 | Evidence First / No Evidence ≠ PASS / Deterministic First, LLM Second | §4.1–§4.3 | 内核判定哲学；LLM 仅辅助 | 负例矩阵（fixture） | 横切/已实现 | — |
 | X5 | 证据独立性与防伪造（内核重算审计链、runner 无法自判 F2P/P2P） | §4.5、§4.7 | consistency 审计链、behavior 基线内核判定 | ledger-demo、behavior-demo | 横切/已实现 | 验证独立性字段 R8 暂缓 |
 | X6 | 本体 Provider 可替换（FIBO 固定版本离线目录，SHA 钉扎；local-catalog） | §4.6 | fibo-pinned/local-catalog | fibo-demo、FIBO-PROVIDER.md | 横切/已实现 | — |
@@ -52,7 +52,7 @@
 | X8 | 首版 MVP 十项闭环（安装→Hook→Spec→执行→证据→判定→Stop 阻断→反馈→修复→自动化测试） | §2.2 | v0.1 即达成并持续回归 | history/VALIDATION.md、LIVE-ACCEPTANCE-*.md | 已实现 | — |
 | X9 | 客户端实机验收与 CLI/模拟分别记录 | 讨论决定 | LIVE-ACCEPTANCE 系列 + CUA 交叉轮；1.7.3 起 expense-approval-fixture 固化为可复用验收基线（1.8.0 起随裁剪调整为 13 门禁/12 kind/六域 + 逐门禁负例矩阵 + lifecycle-check，验收按其 README 四步复用） | history/LIVE-ACCEPTANCE-1.5.md、history/LIVE-ACCEPTANCE-1.7.md（1.6.0–1.7.3 五版收尾，evidence/zcode-live-v1.7/） | 已实现 | — |
 | X10 | 外部依赖缺失必须提示安装指引（KNOWN_TOOLS 登记） | 用户要求 | lib/dependencies.mjs + SessionStart/摘要/报告注入 | 依赖提示注入实机证据 | 已实现 | 新增强前置依赖须登记 |
-| X11 | 打包自含 marketplace、解包复验全量回归与冒烟测试 | 工程纪律 | devtools/build_delivery.py + examples.manifest.json 单一事实源 | evidence/v1.5/package-smoke.txt | 已实现 | — |
+| X11 | 打包自含 marketplace、解包复验全量回归与冒烟测试 | 工程纪律 | devtools/build_delivery.py + examples.manifest.json 单一事实源；v2.0 收尾修复：devtools/delivery-files.json 显式交付清单（拒绝越界路径及链接），先在暂存包解包复验，再发布 zip/SHA；失败保留旧文件对；run-suite 信号终止一律非零 | [RELEASE-2.0.0](release/RELEASE-2.0.0.md)；devtools 定向 9 项、解包全量与 28 demo | 已实现 | 清单随新增交付文件同步审阅；本机打包通过不等于公开发布或客户端实机验收 |
 
 ## 3. v1.5 原则/实践轨道增补（来源：[PLAN.md](PLAN.md) 六工作包，选型自研究目录 A/B/C/E 系列）
 
@@ -70,7 +70,7 @@
 |---|---|---|---|---|---|
 | V1 | change-scope 独立示例，全部 kind 均有示例依据 | examples/change-scope-demo（scenario 驱动临时 Git 项目正反例） | tests/change-scope-demo.test.mjs；knownKindsWithoutExamples 清空 | 已实现 | — |
 | V2 | 单测覆盖率统计（L1.3 收尾） | engineering unit `minCoverageRatio` + `coverage:{tool,ratio,total?,covered?}` 证据（计数交叉核验） | tests/engineering.test.mjs（低于阈值 FAIL/缺证据 ERROR/比值不一致 ERROR） | 协议 | 工具来源由 coverage.tool 登记，不外推认证覆盖率 |
-| V3 | R5 灰度判定协议 | 拓扑 `canaryAnalysis:{verdict,judge,sampleSize,window,sequentialMethod,guardrailViolations,srmDetected?}` + runner 指标 canaryNotPromoted/GuardrailContradiction/SrmVoided | tests/metrics.test.mjs 三反例 + architecture-demo 正例 | 协议 | R1–R4 拓扑语义留 v1.7 |
+| V3 | R5 灰度判定协议 | 拓扑 `canaryAnalysis:{verdict,judge,sampleSize,window,sequentialMethod,guardrailViolations,srmDetected?}` + runner 指标 canaryNotPromoted/GuardrailContradiction/SrmVoided | tests/metrics.test.mjs 三反例 + architecture-demo 正例 | 协议 | R1–R4 已随 v1.10 落地，见 §7 |
 | V4 | R6 重跑确定性协议 | 新 gate kind `rerun`（文件式内核校验：≥2 次同 seed 双次运行 sha256 一致 + 幂等键策略 + 可选复式恒等式） | tests/rerun.test.mjs + examples/rerun-demo（测试重跑核验哈希真实） | 原生 | 内核不重执行任务，哈希真实性由项目双次运行保证 |
 | V6 | 审批/到期 Exception（X1 后续） | exception `status: approved` + `approvedBy/approvedAt`：有效期内呈现 WAIVED（不改变门禁判定）；过期/未生效回退阻断 | tests/domain-profile.test.mjs（WAIVED/过期/未来审批/不豁免 FAIL 门禁） | 原生 | 审批为声明字段，不防伪造 |
 
@@ -111,7 +111,7 @@
 | 增补 | 需求 | 溯源 | 实现 | 证据 | 状态 | 边界/后续 |
 |---|---|---|---|---|---|---|
 | R12 | 摘要层证据力汇聚 | R12 | `summary.evidenceStrength` 只读聚合（证据信号＋定量信号，等级实测推导：核验级＞声明级＞降级，无信号不显示） | tests/summary.test.mjs；evidence/v1.10.1/ | 原生 | 只汇聚已回报证据，不新增采集，不改判定 |
-| B1 | 原始证据内核解析：unit 计数不再信任自报 | L1.3 去信任化 | `lib/raw-evidence.mjs` TAP/JUnit 无依赖解析器（真实工具形状互核、畸形拒收）；unit `rawOutput:{format,file}` 声明即核验（内核重算交叉核验，判定以内核值为准）＋`requireRawOutput` | tests/raw-evidence/engineering.test.mjs；engineering-demo 启用；evidence/v1.11.0 | 原生 | 不防蓄意伪造内容一致的原始文件；覆盖率原始解析不做；mutation/behavior 的 rawOutput 扩展留候选 |
+| B1 | 原始证据内核解析：unit 计数不再信任自报 | L1.3 去信任化 | `lib/raw-evidence.mjs` TAP/JUnit 无依赖解析器（真实工具形状互核、畸形拒收）；unit `rawOutput:{format,file}` 声明即核验（内核重算交叉核验，判定以内核值为准）＋`requireRawOutput` | tests/raw-evidence/engineering.test.mjs；engineering-demo 启用；evidence/v1.11.0 | 原生 | 不防蓄意伪造内容一致的原始文件；覆盖率原始解析不做；behavior 已由 T2/T3 的 rawTranscript 承载；mutation 原始输出扩展未纳入采用范围 |
 | E7 | Java/Python 参考适配器 | E 系列缺口 | `adapters/python/unit_runner.py`（pytest 包装，退出码恒 0=观察协议）＋`adapters/java/merge-junit.mjs`（surefire/gradle 合并，自检）＋`adapters/README.md` 指引 | tests/adapters.test.mjs；端到端 FAIL/PASS 旅程（evidence/v1.11.0-t3-python-adapter.txt） | 原生 | 参考实现非认证工具；Java 侧无 JDK，样例＋内核单测验证 |
 | E5 | Entity↔ORM 参考适配 | L2.2 后续 | `adapters/python/persistence_orm.py`（SQLAlchemy 会话快照＋独立回读=ADR-0013，`orm://` 如实标注，内核零改动） | tests/adapters.test.mjs；run=5577d80 | 原生 | 示范观察协议非 ORM 认证；request 非真实 HTTP 面；外键/多方言留 L2.2 |
 | E6 | API 消费者链层：兼容矩阵与破坏归因 | L2.1 后续 | 新纯判定 kind `consumer-matrix`（第 34 个，用户选定方案 B＋分层来源协议）：声明层逐消费者期望比对＋归因表；观察层 `consumerUsage` 来源枚举（越界使用 FAIL、declared 降级）；ignoreRoutes/mode/指纹沿用 alignment | tests/consumer-matrix.test.mjs；consumer-matrix-demo | 原生 | 消费者期望仍为声明式；类型词汇项目自有、内核比较相等性 |
@@ -178,7 +178,7 @@
 
 ## v1.24 开源发布前修复（2026-10-01）
 
-L0.4/L5.6（ADR deferred）、L2.3（SHACL 单边约束/Unicode/引擎组件）、L2.5（账本精确整数）、L3.7（传递属性方向/外部 reasoner 完整事实）、L5.1（配置数组）、H1（内容快照）及轨道 C（根文件扫描/完整内置模块）由 tests/release-correctness.test.mjs、freshness/adapter 反例验证。预算计算共享并含 shacl 与登记内嵌 runner（v1.30 F01：conventions argv 规则/scope.json contentCheck 一并计入，宿主预算即执行期限——剩余期限不足停止启动记 ERROR budget-exhausted）；长回归走 pr/release，Stop 超预算 ERROR。证明边界与剩余 7 项部分需求见 [OPEN-SOURCE-STATUS](OPEN-SOURCE-STATUS.md)；发布验证见 [RELEASE-1.24.0](release/RELEASE-1.24.0.md)。
+L0.4/L5.6（ADR deferred）、L2.3（SHACL 单边约束/Unicode/引擎组件）、L2.5（账本精确整数）、L3.7（传递属性方向/外部 reasoner 完整事实）、L5.1（配置数组）、H1（内容快照）及轨道 C（根文件扫描/完整内置模块）由 tests/release-correctness.test.mjs、freshness/adapter 反例验证。预算计算共享并含 shacl 与登记内嵌 runner（v1.30 F01：conventions argv 规则/scope.json contentCheck 一并计入，宿主预算即执行期限——剩余期限不足停止启动记 ERROR budget-exhausted）；长回归走 pr/release，Stop 超预算 ERROR。当时剩余 7 项部分需求的后续结算见本矩阵对应行；当前证明边界见 [OPEN-SOURCE-STATUS](OPEN-SOURCE-STATUS.md)；发布验证见 [RELEASE-1.24.0](release/RELEASE-1.24.0.md)。
 
 ## 受控表达需求（2026-10-06 起，X12–X15）
 
@@ -186,10 +186,12 @@ L0.4/L5.6（ADR deferred）、L2.3（SHACL 单边约束/Unicode/引擎组件）�
 
 | ID | 需求 | 实现 | 验证依据 | 状态 | 后续 |
 |---|---|---|---|---|---|
-| X12 | 开发指令与规范明确主体、条件、动作和证据；纠正旧字段与例外表述 | 1.25.0 第一批（判定/退出码/检查范围零变化）：summary 失败建议改修复优先（AC 结构/类型违规不再并列"改回自由文本"、约定命中区分修复制品与调整规则）；插件 SKILL 第 4/9/10 项纠正（例外 WAIVED 语义、`levelCoverage`/`unmetRequiredLevels` 现行键、修复不放松验收）；建立 WRITING-GUIDE（W1–W12＋按用途约束强度）并自 AGENTS 引用；CONFIG-GUIDE/SPEC/代码注释三处"豁免命中入证据"失实修正（被豁免命中不入证据、无审计面） | tests/summary.test.mjs 新增正反例（建议含修复动作与"验收要求变更须显式"、旧并列句式零出现）；616 项回归全过 0 SKIP；受影响 demo 见 RELEASE-1.25.0 | 部分（第一批已实施） | 第二批报告表达并入 X13；入口文档重构属第三批；文风自动检查属 X14 |
+| X12 | 开发指令与规范明确主体、条件、动作和证据；纠正旧字段与例外表述 | 1.25.0 第一批（判定/退出码/检查范围零变化）：summary 失败建议改修复优先（AC 结构/类型违规不再并列"改回自由文本"、约定命中区分修复制品与调整规则）；插件 SKILL 第 4/9/10 项纠正（例外 WAIVED 语义、`levelCoverage`/`unmetRequiredLevels` 现行键、修复不放松验收）；建立 WRITING-GUIDE（W1–W12＋按用途约束强度）并自 AGENTS 引用；CONFIG-GUIDE/SPEC/代码注释三处"豁免命中入证据"失实修正（被豁免命中不入证据、无审计面） | tests/summary.test.mjs 新增正反例（建议含修复动作与"验收要求变更须显式"、旧并列句式零出现）；616 项回归全过 0 SKIP；受影响 demo 见 RELEASE-1.25.0 | 达成（v2.0 终审按第一批完成条件复核） | 指令/字段/例外语义已修正，正反例与本轮回归通过；后续批次分别由 X13–X15 承载，不构成 X12 未完成项。证据见 [终审记录](history/FINAL-REVIEW-2.0.0.md) |
 | X13 | 报告逐项呈现证明范围和来源，准确区分门禁状态与 Stop 行为，显示 advisory | 1.26.0 第二批（stdout JSON/退出码/归档协议零变更，全部渲染层）：全表新增来源列（核验[信号标签]/声明/降级[标签]及并存组合）＋证据力行来源分布——混合来源不得呈现为全部已核验；brief 新增 advisory 建议命中行、例外行（waived/未决）与未验证声明行；全表新增声明关联行（逐 claimId 关联门禁与结论＋固定边界句，旧归档无 claimId 不呈现）；Stop 边界表达——new-only 消息明示报告仍 FAIL、复用标记带原运行时间与运行标识、外层异常明示不构成质量判定并给 CLI 命令；SKILL 第 5/8 项来源/advisory/声明关联读法 | tests/summary+adapter+report 新反例集：混合来源三类同现各自如实（仅声明门禁不得含"核验"）、advisory 保持判定且可见、waived-only 不显未决、声明关联未验证指名、旧形状归档兼容、FAIL 复用标记含原运行时间、外层异常指向 CLI；SPEC 摘要输出节同步 | 达成（v1.26.0，2026-10-06） | AC→真实用例绑定已随 v1.31.0 落地（cases/requireCaseBinding，见 v1.31 节）；X14 文风自动检查与 X15 实验另行 |
 | X14 | 受控表达的可判定规则自动检查；文风问题先提示 | 1.27.0 第三批（判定语义零变化）：随包零依赖检查器 `scripts/writing-style-check.mjs`（统一观察协议、自身失败＝ERROR）——WS-1 长句（中文分句>160 字/英文句>45 词，代码与行内字面量出界）/WS-2 模糊词（W4 词表＋`qgate-style:example` 样例豁免）/WS-3 多动作步骤（连接词启发式），表格逐单元格不整表跳过；扫描零文件回报 scope-empty finding；根约定登记接入 advisory 规则 STYLE-writing（活文档范围，历史/上下文层不扫）；摘要层新增 banned-words 零扫描可见行；WRITING-GUIDE 规则登记表（编号/来源/范围/正反例/漏检边界/豁免——§8 全要素）；入口文档重构：PLAN/HANDOFF 历史块迁 history/VERSION-HISTORY.md（链接改写 0 断链）、RTM §13 客户端口径修正 | tests/writing-style-check.test.mjs 9 项（协议/正反例/误报边界/零文件/fail-closed/摘要行）；631 项回归全过 0 SKIP；根 close PASS＋advisory 行实测 87 项首轮观察；迁移后全仓 497 链接 0 断链 | 达成（v1.27.0 首轮，2026-10-06） | 升级为阻断须确定性＋范围清楚＋误报逐条核实（X15 数据已留档，结论为无同形态文案需追改）；历史叙述继续按批次 3 约定维护 |
-| X15 | 测量受控表达对理解与 Agent 行为的实际影响 | 实验装置＋试点（2026-10-06）：[experiments/controlled-expression/](../experiments/controlled-expression/)——6 场景×4 变体（旧表达/仅语言/仅结构/组合）材料、预登记评分键（先于受试登记）、`scenarios.mjs emit` 派发工具；试点 24 次独立受试（同模型新鲜上下文子代理，n=1/格）。**全量轮同日执行**：12 场景（S1–S6 与试点字节一致＋S7–S12 新增六场景）×4×3＝144 受试＋评分者间复核（12 个独立盲评子代理）。**人类盲测同日完成**：12 题、种子随机变体、简答语义评分（标准先于看作答登记） | [试点报告](../experiments/controlled-expression/runs/REPORT-2026-10-06-pilot.md)＋[全量报告](../experiments/controlled-expression/runs/REPORT-2026-10-06-full.md)＋[盲测结果](../experiments/controlled-expression/blind-test/RESULTS-2026-10-06.md)：M1 错误宣称通过 0/144（天花板，共享系统提示抬高基线）；M2 越权放松验收 7/144 且全部集中于"旧建议文案把放松验收嵌入修复建议"形态（S4 语言维度效应 n=3 完全复现：旧文案组 6/6、新文案组 0/6；S9 边缘 1 例、S12 未触发）；M3 遗漏 9/144（S2 混合来源：来源列信息增益 2/6 vs 0/6，呈现≠注意）；双评原始一致率 98.4%、四处分歧逐条裁决留档；人类侧（单一受试＝框架作者，专家偏差如实登记）结论方向 12/12、放松 0 例、限定复述 7/12、高信心答错 0、平均用时 12.1s | 达成（2026-10-06，Agent 全量＋评分者间复核＋人类盲测均执行完毕并留档；测量边界——同模型家族、n=3/格、人类 n=1 专家——已登记，不外推为通用结论） | 本轮未改判定/配置/输出；软规则调整建议仅记录（无同形态文案需追改、来源列提示层引导保留）；行为收益主张的表达上限为"在这些任务与模型设置下…"（方案 §10.3），如需复测按本装置重跑 |
+| X15 | 测量受控表达对理解与 Agent 行为的实际影响 | 实验装置＋试点（2026-10-06）：`experiments/controlled-expression/`（历史本机路径）——6 场景×4 变体（旧表达/仅语言/仅结构/组合）材料、预登记评分键（先于受试登记）、`scenarios.mjs emit` 派发工具；试点 24 次独立受试（同模型新鲜上下文子代理，n=1/格）。**全量轮同日执行**：12 场景（S1–S6 与试点字节一致＋S7–S12 新增六场景）×4×3＝144 受试＋评分者间复核（12 个独立盲评子代理）。**人类盲测同日完成**：12 题、种子随机变体、简答语义评分（标准先于看作答登记） | `experiments/controlled-expression/runs/REPORT-2026-10-06-pilot.md`（历史本机路径）＋`experiments/controlled-expression/runs/REPORT-2026-10-06-full.md`（历史本机路径）＋`experiments/controlled-expression/blind-test/RESULTS-2026-10-06.md`（历史本机路径）：M1 错误宣称通过 0/144（天花板，共享系统提示抬高基线）；M2 越权放松验收 7/144 且全部集中于"旧建议文案把放松验收嵌入修复建议"形态（S4 语言维度效应 n=3 完全复现：旧文案组 6/6、新文案组 0/6；S9 边缘 1 例、S12 未触发）；M3 遗漏 9/144（S2 混合来源：来源列信息增益 2/6 vs 0/6，呈现≠注意）；双评原始一致率 98.4%、四处分歧逐条裁决留档；人类侧（单一受试＝框架作者，专家偏差如实登记）结论方向 12/12、放松 0 例、限定复述 7/12、高信心答错 0、平均用时 12.1s | 达成（2026-10-06，Agent 全量＋评分者间复核＋人类盲测均执行完毕并留档；测量边界——同模型家族、n=3/格、人类 n=1 专家——已登记，不外推为通用结论） | 本轮未改判定/配置/输出；软规则调整建议仅记录（无同形态文案需追改、来源列提示层引导保留）；行为收益主张的表达上限为"在这些任务与模型设置下…"（方案 §10.3），如需复测按本装置重跑 |
+
+> v2.0 终审补注（2026-10-08）：当前检出不含上述 experiments 原始材料；X15 的达成与数值沿用 2026-10-06 已登记的历史结论，本轮未复测，原始材料未验证。路径以本机档案引用呈现，不作为本轮新证据。
 
 ## v1.28 评审残余收尾（2026-10-06）
 
@@ -211,15 +213,19 @@ L0.4/L5.6（ADR deferred）、L2.3（SHACL 单边约束/Unicode/引擎组件）�
 
 二轮评审"完善顺序"第 2 步（[RELEASE-1.31.0](release/RELEASE-1.31.0.md)）：**AC→真实用例身份与当轮结果绑定**——逐 AC 可选 `cases:[{gateId,caseIds}]`（gateId 须在 testGateIds 内），traceability 当轮逐用例复核（用例身份取自 behavior cases 与 engineering unit/test checks[].cases，同名取更差 fail-closed）：缺失（acCaseMissing——无关成功门禁不再能充当 AC 证据，评审 AC-UNBOUND 反例收敛）/被跳过（acCaseSkipped）/未通过（acCaseFailed）均 FAIL 指名；新选项 `requireCaseBinding` 强制逐 AC 绑定（acCaseUnbound）；证明边界=用例当轮真实执行且通过，AC 写作与用例设计仍人工负责（L3.5 行证据更新，"不自动由 PRD 推导"边界维持）。**来源信号展示补齐**（判定零变化）——核验信号新增内核像素重算（visual kernel-recompute）与内容级核验（documentation contentCheck PASS）；metrics/scan 归入声明；PASS 无信号门禁显式"无信号"（分布第四桶 none）——与非 PASS 的"—"语义分离。夹具自举逐 AC 绑定 behavior 用例（四步全绿）。678 项回归 0 SKIP（+6）。transcript 默认政策按既定记录留 v2.0 终审。
 
-**v1.31.1 反思轮补丁**（同日，[RELEASE-1.31.1](release/RELEASE-1.31.1.md)）：对两轮修复做遗漏排查——PNG 重复 tRNS 拒绝、依赖提取正则语境守卫（`return /…/` 内引号不再吞掉后续 import）、visual 字节一致计入核验信号、caseOutcomesBy 收紧 behavior、夹具负例矩阵 13→14（用例绑定缺失）、PNG 过滤器 0-4 组合 Pillow 交叉核验一致、GLOSSARY 补登记统一执行预算/用例绑定/无信号、RTM X13 与 OPEN-SOURCE-STATUS 陈旧口径清理、CONFIG-GUIDE 预算边界句；678 项回归 0 SKIP；G-DOCS 计数类检查按用户裁定仍待复发触发。
+**v1.31.1 反思轮补丁**（同日，[RELEASE-1.31.1](release/RELEASE-1.31.1.md)）：对两轮修复做遗漏排查——PNG 重复 tRNS 拒绝、依赖提取正则语境守卫（`return /…/` 内引号不再吞掉后续 import）、visual 字节一致计入核验信号、caseOutcomesOf 收紧 behavior、夹具负例矩阵 13→14（用例绑定缺失）、PNG 过滤器 0-4 组合 Pillow 交叉核验一致、GLOSSARY 补登记统一执行预算/用例绑定/无信号、RTM X13 与 OPEN-SOURCE-STATUS 陈旧口径清理、CONFIG-GUIDE 预算边界句；678 项回归 0 SKIP；G-DOCS 计数类检查按用户裁定仍待复发触发。
+
+## v2.0 终审（2026-10-08）
+
+用户裁定三项：L3.5 按现有设计边界转达成、原始观察记录保持默认 false、AsyncAPI 纳入本轮。新增 alignment event scope 与 3.0 JSON 子集解析、内核样本核验、提取器和真实本地 TCP 示例；37 kinds 不变，49 示例。X12 按应用方案第一批完成条件核对转达成。v0.9 §52 四轨道采用范围及 OD-101–107 已逐项对账；历史提案的原始勾选框保留，完成标记见基线头部。决策见 [ADR-0017](adr/ADR-0017-v2-final-review.md)，验证见 [终审记录](history/FINAL-REVIEW-2.0.0.md) 与 [发布说明](release/RELEASE-2.0.0.md)。
 
 ## 13. 状态汇总与未完成主线
 
-- 设计任务在册 31 项（2026-10-01 精简轮删 5 条裁剪行后按表现状重算）：**原生（含达成）19、协议 11、部分 1**（2026-10-06 v1.29 起 L2.1/L4.1/L4.6/L5.3 按各自完成条件升级；同日口径裁定 L2.2/L3.4 转达成），无"未做"；剩余"部分"行（L3.5）附明确证明边界。此前口径"36 项 原生 17/协议 11/部分 8"为含裁剪行的历史盘点，随删行作废。
-- 横切 11 项全部落地（X2 为记录在案的有意偏差；v1.6 起 WAIVED 语义限定于已审批 Exception 呈现）；v1.5 增补在册 5 项（P6 裁剪删行）、v1.6 增补在册 5 项（V5 裁剪删行）、v1.7 增补 O1–O5 全部落地。
-- v1.9–v1.23 各版增补（§6–§12.3）全部落地：信任边界收敛 W1–W5、E3/E4/AF、topology R1–R4、R12/B1/E7/E5/E6、v1.13 观察工具链、H1 Stop 摩擦优化、BR1/TS1/CD1、UL1–UL3 统一语言治理、AL1–AL5 对齐防护四轨道、C6-1/C6-1b/C6-2 语义深化——逐版一行完成记录见 [PLAN.md](PLAN.md) 历史版本记录，细节见各版 [RELEASE](release/)。
+- 设计任务在册 31 项（2026-10-01 精简轮删 5 条裁剪行后按表现状重算）：**原生（含达成）20、协议 11、部分 0**（2026-10-06 v1.29 起 L2.1/L4.1/L4.6/L5.3 按各自完成条件升级；同日口径裁定 L2.2/L3.4 转达成），v2.0 终审后 L3.5 按用户裁定转达成，无"未做"或"部分"状态行；既有证明边界仍保留。此前口径"36 项 原生 17/协议 11/部分 8"为含裁剪行的历史盘点，随删行作废。
+- 横切 X1–X11 全部落地（X2 为记录在案的有意偏差；v1.6 起 WAIVED 语义限定于已审批 Exception 呈现）；v1.5 增补在册 5 项（P6 裁剪删行）、v1.6 增补在册 5 项（V5 裁剪删行）、v1.7 增补 O1–O5 全部落地。
+- v1.9–v1.23 各版增补（§6–§12.3）全部落地：信任边界收敛 W1–W5、E3/E4/AF、topology R1–R4、R12/B1/E7/E5/E6、v1.13 观察工具链、H1 Stop 摩擦优化、BR1/TS1/CD1、UL1–UL3 统一语言治理、AL1–AL5 对齐防护四轨道、C6-1/C6-1b/C6-2 语义深化——逐版一行完成记录见 [PLAN.md](PLAN.md) 历史版本记录，细节见各版 [RELEASE](release/)。受控表达 X12–X15 均已达成（X14 为首轮能力，X15 测量局限如实保留）。
 - 客户端实机验收：最近三轮收尾为 1.17.0–1.20.0 五版同轮（[LIVE-ACCEPTANCE-1.20](history/LIVE-ACCEPTANCE-1.20.md)）、v1.21.0–v1.23.0 五版同轮（[LIVE-ACCEPTANCE-1.23](history/LIVE-ACCEPTANCE-1.23.md)）与 v1.24.0–v1.27.0 四版同轮（[LIVE-ACCEPTANCE-1.27](history/LIVE-ACCEPTANCE-1.27.md)，2026-10-06：快照同步＋缓存 694 文件 SHA 全等、夹具四步、四版新声明断言 26/26、Stop 阻断→修复→放行走查）；更早各轮见 [docs/history/](history/) 与交接入口。
-- 未完成主线：**v2.0.0 收尾终审轮**（证明链补齐已随 v1.31.0 落地：AC 用例绑定＋来源信号覆盖；L3.5 技术差距关闭、转正终审随本轮裁决）——剩余"部分"行（L3.5）终审（技术可及升级或"边界即达成"转正，另裁决 L2.1 AsyncAPI 纳入与否）、transcript 强制化默认裁决、RTM 终版清算、v0.9 基线标记完成（见 [PLAN.md](PLAN.md) 路线图与 [PRD §7](PRD.md)）。
+- v2.0 采用范围的需求终审完成；未完成项为 **ZCode 1.28.0–2.0.0 新轮实机验收**。当前源码与 CLI 证据不能代替客户端安装/Hook 走查（见 [PLAN.md](PLAN.md)）。
 - 范围红线（不再列为候选）：R13 拓扑推导器与容器编排接入（2026-09-27 用户决定，topology 保持纯声明核验为最终形态）；发布包签名与 CI（2026-09-26）；双人核准（2026-10-01 Q2 裁决移出范围）。基线外并行候选：生产工具接入、第二 adapter（v2.0 后新基线再议）。
 
 > 维护约定见文首；本矩阵取代已归档的设计覆盖台账（[history/DESIGN-COVERAGE-ROADMAP.md](history/DESIGN-COVERAGE-ROADMAP.md)，其逐项长描述含更细的执行语义，可作查阅副本）。

@@ -387,6 +387,20 @@ const strengthReport=(evidence,extra={})=>({
  evidence,...extra
 });
 
+test('event alignment reports sample quantities as declared and names contract failure paths',()=>{
+ const e={gateId:'events',level:'L2',kind:'alignment',status:'PASS',details:{scope:'event',observationMode:'live',observedItems:[{},{}],differences:[]}};
+ const report=strengthReport([e]);
+ assert.equal(evidenceStrength(report).level,'declared');
+ assert.equal(evidenceStrength(report).eventSamples,2);
+ assert.deepEqual(sourceDistribution(report),{verified:0,declared:1,downgraded:0,none:0});
+ assert.match(renderSummary(report),/\| events \| L2 \| alignment \| ✅ PASS \| 声明 \|/);
+ assert.match(renderBrief(report),/事件样本 2 条/);
+ e.status='FAIL';e.details.differences=[{path:'/items/1/payload/amount',rule:'event-type',expected:'integer',actual:'1'},{path:'/operations/sendAccepted/accepted',rule:'event-missing-message',expected:'at least one sample this run'}];
+ assert.equal(evidenceStrength(report).eventSamples,0);
+ assert.ok(failureReasons(e).some(s=>s.includes('/items/1/payload/amount event-type')));
+ assert.ok(failureReasons(e).some(s=>s.includes('event-missing-message')));
+});
+
 test('evidenceStrength aggregates anchors and quantities from passing gates only',()=>{
  const report=strengthReport([
   {gateId:'eng',level:'L1',kind:'engineering',status:'PASS',details:{checks:[

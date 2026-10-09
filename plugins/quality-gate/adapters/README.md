@@ -8,6 +8,7 @@
 
 | 适配器 | 形态 | 验证边界 |
 |---|---|---|
+| `asyncapi/extract-contract.mjs` | AsyncAPI 3.0.x JSON 子集提取器（v2.0）：stdin `{runId,file}`，输出归一化事件声明 `{kind:'event',items}`；本文件 components 引用、操作方向、通道、消息及 JSON 载荷/应用头约束由共享纯函数提取，越界退出 3 | 门禁 `alignment.scope:event` 直接读取原始 AsyncAPI 文件，不把提取结果冒充运行观察；`examples/asyncapi-demo` 经真实本地 TCP 收发并在内核核验样本。范围与错误语义见仓库 CONFIG-GUIDE 的 alignment 节；未验证生产消息中间件 |
 | `python/unit_runner.py` | pytest 包装 runner：stdin 收 qgate 请求 → 本地跑 `pytest --junitxml` → 从 XML 属性自报计数并声明 `rawOutput:{format:'junit'}`，退出码恒 0（观察协议，测试失败由内核判定） | 仓库内以真实 pytest 全链路验证（见 `tests/adapters.test.mjs`；本机无 pytest 时该测试 skip 并给安装指引） |
 | `python/persistence_orm.py` | persistence 参考 runner 的 Entity↔ORM 形态（E5）：before/after 快照与落库记录取自 SQLAlchemy 会话（独立新 session 回读，ADR-0013），E3 快照协议不变、内核零改动 | 仓库内经真实内核门禁全链路验证（SQLAlchemy 2.x + 内存 SQLite；依赖缺失时测试 skip 并给安装指引；request 以 `orm://` 方案如实标注非真实 HTTP 面真实项目应回报其真实 API 调用） |
 | `java/merge-junit.mjs` | surefire/gradle 报告合并 runner：把 `TEST-*.xml` 多文件合并为单 `testsuites` 文件、自报计数并声明 rawOutput（复用内核解析器自检）；Java 项目仅需运行 qgate 所需的 Node | 仓库内以样例 surefire XML（按 schema 手写、如实标注）验证合并与内核解析；无 JDK 环境，不做 Maven/Gradle 全链路实测，不声称已验证真实构建工具链 |

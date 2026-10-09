@@ -10,13 +10,13 @@
 |---|---|
 | [PRD.md](PRD.md) | 产品需求：问题定位、目标/非目标、六域问题框架、功能概览、路线图（原始需求+现状+规划的唯一产品视角整合） |
 | [RTM.md](RTM.md) | 需求跟踪矩阵：设计任务→实现→验证依据→状态→后续的**单一索引**（含状态图例与维护约定） |
-| [adr/](adr/) | 16 条架构决策记录（编号递增，已接受状态，含备选与后果） |
+| [adr/](adr/) | 17 条架构决策记录（编号递增，已接受状态，含备选与后果） |
 
 ## 规范层（怎么配置、怎么判）
 
 | 文档 | 用途 |
 |---|---|
-| [GATE-SPEC-v1.23.md](GATE-SPEC-v1.23.md) | 现行 Gate Spec：配置与 runner 协议、判定规则（活规范；协议稳定沿用 1.23 版本名，v1.24 起判定修正以文末追加节登记） |
+| [GATE-SPEC-v1.23.md](GATE-SPEC-v1.23.md) | 现行 Gate Spec：配置与 runner 协议、判定规则（活规范；保留 1.23 文件入口，v1.24 起修正与 v2.0 AsyncAPI event 扩展以文末追加节登记） |
 | [GLOSSARY.md](GLOSSARY.md) | 统一语言术语表：全项目概念唯一登记处（规范中文/代码名/定义/上下文/弃用别名；v1.19 起弃用词由约定对齐门禁 G-CONVENTIONS 强制（自举自 glossary 防回归测试）） |
 | [CONFIG-GUIDE.md](CONFIG-GUIDE.md) | 全部可配置项与逐 kind 机器校验 jsonc 样例（受 tests/config-guide.test.mjs 强制同步） |
 | [WRITING-GUIDE.md](WRITING-GUIDE.md) | 写作规则（受控表达，RTM X12）：按用途定约束强度＋核心规则 W1–W12——GLOSSARY 管术语、本文件管表达；文风自动检查已随 X14 接入（v1.27.0 起 advisory 首轮） |
@@ -40,9 +40,9 @@
 
 ## 上下文层（需求与研究输入的"为什么"，均非实施承诺）
 
-- [context/RESEARCH-CONTROLLED-EXPRESSION-2026-10-06.md](context/RESEARCH-CONTROLLED-EXPRESSION-2026-10-06.md)：受控表达应用方案。覆盖开发指令、文档重构、插件报告、自动检查及效果实验；四批均已实施——1.25.0/1.26.0 指令与报告表达（X12 部分、X13 达成）、1.27.0 文档重构与自动检查（X14 首轮达成）、效果实验（X15 已执行并结算，测量边界见 RTM 该行）。
+- [context/RESEARCH-CONTROLLED-EXPRESSION-2026-10-06.md](context/RESEARCH-CONTROLLED-EXPRESSION-2026-10-06.md)：受控表达应用方案。覆盖开发指令、文档重构、插件报告、自动检查及效果实验；四批均已实施——1.25.0/1.26.0 指令与报告表达（X12 经 v2.0 终审结算、X13 达成）、1.27.0 文档重构与自动检查（X14 首轮达成）、效果实验（X15 已执行并结算，测量边界见 RTM 该行）。
 - [context/original-design-v0.1.md](context/original-design-v0.1.md)：原始设计基线，研究/需求资料，不代表全部已实现（已归档）。
-- [context/original-design-v0.9.md](context/original-design-v0.9.md)：演进设计基线 v0.9（全量，现状描述以 v1.16.0 为实现基线；新增 Agent 对齐失效防护四轨道设计与阶段路线，取代 v0.1 作为后续开发指导；文中新概念为提案态，见 GLOSSARY §1 提案概念例外）。
+- [context/original-design-v0.9.md](context/original-design-v0.9.md)：演进设计基线 v0.9（全量，现状描述以 v1.16.0 为实现基线；新增 Agent 对齐失效防护四轨道设计与阶段路线，取代 v0.1 作为后续开发指导；v2.0 已完成所采用范围，头部补注指向终审核对；原提案正文保留，见 GLOSSARY §1 提案概念例外）。
 - [context/RESEARCH-ARCH-PRINCIPLES.md](context/RESEARCH-ARCH-PRINCIPLES.md)：架构原则调研（R 系列，四原则语义深化与候选路线）。
 - [context/RESEARCH-PRINCIPLE-CATALOG.md](context/RESEARCH-PRINCIPLE-CATALOG.md)：原则目录（A/B/C/D/E 系列，四原则之外的扩展候选）。
 

@@ -72,6 +72,17 @@
       "smokeStage": "close"
     },
     {
+      "id": "asyncapi-demo",
+      "role": "protocol",
+      "levels": [
+        "L2"
+      ],
+      "kinds": [
+        "alignment"
+      ],
+      "smokeStage": "close"
+    },
+    {
       "id": "behavior-demo",
       "role": "protocol",
       "levels": [

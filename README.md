@@ -4,7 +4,7 @@ Configurable, evidence-producing quality gates for agent-assisted software deliv
 
 把“软件可交付”变成可追溯的 **Claim → Evidence → Gate → Risk → Exception** 证明链。内核采用 Node.js 标准库，无 npm 依赖，可通过独立 CLI 运行；ZCode 插件是首个宿主 adapter。
 
-**当前版本：1.31.1。** 37 种门禁、48 个示例，覆盖 L0–L5 六个质量证明域。近版脉络：1.24.0 首次开源发行（含全项目审查 11 组判定问题修复）→ 1.25.0–1.27.0 受控表达三批（指令纠正、报告来源与声明关联、随包文风检查 advisory）→ 1.28.0 评审残余收尾 → 1.29.0 评审后续推进 → 1.30.0 二轮评审六组实现问题修复（登记内 runner 计入执行预算并受剩余期限约束、requireLive 缺失 mode 即缺证据、semantic-relation 反向认可须显式互逆、PNG tRNS 透明与结构防线、依赖图提取跳过注释/字符串、OpenAPI 提取 fail-closed）→ 1.31.0 证明链补齐（AC→真实用例绑定 requireCaseBinding、来源信号覆盖内核像素重算/内容级核验与无信号显式化）→ 1.31.1 反思轮补丁（重复 tRNS 拒绝、依赖提取正则语境守卫、字节一致核验信号，[发布说明](docs/release/RELEASE-1.31.1.md)）——支持范围与后续缺口见 [开源状态](docs/OPEN-SOURCE-STATUS.md) 和 [RTM](docs/RTM.md)。
+**当前版本：2.0.0。** 37 种门禁、49 个示例，覆盖 L0–L5 六个质量证明域。本版完成 v2.0 需求终审，并增加 AsyncAPI 3.0 JSON 子集的事件契约核验：从原始声明核对当轮消息方向、通道、载荷/应用头约束与逐消息覆盖。L3.5 按明确设计边界转达成；原始观察记录仍由项目显式启用。见 [发布说明](docs/release/RELEASE-2.0.0.md)、[终审记录](docs/history/FINAL-REVIEW-2.0.0.md) 与 [支持范围](docs/OPEN-SOURCE-STATUS.md)。ZCode 新版实机验收仍单独待办，CLI 结果不能代替。
 
 ## 快速开始
 
@@ -34,7 +34,7 @@ node plugins/quality-gate/bin/qgate.mjs <项目绝对路径> close
 |---|---|
 | L0 需求与决策 | 需求追踪、验收条件覆盖、假设/决策登记、任务意图与变更范围、约定对齐 |
 | L1 工程验证 | 静态检查、构建、单测、变异测试执行协议；TAP/JUnit 原始输出解析；符号存在性 |
-| L2 数据与契约 | API/Schema 对齐、实际落盘回读、字段语义、不变量与账本一致性 |
+| L2 数据与契约 | API/Schema/AsyncAPI 事件契约对齐、实际落盘回读、字段语义、不变量与账本一致性 |
 | L3 行为与语义 | 行为/旅程/视觉协议、性质测试、F2P/P2P、术语和确定性 OWL 子集 |
 | L4 非功能与安全 | 度量、扫描工具协议、恢复演练、预算守恒、拓扑声明核验、trace 贯通 |
 | L5 治理与收尾 | 多环境配置、文档、技术债和决策收尾 |
@@ -53,13 +53,17 @@ Stop 的 55 秒宿主期限内最多接受 50 秒已声明执行预算，余量�
 
 ```powershell
 node devtools/run-suite.mjs plugins/quality-gate/tests/*.test.mjs
+node --test devtools/tests/run-suite.test.mjs
+python -m unittest discover -s devtools/tests -p 'test_*.py'
 node plugins/quality-gate/bin/qgate.mjs . release
 node plugins/quality-gate/bin/qgate.mjs plugins/quality-gate/examples/six-domain-demo release
 node acceptance/expense-approval-fixture/scripts/negative-matrix.mjs
+python devtools/build_delivery.py --verify-only
+# 提交源码与 devtools/delivery-files.json 后，正式重建：
 python devtools/build_delivery.py
 ```
 
-测试入口按项目约定限制并发；可选工具未安装导致的 SKIP 应单独记录。构建脚本在本地生成交付 zip，解包后重跑套件和清单中的冒烟示例。历史安装包和本机运行证据不随公开源码上传。
+测试入口按项目约定限制并发；可选工具未安装导致的 SKIP 应单独记录。构建脚本只打包 [显式交付清单](devtools/delivery-files.json)中的文件，先在临时路径解包重跑零 SKIP 套件与清单冒烟示例，通过后才发布正式 zip/SHA；未提交工作树用 `--verify-only` 做同样验证。正式构建要求源码已提交，历史安装包和本机运行证据不随公开源码上传。
 
 ## 文档与参与
 

@@ -353,7 +353,7 @@ export function downgradeNotes(report){
 export function evidenceStrength(report){
  const signals={gitBaselines:0,fingerprints:0,rerunDeterministic:0,snapshots:0,rawOutputs:0,baselineContents:0,kernelRecomputes:0,contentChecks:0,byteIdentical:0};
  const tests={total:0,passed:0,failed:0,skipped:0,checks:0};
- const coverage=[];const mutation=[];let property=null;let behaviorCases=0;
+ const coverage=[];const mutation=[];let property=null;let behaviorCases=0;let eventSamples=0;
  for(const entry of Array.isArray(report.evidence)?report.evidence:[]){
   if(entry.status!=='PASS')continue;
   const details=entry.details;
@@ -377,6 +377,7 @@ export function evidenceStrength(report){
   }
   if(entry.kind==='property'&&details.caseCount!==undefined)property={gate:entry.gateId,seed:details.seed,cases:details.caseCount,counterexamples:details.counterexamples?.length??0};
   if(entry.kind==='behavior'&&Array.isArray(details.cases))behaviorCases+=details.cases.length;
+  if(entry.kind==='alignment'&&details.scope==='event'&&Array.isArray(details.observedItems))eventSamples+=details.observedItems.length;
   // 原始观察记录（v1.13）：behavior/journey 观察记录核验一致计入"原始输出解析"信号
   if((entry.kind==='behavior'||entry.kind==='journey')&&details.rawTranscript?.crossCheck==='match')signals.rawOutputs++;
   if(entry.kind==='rerun')for(const job of details.jobs??[])if(job.deterministic)signals.rerunDeterministic++;
@@ -387,12 +388,12 @@ export function evidenceStrength(report){
   if(entry.kind==='visual'&&details.comparison==='exact-bytes')signals.byteIdentical++;
   if(entry.kind==='documentation'&&(details.artifacts??[]).some(artifact=>artifact?.contentCheck?.status==='PASS'))signals.contentChecks++;
  }
- const quantitative=tests.checks+coverage.length+mutation.length+(property?1:0)+(behaviorCases>0?1:0);
+ const quantitative=tests.checks+coverage.length+mutation.length+(property?1:0)+(behaviorCases>0?1:0)+(eventSamples>0?1:0);
  const anchorCount=signals.gitBaselines+signals.fingerprints+signals.rerunDeterministic+signals.snapshots+signals.rawOutputs+signals.baselineContents+signals.kernelRecomputes+signals.contentChecks+signals.byteIdentical;
  const signalTotal=quantitative+anchorCount;
  const downgrades=downgradeNotes(report).length;
  const level=signalTotal===0?'none':downgrades>0?'downgraded':anchorCount>0?'anchored':'declared';
- return {level,signals,tests,coverage,mutation,property,behaviorCases,downgrades,signalTotal};
+ return {level,signals,tests,coverage,mutation,property,behaviorCases,eventSamples,downgrades,signalTotal};
 }
 
 const strengthLabels={anchored:'核验级',declared:'声明级',downgraded:'降级'};
@@ -435,6 +436,7 @@ function entryDeclaredQuantities(entry){
  }
  if(entry.kind==='property'&&details.caseCount!==undefined)quantitative++;
  if(entry.kind==='behavior'&&Array.isArray(details.cases)&&details.cases.length)quantitative++;
+ if(entry.kind==='alignment'&&details.scope==='event'&&Array.isArray(details.observedItems)&&details.observedItems.length)quantitative++;
  if(entry.kind==='metrics'&&Array.isArray(details.metrics)&&details.metrics.length)quantitative++;
  if(entry.kind==='scan'&&Array.isArray(details.findings))quantitative++;
  return quantitative;
@@ -540,6 +542,7 @@ function strengthLine(strength,report){
  if(strength.mutation.length)quantityBits.push(`变异 ${list(strength.mutation,3)}`);
  if(strength.property)quantityBits.push(`性质 ${strength.property.cases} 例（seed ${strength.property.seed}）`);
  if(strength.behaviorCases)quantityBits.push(`行为 ${strength.behaviorCases} 例`);
+ if(strength.eventSamples)quantityBits.push(`事件样本 ${strength.eventSamples} 条`);
  if(quantityBits.length)parts.push(`定量 ${list(quantityBits,4)}`);
  const distribution=sourceDistribution(report);
  const distributionBits=[];

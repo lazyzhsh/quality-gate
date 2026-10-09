@@ -15,7 +15,7 @@
 | L4 | metrics（3 阈值）、api-authz（scan）、timeout-budget（budget）、rerun-evidence（rerun） | scripts/metrics-runner.mjs、openapi.json、registries/budget.json、registries/rerun.json |
 | L5 | rollback-drill（command）、technical-debt（debt） | scripts/rollback-drill.mjs、registries/debt.json |
 
-其余 25 种 gate kind 的覆盖在插件侧：`examples/examples.manifest.json`（48 示例）与打包冒烟测试（`python devtools/build_delivery.py`）+ 插件回归测试，与本夹具互补。
+其余 25 种 gate kind 的覆盖在插件侧：`examples/examples.manifest.json`（49 示例）与打包冒烟测试（`python devtools/build_delivery.py`）+ 插件回归测试，与本夹具互补。
 
 登记文件集中在 `.quality-gate/registries/`（随库提交）；`.quality-gate/runs/` 为运行数据（已 gitignore）。`openapi.json` 留在根目录（authz runner 直接读取）。
 

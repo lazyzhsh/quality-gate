@@ -417,11 +417,11 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
 ### alignment
 | 选项 | 类型/默认 | 作用 |
 |---|---|---|
-| `scope` | `"api"` / `"schema"` / `"contract-diff"`，必填 | api/schema：与 runner 观察对比的声明契约；contract-diff：契约兼容阻断（`file` 为当前契约 `{fields}`，runner 须 diff 基线并回报 `breaking:[{path,rule}]`+`checked:true`，未执行即 ERROR、breaking 非空即 FAIL 指名；加可选字段兼容、删字段/改类型阻断） |
+| `scope` | `"api"` / `"schema"` / `"event"` / `"contract-diff"`，必填 | api/schema：与 runner 观察对比的声明契约；event：直接读取 AsyncAPI 3.0.x JSON 子集，核验当轮消息的操作、方向、通道及载荷/应用头约束（v2.0，详见下节）；contract-diff：契约兼容阻断（`file` 为当前契约 `{fields}`，runner 须 diff 基线并回报 `breaking:[{path,rule}]`+`checked:true`，未执行即 ERROR、breaking 非空即 FAIL 指名；加可选字段兼容、删字段/改类型阻断） |
 | `compatibilityLevel` | backward/forward/full，contract-diff 必填 | 声明兼容方向并传给 runner；方向语义由 runner 按声明判定，内核只消费结构化结论 |
-| `file` | string，必填 | 预期契约文件 `{kind, items}` |
-| `ignorePaths` | string[]，可选 | JSON Pointer 模式（`*` 匹配一段，如 `/items/*/serverTime`）；命中的差异跳过并计入证据 `ignoredDifferences`，未声明的差异照常 FAIL |
-| `requireLive` | bool，默认 false（v1.9 W3） | 观察模式声明：runner 观察可回报 `mode: live\|static`（static=未发真实请求/未连真实存储，仅静态读取）。static 默认放行但摘要**降级标注**（观察为静态读取）；`requireLive:true` 要求**显式 `mode:'live'`**（v1.30 F02）——static 即 FAIL 指名，**缺失 mode 同样 FAIL** 指名（`missingObservationMode`：无法区分实时观察与不回报模式声明的旧 runner，缺失来源不比诚实 static 更易放行；旧 runner 兼容请关闭 requireLive）；畸形 mode 值 ERROR。该判定在 alignment（api/schema）、alignment（contract-diff）、consumer-matrix 三条消费路径一致 |
+| `file` | string，必填 | api/schema 为预期契约文件 `{kind, items}`；event 为原始 AsyncAPI JSON 文档（每轮直接读取与提取，禁止用旧提取结果替代）；contract-diff 为当前契约 `{fields}`。文件上限 65536 字节 |
+| `ignorePaths` | string[]，可选；event 禁用 | JSON Pointer 模式（`*` 匹配一段，如 `/items/*/serverTime`）；命中的差异跳过并计入证据 `ignoredDifferences`，未声明的差异照常 FAIL。event 声明此项即配置 ERROR；调整约束须显式修改事件契约 |
+| `requireLive` | bool，默认 false（v1.9 W3） | 观察模式声明：runner 观察可回报 `mode: live\|static`（static=仅静态读取，未执行所声明的运行观察）。static 默认放行但摘要**降级标注**（观察为静态读取）；`requireLive:true` 要求**显式 `mode:'live'`**（v1.30 F02）——static 即 FAIL 指名，**缺失 mode 同样 FAIL** 指名（`missingObservationMode`：无法区分实时观察与不回报模式声明的旧 runner，缺失来源不比诚实 static 更易放行）；畸形 mode 值 ERROR。该判定在 alignment（api/schema/event）、alignment（contract-diff）、consumer-matrix 三条消费路径一致。为旧 runner 调整 requireLive 属验收要求变更，须显式决定 |
 | `requireSourceFingerprint` | bool，默认 false（v1.9.1） | 观察端来源指纹：观察可回报 `sourceFingerprint:{file, sha256}`——**声明即核验**（存在性+防逃逸+与磁盘文件哈希比对，不符 FAIL 指名，畸形/逃逸 ERROR），把观察绑定到具体项目制品；开启后未声明即 FAIL。适用于文件型观察面（如迁移后 schema 快照）；live HTTP 面走 mode+requireLive，附指纹（如服务实现文件哈希）同样有效 |
 
 ```jsonc
@@ -430,10 +430,38 @@ init/update 写盘后自动做**登记文件门禁引用预检**（v1.7.2）：r
   "claims": [{"id": "CL-1", "statement": "Deployed API matches the declared contract"}],
   "gates": [{"id": "api", "kind": "alignment", "level": "L2", "enabled": true, "stages": ["close"], "claimId": "CL-1", "scope": "api", "file": "api.expected.json", "argv": ["$NODE", "api-observe.mjs"], "timeoutMs": 5000,
     // 易变字段（时间戳/请求ID）在此显式豁免；豁免记录进证据，不放行未声明的漂移
-    "ignorePaths": ["/items/*/serverTime"]}],
+    "ignorePaths": ["/items/*/serverTime"]},
+    // v2.0：直接消费原始声明；runner 只报告实际消息，不读取声明拼出期望
+    {"id": "events", "kind": "alignment", "level": "L2", "enabled": true, "stages": ["close"], "claimId": "CL-1", "scope": "event", "file": "asyncapi.json", "argv": ["$NODE", "event-observe.mjs"], "timeoutMs": 5000, "requireLive": true}],
   "risks": [], "exceptions": []
 }
 ```
+
+#### event：AsyncAPI 事件契约（v2.0）
+
+内核从原始声明提取操作与消息约束；runner stdin 仍为 `{schemaVersion:"0.1",runId,scope:"event"}`。输出包络为 `{schemaVersion:"0.1",runId,kind:"event",source,mode?,sourceFingerprint?,items}`。`requireLive` 与 `requireSourceFingerprint` 沿用同表规则：缺模式/静态模式或缺强制指纹即 FAIL，旧 runId/畸形包络即 ERROR。live 是 runner 的来源声明，不证明观察独立或真实。
+
+| 声明/观察字段 | 规则与缺失语义 |
+|---|---|
+| `asyncapi` / `info` | 声明版本 3.0.x JSON；info.title/info.version 非空。YAML、2.x、其他版本不在子集，ERROR |
+| `channels` / `operations` | 两者须非空对象；channel.address 为不含 `{}` 的静态地址。operation.action 为 send/receive，按应用自身视角解释；operation.channel 必须引用根 channels；operation.messages 必须显式列出该通道的消息引用且不重复。根通道消息须被至少一个操作引用，漏覆盖 ERROR |
+| `components` / `$ref` | 可复用 schemas/messages/channels/operations；仅本文件 `#/components/<对应类别>/<名称>` 引用，支持 JSON Pointer `~0`/`~1`。operation 的 channel/messages 引用须符合上述根路径。外部、循环、缺失引用及 `$ref` 同级附加字段均 ERROR；不联网取引用 |
+| `payload` / `headers` | 声明 payload 必填；headers 可选，有声明时须 object。Schema 须显式 type，支持 object/array/string/number/integer/boolean/null、enum、properties、required、布尔 additionalProperties、单一 items、minimum/maximum、minLength/maxLength、minItems/maxItems。required 只可引用已声明 properties；additionalProperties 默认 true，required 默认空。integer 只接受 JS 安全整数；字符串长度按 Unicode 码点 |
+| `contentType` / `defaultContentType` | 消息 contentType 优先，否则取文档 defaultContentType；必须为 application/json，缺失或其他媒体类型 ERROR |
+| `items`（runner 输出） | 0..1000 个当轮实际消息样本；每项必须含非空 `operationId`、`action`、`channel`、`messageId`、`contentType` 及 `payload`。有头约束时回报 `headers` 对象；禁止未知包络键。消息身份取通道消息键，不能用 components 名或 message.name 代替 |
+| `operationId` / `messageId`（样本） | 按二者联合关联声明，不依赖回报顺序。同消息可有多个样本且逐个核验；每个声明的操作-消息组合至少要有一个当轮样本，缺失 FAIL `event-missing-message`，未知组合 FAIL `event-unexpected-message` |
+| 方向、通道与消息内容 | action/channel/contentType 不符 FAIL 并指名。payload/headers 违反类型、必填、枚举、额外字段、上下限时 FAIL，JSON Pointer 入 differences。样本须在该操作所列消息中恰好匹配一种，匹配多种 FAIL `event-ambiguous-message`；runner 自报 messageId 不解除歧义 |
+| 子集与资源上限 | 100 个操作-消息组合；Schema 展开最多 1000 节点/12 层/每 object 100 属性/enum 100 项/引用链 16 步；超限 ERROR。未支持的语义键（含 traits/bindings/security/servers/reply/parameters、组合 Schema、format/pattern、Multi Format Schema）ERROR。仅说明性 title/summary/description/tags/externalDocs、Schema 的 title/description/examples/default、消息 name/examples 不参与约束；未使用 components 不展开 |
+
+最小观察示意（完整可运行正反例见 `examples/asyncapi-demo`）：
+
+```json
+{"schemaVersion":"0.1","runId":"<当次 stdin runId>","kind":"event","source":"项目消息采集工具与范围","mode":"live","items":[{"operationId":"receiveOrder","action":"receive","channel":"orders.request","messageId":"submit","contentType":"application/json","headers":{"requestId":"r1"},"payload":{"id":"order-1","amount":1250,"currency":"CNY"}}]}
+```
+
+参考提取器 `adapters/asyncapi/extract-contract.mjs` 的 stdin 为 `{runId,file}`，输出 `{schemaVersion:"0.1",runId,source,kind:"event",items}`（items 为归一化声明，供检查/工具复用；不是运行观察）。输入协议错误退出 2，声明越界/读取失败退出 3。门禁 file 始终指原始 AsyncAPI 文档，避免修改声明后继续使用旧提取文件。内核证据含原始文件 expectedSha256、expectedItems、observedItems 与逐项 differences；来源列按 runner 消息样本标“声明”，证据力定量含 eventSamples，只计 PASS 门禁。
+
+证明范围为所声明消息的样本符合性与当轮覆盖，不是两版本契约兼容性、全量事件流覆盖或消息中间件认证；Kafka/AMQP/MQTT 投递、顺序、持久化、安全握手均未验证。规范依据：[AsyncAPI 3.0.0](https://github.com/asyncapi/spec/blob/v3.0.0/spec/asyncapi.md)。
 
 ### consumer-matrix
 | 选项 | 类型/默认 | 作用 |

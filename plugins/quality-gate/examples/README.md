@@ -4,6 +4,7 @@
 
 | 示例 | 角色 | 域 | 门禁 kind | 冒烟测试阶段 | 测试依据 |
 |---|---|---|---|---|---|
+| asyncapi-demo | 协议演示 | L2 | alignment | close | asyncapi |
 | alignment-demo | 协议演示 | L2 | alignment | — | alignment |
 | api-security-demo | 协议演示 | L3/L4 | scan, behavior | close | api-security |
 | architecture-demo | 协议演示 | L4 | metrics | close | metrics |

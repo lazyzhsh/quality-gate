@@ -4,7 +4,7 @@
     {
       "name": "quality-gate",
       "source": "./plugins/quality-gate",
-      "version": "1.31.1",
+      "version": "2.0.0",
       "description": "Configurable evidence-producing quality gates",
       "category": "developer-tools",
       "description_i18n": {

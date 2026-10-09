@@ -8,7 +8,7 @@
 2. 设计基线：[原始设计基线 v0.1](docs/context/original-design-v0.1.md)（研究/需求来源，已归档；不代表所有章节已经实现）与[演进设计基线 v0.9](docs/context/original-design-v0.9.md)（2026-09-30 起，全量演进版：现状以 v1.16.0 为实现基线 + Agent 对齐失效防护四轨道设计，取代 v0.1 指导后续开发）；原始讨论档案见 [history/DISCUSSION-AND-DECISIONS.md](docs/history/DISCUSSION-AND-DECISIONS.md)（已归档，活跃内容由 PRD/RTM/ADR 承接）。
 3. [RTM 需求跟踪矩阵](docs/RTM.md)：L0–L5 的 31 项任务（2026-10-01 精简轮后口径，另受控表达 X12–X15 增补）+ 横切 + v1.5–v1.7 增补的实现、验证依据、状态与后续；这是实现状态的单一索引（更细的逐项执行语义存档于 [history/DESIGN-COVERAGE-ROADMAP.md](docs/history/DESIGN-COVERAGE-ROADMAP.md)）。
 4. [Gate Spec 1.23](docs/GATE-SPEC-v1.23.md)：配置与 runner 协议；[配置功能指引](docs/CONFIG-GUIDE.md)：全部可配置项与逐 kind 机器校验样例；[插件 README](plugins/quality-gate/README.md)：直接调用方法。
-5. 近三版发布说明 [1.31.1](docs/release/RELEASE-1.31.1.md)、[1.31.0](docs/release/RELEASE-1.31.0.md)、[1.30.0](docs/release/RELEASE-1.30.0.md)（更早各版见 [docs/release/](docs/release/) 与 [history/VERSION-HISTORY.md](docs/history/VERSION-HISTORY.md) 逐版索引）；客户端实机验收 [LIVE-ACCEPTANCE-1.27](docs/history/LIVE-ACCEPTANCE-1.27.md)（1.24.0–1.27.0 四版同轮收尾，2026-10-06）、[LIVE-ACCEPTANCE-1.23](docs/history/LIVE-ACCEPTANCE-1.23.md)（1.21.0–1.23.0 五版同轮收尾）及更早各轮见 [docs/history/](docs/history/)；1.28.0 起实机验收待新轮。
+5. 近三版发布说明 [2.0.0](docs/release/RELEASE-2.0.0.md)、[1.31.1](docs/release/RELEASE-1.31.1.md)、[1.31.0](docs/release/RELEASE-1.31.0.md)（更早各版见 [docs/release/](docs/release/) 与 [history/VERSION-HISTORY.md](docs/history/VERSION-HISTORY.md) 逐版索引）；客户端实机验收 [LIVE-ACCEPTANCE-1.27](docs/history/LIVE-ACCEPTANCE-1.27.md)（1.24.0–1.27.0 四版同轮收尾，2026-10-06）、[LIVE-ACCEPTANCE-1.23](docs/history/LIVE-ACCEPTANCE-1.23.md)（1.21.0–1.23.0 五版同轮收尾）及更早各轮见 [docs/history/](docs/history/)；1.28.0 起实机验收待新轮。
 
 ## 目录
 
@@ -24,6 +24,10 @@
 | `marketplace.json` | ZCode 本地 marketplace 入口 |
 
 ## 当前可运行基线
+
+- **2.0.0 终审与事件契约**（[RELEASE-2.0.0](docs/release/RELEASE-2.0.0.md)）：用户三裁定＝L3.5 按现有边界转达成、原始观察记录默认 false 保持、AsyncAPI 纳入。新增 alignment event scope，直接读取 AsyncAPI 3.0 JSON 子集并核验实际消息；本地 TCP 正反例与 692 项回归通过，0 SKIP；37 kinds、49 示例。RTM 六域 20 原生/达成＋11 协议、0 部分；X12 按完成条件结算，v0.9 四轨道采用范围完成。终审证据与证明边界见 [FINAL-REVIEW-2.0.0](docs/history/FINAL-REVIEW-2.0.0.md)。客户端 1.28.0 起仍待新轮。
+
+以下为此前版本的实现记录，按其版本理解。
 
 - **1.31.1 反思轮补丁**（[RELEASE-1.31.1](docs/release/RELEASE-1.31.1.md)）：PNG 重复 tRNS chunk 拒绝（此前静默取后者）、依赖图提取正则字面量语境守卫（`return /…/` 内引号不再吞掉后续 import）、visual 字节一致（exact-bytes＝内核 SHA256 相等）计入核验信号"字节一致"、caseOutcomesOf 通用分支收紧到 behavior kind、GLOSSARY 补登记统一执行预算/用例绑定/无信号、CONFIG-GUIDE 预算边界句（内核内置有界操作不属声明面）、夹具负例矩阵 13→14（用例绑定缺失 acCaseMissing）、PNG 过滤器 0-4 组合 Pillow 交叉核验一致；678 项回归 0 SKIP。
 - **1.31.0 证明链补齐**（[RELEASE-1.31.0](docs/release/RELEASE-1.31.0.md)，二轮评审建议第 2 步）：AC→真实用例身份与当轮结果绑定——requirements.json 逐 AC 可选 `cases:[{gateId,caseIds}]`，traceability 当轮逐用例复核（acCaseMissing/acCaseSkipped/acCaseFailed/acCaseUnbound 指名，无关成功门禁不能充当 AC 证据——评审 AC-UNBOUND 反例收敛），新选项 `requireCaseBinding` 强制逐 AC 绑定；来源信号补齐（visual 内核像素重算与 documentation 内容级核验计入核验信号、metrics/scan 归入声明、PASS 无信号门禁显式"无信号"——判定零变化）；夹具自举逐 AC 绑定 behavior 用例并开启 requireCaseBinding（四步全绿）；678 项回归 0 SKIP（+6）。AC 绑定的证明边界：复核证明"这些用例当轮真实执行且通过"，AC 写作与用例设计仍人工负责（L3.5 的"不自动由 PRD 推导"设计边界维持，转正留 v2.0 终审）。
@@ -48,8 +52,10 @@ python devtools/build_delivery.py
 
 回归套件经 `devtools/run-suite.mjs` 以 `--test-concurrency` 钳制（按物理核 75%≈逻辑核×0.375；超线程下按逻辑核×0.75 会打满物理核——24 逻辑核机器实测并发 9 → 持续段 72%，根门禁 close 15.7s）；直接 `node --test` 仍可用但不受钳制。根门禁 G-TESTS 与打包脚本内建同规则。根项目 close 阶段执行 G-CONVENTIONS＋G-DOCS（活文档约定＋入口文档版本内容级核验，2026-10-06 起），完整回归在 pr/release。
 
-打包脚本在 `dist/` 生成可独立解包的 `quality-gate-<版本>.zip`、SHA256，并在临时目录中重跑全量测试与清单驱动的冒烟测试 demo。旧安装包保留用于版本追溯。ZCode 安装以本仓库根目录的 `marketplace.json` 为入口；升级后新建会话。若仍指向旧工作区的 marketplace，需在客户端更新本地源路径。**不应直接编辑 ZCode 安装缓存**。客户端升级固定流程（2026-09-27 起，[LIVE-ACCEPTANCE-1.12](docs/history/LIVE-ACCEPTANCE-1.12.md)）：`python devtools/sync_client_marketplace.py`（同步 marketplace 快照+SHA 校验，"更新"按钮只读快照不读源仓库）→ 客户端插件市场对插件执行"更新"（directory 型本地市场现已支持直接更新，取代旧卸载→安装流程）→ 重跑脚本确认。
+打包脚本按 [显式交付清单](devtools/delivery-files.json) 收集文件，拒绝越界路径及链接；先在临时目录生成候选包、解包运行零 SKIP 全量测试与 28 个清单冒烟示例，通过后才发布 `dist/quality-gate-<版本>.zip` 与 SHA256。未提交时用 `python devtools/build_delivery.py --verify-only` 仅验包；提交后运行 `python devtools/build_delivery.py` 正式重建，并校验 SHA。旧安装包保留用于版本追溯。ZCode 安装以本仓库根目录的 `marketplace.json` 为入口；升级后新建会话。若仍指向旧工作区的 marketplace，需在客户端更新本地源路径。**不应直接编辑 ZCode 安装缓存**。客户端升级固定流程（2026-09-27 起，[LIVE-ACCEPTANCE-1.12](docs/history/LIVE-ACCEPTANCE-1.12.md)）：`python devtools/sync_client_marketplace.py`（同步 marketplace 快照+SHA 校验，"更新"按钮只读快照不读源仓库）→ 客户端插件市场对插件执行"更新"（directory 型本地市场现已支持直接更新，取代旧卸载→安装流程）→ 重跑脚本确认。
 
 ## 接下来怎样迭代
 
-当前版本 1.31.1（证明链补齐＋反思轮补丁，[RELEASE-1.31.1](docs/release/RELEASE-1.31.1.md)）；主线为受控表达分批实施（[应用方案](docs/context/RESEARCH-CONTROLLED-EXPRESSION-2026-10-06.md)、RTM X12–X15）：第一至三批已落地（1.25.0 纠正文案与指令、1.26.0 报告表达、1.27.0 文风检查接入＋文档重构——X12 部分、X13 达成、X14 首轮达成），第四批效果对照实验（X15）的实验装置与试点见 [experiments/controlled-expression/](experiments/controlled-expression/)。1.24.0 为首次 GitHub 开源发行（公开仓库 lazyzhsh/quality-gate，MIT；本机开发历史保留，公开版本从干净快照开始，evidence/dist 不上传）。AC→真实用例绑定已随 1.31.0 落地（cases/requireCaseBinding，L3.5 的技术差距关闭——"不自动由 PRD 推导"设计边界维持）；下一步为 v2.0 收尾终审（L3.5 转正终审、transcript 默认裁决、RTM 终版清算、v0.9 演进基线标记）；外部真实项目使用验证属进一步需求收集（2026-10-06 用户裁定），不作为本项目跟踪与验收条件——L2.2/L3.4 的外部验证类剩余据此转达成（RTM 裁定节留痕），状态调整须有完成条件或显式裁决。客户端 1.24.0–1.27.0 实机验证已于 2026-10-06 四版同轮收尾（[LIVE-ACCEPTANCE-1.27](docs/history/LIVE-ACCEPTANCE-1.27.md)），1.28.0 起待新轮。贡献与安全入口见 .github/。范围决定（2026-09-27）：R13 拓扑推导器与容器编排接入永久出项目范围；（2026-09-26）发布包签名与仓库自有 CI 出范围；（2026-10-01）双人核准移出范围。生产项目接入专业扫描器、浏览器、负载和运维环境时，应让 Evidence 清楚写出工具、范围和局限。不得把"项目工具协议存在"写成"已自动证明真实业务正确"。
+当前版本 **2.0.0**，v2.0 需求终审与 AsyncAPI 扩展已完成。下一步是 ZCode 1.28.0–2.0.0 新一轮实机验收：同步 marketplace 快照，经客户端插件行“更新”，用文件系统核验缓存与 Stop 报告，CLI/模拟与实机结果分别记录。此前客户端记录只覆盖其当时版本。
+
+原始观察记录保持按项目显式启用；AC 语义与用例设计仍由人评审。外部真实项目使用验证属进一步需求收集，不作本项目验收条件。第二 adapter 与其他新增能力按新需求另立基线。R13 拓扑推导与容器编排、发布包签名、仓库自有 CI 和双人核准保持出范围。专业扫描器、浏览器、负载与运维工具的证据须标出来源、输入范围和局限。

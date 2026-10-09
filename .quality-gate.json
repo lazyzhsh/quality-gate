@@ -28,7 +28,8 @@
         "$NODE",
         "devtools/run-suite.mjs",
         "--test-reporter=dot",
-        "plugins/quality-gate/tests/*.test.mjs"
+        "plugins/quality-gate/tests/*.test.mjs",
+        "devtools/tests/*.test.mjs"
       ],
       "timeoutMs": 60000,
       "level": "L1"
@@ -62,7 +63,7 @@
       ],
       "timeoutMs": 5000,
       "level": "L5",
-      "version": "1.31.1",
+      "version": "2.0.0",
       "requiredTopics": [
         "Quality Gate"
       ],

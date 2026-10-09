@@ -3,13 +3,15 @@ import {spawnSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {projectFile} from './kernel.mjs';
 import {diff,filterDifferences,validateIgnorePaths} from './diff.mjs';
+import {extractEventContract,compareEventSamples} from './asyncapi.mjs';
 
 const text=value=>typeof value==='string'&&value.trim().length>0;
 const check=(condition,message)=>{if(!condition)throw new Error(message);};
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 
 export function validateAlignment(g){
- check(g.level==='L2'&&['api','schema','contract-diff'].includes(g.scope)&&text(g.file),'alignment requires L2, api/schema/contract-diff scope and file');
+ check(g.level==='L2'&&['api','schema','event','contract-diff'].includes(g.scope)&&text(g.file),'alignment requires L2, api/schema/event/contract-diff scope and file');
+ check(g.scope!=='event'||g.ignorePaths===undefined,'event alignment does not support ignorePaths; revise the declared contract explicitly');
  check(g.scope!=='contract-diff'||['backward','forward','full'].includes(g.compatibilityLevel),'contract-diff requires compatibilityLevel backward/forward/full');
  validateIgnorePaths(g.ignorePaths,'ignorePaths');
  // 观察模式声明（W3）：requireLive 下 static 观察（未发真实请求/未连真实存储）即 FAIL
@@ -43,7 +45,8 @@ const sourceFingerprintCheck=(observation,root)=>{
 export function runAlignment(g,root){
  const raw=fs.readFileSync(projectFile(root,g.file));
  check(raw.length<=65536,'Alignment specification too large');
- const expected=JSON.parse(raw.toString('utf8').replace(/^\uFEFF/,''));
+ const document=JSON.parse(raw.toString('utf8').replace(/^\uFEFF/,''));
+ const expected=g.scope==='event'?extractEventContract(document):document;
  if(g.scope==='contract-diff'){
   // 契约兼容协议：runner（如 oasdiff 类工具）对基线/当前契约做机器 diff，
   // 内核只消费结构化 breaking 结论——checked 不真即 ERROR，breaking 非空即 FAIL。
@@ -78,7 +81,7 @@ export function runAlignment(g,root){
   const liveBlock=liveModeBlock(mode,g.requireLive);
   const liveBlocked=liveBlock!==null;
   const fingerprintBlocked=(g.requireSourceFingerprint===true&&fingerprint===null)||fingerprint?.status==='MISMATCH';
-  const allDifferences=diff(expected.items,observation.items,'/items');
+  const allDifferences=g.scope==='event'?compareEventSamples(expected,observation.items):diff(expected.items,observation.items,'/items');
   // ignorePaths 只豁免声明过的易变路径；跳过的差异必须留在证据里，不放行未声明的漂移
   const {differences,ignoredDifferences}=filterDifferences(allDifferences,g.ignorePaths);
   return {status:differences.length||liveBlocked||fingerprintBlocked?'FAIL':'PASS',details:{...execution,scope:g.scope,source:observation.source,...(mode?{observationMode:mode}:{}),...(fingerprint?{sourceFingerprint:fingerprint}:{}),...(liveBlocked?{requireLive:g.requireLive,...(liveBlock.missing?{missingObservationMode:true}:{})}:{}),...(g.requireSourceFingerprint===true&&fingerprint===null?{missingSourceFingerprint:true}:{}),expectedSha256:createHash('sha256').update(raw).digest('hex'),expectedItems:expected.items,observedItems:observation.items,differences,...(ignoredDifferences.length?{ignoredDifferences}:{}),...(g.ignorePaths?{ignorePaths:g.ignorePaths}:{})}};

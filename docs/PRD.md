@@ -1,6 +1,6 @@
 # PRD：Quality Gate 产品需求文档
 
-版本基线：v1.31.1（2026-10-06）。本文档把[原始需求](context/original-design-v0.1.md)、当前实现与[后续规划](PLAN.md)整合为产品视角的唯一入口；需求→实现的逐项映射见 [RTM.md](RTM.md)，架构决策见 [adr/](adr/)，字段级规范见 [GATE-SPEC-v1.23.md](GATE-SPEC-v1.23.md) 与 [CONFIG-GUIDE.md](CONFIG-GUIDE.md)，表达规则见 [WRITING-GUIDE.md](WRITING-GUIDE.md)。
+版本基线：v2.0.0（2026-10-08）。本文档把[原始需求](context/original-design-v0.1.md)、当前实现与[后续规划](PLAN.md)整合为产品视角的唯一入口；需求→实现的逐项映射见 [RTM.md](RTM.md)，架构决策见 [adr/](adr/)，字段级规范见 [GATE-SPEC-v1.23.md](GATE-SPEC-v1.23.md) 与 [CONFIG-GUIDE.md](CONFIG-GUIDE.md)，表达规则见 [WRITING-GUIDE.md](WRITING-GUIDE.md)。
 
 ## 1. 问题与产品定位
 
@@ -44,7 +44,7 @@
 
 - **L0 范围与需求**：需求追踪矩阵（AC 类型覆盖）、假设登记、决策登记、Git 变更范围——原生判定。
 - **L1 工程正确性**：静态/构建/单测/变异/结构/约定六类工程检查协议；F2P/P2P 双向测试协议防伪修复。
-- **L2 系统一致性**：契约与结构对齐、持久化行为逐字段核验、跨表不变量；v1.5 支付数据正确性（零和账本、append-only、对账、DLQ 保留、内核重算审计链、契约破坏性变更阻断）。
+- **L2 系统一致性**：契约与结构对齐（含 v2.0 AsyncAPI 事件契约：3.0 JSON 子集、当轮消息样本内核核验）、持久化行为逐字段核验、跨表不变量；v1.5 支付数据正确性（零和账本、append-only、对账、DLQ 保留、内核重算审计链、契约破坏性变更阻断）。
 - **L3 行为与业务语义**：旅程（冒烟/集成/E2E）、视觉、行为案例、性质/状态机；本体语义八层（对齐/术语/关系/约束/状态/实例/暴露/一致性）、确定性 OWL 子集推理（等价/并类/子属性/逆属性/传递，v1.23）与多语言术语（v1.22）；SHACL Core 组件内核原生判定、pyshacl 引擎可选并集（v1.22.x）。
 - **L4 架构非功能与安全**：适应度度量（`metrics` 纯阈值判定，证据纪律已随 1.8.0 裁剪）、扫描（sast/api-authz/credential 三类；dependency/secret/iac/dast 已随 1.8.0 裁剪）、故障恢复与熔断演练、超时/重试预算守恒、拓扑语义（`topology`，v1.10）、重跑确定性（`rerun`）；trace 贯通核验与回放基线（v1.21 轨道 D 收官）。
 - **L5 交付与治理**：配置核对、文档一致性、债务登记、决策收尾（迁移演练/运维就绪/发布证据包已随 1.8.0 裁剪，six-domain 模板 L5 由 debt+回滚 command 承载）。
@@ -59,11 +59,11 @@
 | 时效 | CLI edit/close 总预算 ≤60s，pr/release ≤300s；仅 pr/release 的 command 可到 300s，Stop 配置执行预算 ≤50s（宿主 55s） |
 | 平台 | Windows/macOS/Linux；内核不依赖宿主事件格式（ZCode adapter 隔离） |
 | 安全 | argv 以当前用户执行（按构建脚本同等审查）；秘密脱敏失败；报告只落本地不外传 |
-| 可维护 | 回归计数见最新发布验证；48 示例（27 冒烟测试）；新增可配置项必须同步 CONFIG-GUIDE 并由测试强制；新概念先入 GLOSSARY（弃用词由根 G-CONVENTIONS 强制） |
+| 可维护 | 回归计数见最新发布验证；49 示例（28 冒烟测试）；新增可配置项必须同步 CONFIG-GUIDE 并由测试强制；新概念先入 GLOSSARY（弃用词由根 G-CONVENTIONS 强制） |
 
 ## 6. 交付形态与验收纪律
 
-- **交付物**：`dist/quality-gate-<版本>.zip`（自含 marketplace.json+docs+源码与测试；不包含本机 evidence，SHA256 留档）；本地 marketplace 安装路径见根 [README.md](../README.md)。
+- **交付物**：`dist/quality-gate-<版本>.zip`（自含 marketplace.json+docs+源码与测试；不包含本机 evidence，SHA256 留档）；文件由 `devtools/delivery-files.json` 显式列出，候选包先解包验证再写正式路径，正式构建要求源码已提交；本地 marketplace 安装路径见根 [README.md](../README.md)。
 - **每增量验收纪律**（AGENTS 约定）：可运行正例 + 故意失败反例 + 明确失败证据 + 全量回归；ZCode 实机验收与 CLI/模拟测试分别记录；打包变更跑解包复验。
 - **版本节奏**：v0.1–v1.1 六域逐项落地 → v1.2 工程与治理增强 → v1.3/v1.4 语义轨道 → v1.5 原则/实践轨道 → v1.6 判定协议与证据治理收尾（R5/R6+priorRuns+WAIVED；双轨并行迭代，见 [adr/ADR-0012](adr/ADR-0012-parallel-tracks.md)）。全部历史见 [history/](history/)。
 
@@ -73,7 +73,7 @@
 
 **已达成（v1.24.0–v1.31.0，2026-10-01/06）**：v1.24.0 = 首次 GitHub 开源发行＋2026-10-01 全项目审查 11 组错误放行/错误阻断问题修复（Stop 复用条件、OWL 推理方向、账本整数精度、根目录符号扫描、SHACL 单边约束、Stop 预算、内置模块识别、引擎组件与 Unicode、reasoner 事实、配置数组、deferred ADR——复现转回归 [RELEASE-1.24.0](release/RELEASE-1.24.0.md)，支持范围见 [OPEN-SOURCE-STATUS](OPEN-SOURCE-STATUS.md)）；v1.25.0–v1.27.0 = 受控表达三批（X12/X13 达成/X14 首轮达成——报告表达、来源列与声明关联等证明范围显示）；v1.28.0 = 评审残余收尾（SKIP 原因显式化、不适用跳过审计、零文件面可见）；v1.29.0 = 评审后续推进（内容级核验/真实故障/真实测量/像素重算/组合验证/OpenAPI 子集/延迟分布——L2.1/L4.1/L4.6/L5.3 按完成条件达成，653 测试/37 kinds/48 示例，[RELEASE-1.29.0](release/RELEASE-1.29.0.md)）；v1.30.0 = 二轮评审修复（evidence/project-review-2026-10-06 六组实现问题收敛：F01 登记内 runner 计入统一执行预算＋剩余期限停止启动、F02 requireLive 缺失 mode 即缺证据 FAIL、F03 反向认可须显式 inverseOf、F04 PNG tRNS 透明键与结构防线、F05 依赖图提取跳过注释/字符串并计副作用 import/export-from、F06 OpenAPI 提取 fail-closed＋参数 name+in 覆盖＋输出 kind:'api'——672 测试 0 SKIP，[RELEASE-1.30.0](release/RELEASE-1.30.0.md)）；v1.31.0 = 证明链补齐（AC→真实用例身份与当轮结果绑定 cases/requireCaseBinding——缺失/被跳过/无关成功门禁均不得作为 AC 通过依据；来源信号覆盖 kernel-recompute 与 contentCheck、PASS 无信号门禁显式"无信号"——678 测试 0 SKIP，[RELEASE-1.31.0](release/RELEASE-1.31.0.md)）；v1.31.1 = 反思轮补丁（PNG 重复 tRNS 拒绝、依赖提取正则字面量语境守卫、visual 字节一致计入核验信号、GLOSSARY 术语补登记，[RELEASE-1.31.1](release/RELEASE-1.31.1.md)）。客户端实机验收 1.24.0–1.27.0 已四版同轮收尾（[LIVE-ACCEPTANCE-1.27](history/LIVE-ACCEPTANCE-1.27.md)）。
 
-**通往 v2.0 的路线**（2026-10-01 经 AskUserQuestion 选定：一轨一轮，目标=v0.9 演进基线全部完成——四轨道闭环＋RTM 无"部分"行[双轨制：技术可及项升级，证明哲学性边界以"边界即达成"终审转正]；详规见 [PLAN.md](PLAN.md) 路线图）：v1.17.1–v1.31.1 已全部落地（对齐防护四轨道收官、C6 语义深化、开源与审查修复、受控表达四批、评审收尾与后续推进、二轮评审修复与证明链补齐，见上两段）；余 **v2.0.0 收尾终审轮**——剩余"部分"行（L3.5）终审（另裁决 L2.1 AsyncAPI 纳入与否）、transcript 强制化默认裁决、RTM 终版清算、v0.9 基线标记完成。外部真实项目使用验证属进一步需求收集（2026-10-06 用户裁定）：不作为本项目需求跟踪与验收条件，使用方反馈作为后续新需求来源。
+**通往 v2.0 的路线**（2026-10-01 经 AskUserQuestion 选定：一轨一轮，目标=v0.9 演进基线全部完成——四轨道闭环＋RTM 无"部分"行[双轨制：技术可及项升级，证明哲学性边界以"边界即达成"终审转正]；详规见 [PLAN.md](PLAN.md) 路线图）：v1.17.1–v1.31.1 已全部落地（对齐防护四轨道收官、C6 语义深化、开源与审查修复、受控表达四批、评审收尾与后续推进、二轮评审修复与证明链补齐，见上两段）；**v2.0.0 收尾终审轮已完成（2026-10-08）**：L3.5 经用户裁定按现有边界转达成；原始观察记录保持默认 false、由项目显式启用；AsyncAPI 经用户裁定纳入，已实现事件契约 JSON 子集与真实本地消息正反例。RTM 六域在册 31 项为原生/达成 20、协议 11、部分 0；X12 按第一批完成条件复核转达成；v0.9 四轨道采用范围完成。决策与验证见 [终审记录](history/FINAL-REVIEW-2.0.0.md) 和 [ADR-0017](adr/ADR-0017-v2-final-review.md)。ZCode 1.28.0 起至 2.0.0 的实机验收仍单独待新轮。外部真实项目使用验证属进一步需求收集（2026-10-06 用户裁定）：不作为本项目需求跟踪与验收条件，使用方反馈作为后续新需求来源。
 
 **基线外并行候选**（不随路线图排期）：第二个 agent adapter（先固定核心-宿主事件协议并以同案例比对输出）；生产工具接入：专业扫描器/浏览器/负载/遥测/迁移工具经 runner 协议与 KNOWN_TOOLS 登记接入真实项目（协议侧已就绪，属各项目工程工作）。
 
